@@ -14,9 +14,9 @@ import {
   StarButton,
 } from '@/components/ui/primitives';
 import dynamic from 'next/dynamic';
+import { JourneyLine } from './JourneyLine';
 import { useFavorites } from '@/lib/client/favorites';
 import { useTicker, useTransit } from '@/lib/client/useTransit';
-import { progressAlongLeg } from '@/lib/transit/geo';
 import { formatAge, formatClock } from '@/lib/transit/time';
 import type { TransitAlert, TripDetail } from '@/lib/transit/types';
 
@@ -169,126 +169,7 @@ export function TripScreen({ tripId }: { tripId: string }) {
         </div>
       ) : null}
 
-      <section aria-label="Journey" className="mt-3 rounded-2xl border px-4 py-3 hairline bg-[var(--bg-elevated)]">
-        <ol>
-          {trip.stops.map((stop, index) => {
-            const isLast = index === trip.stops.length - 1;
-            const following = trip.stops[index + 1];
-            const passed = stop.status === 'departed';
-            const here = stop.status === 'current';
-            const next = stop.status === 'next';
-
-            // The line from this stop's circle to the next one's. While the train
-            // is on it, the stretch it has covered is filled and a dot rides at
-            // its real position; at a station the dot is the station's own circle.
-            const onThisLeg = passed && following?.status === 'next';
-            const progress =
-              onThisLeg &&
-              trip.vehicle &&
-              Number.isFinite(trip.vehicle.latitude) &&
-              Number.isFinite(trip.vehicle.longitude) &&
-              stop.lat != null &&
-              stop.lon != null &&
-              following?.lat != null &&
-              following?.lon != null
-                ? progressAlongLeg(
-                    trip.vehicle.latitude,
-                    trip.vehicle.longitude,
-                    { lat: stop.lat, lon: stop.lon },
-                    { lat: following.lat, lon: following.lon },
-                  )
-                : null;
-            const pct = progress != null ? Math.round(progress * 100) : null;
-
-            return (
-              <li key={`${stop.stopId}-${index}`} className="relative flex gap-4">
-                {/* Rail: circle centres sit 26px down, so lines join them exactly. */}
-                <div className="relative w-6 shrink-0" aria-hidden>
-                  {!isLast ? (
-                    <span
-                      className={clsx(
-                        'absolute top-[26px] -bottom-[26px] left-1/2 w-1 -translate-x-1/2 overflow-visible rounded-full',
-                        passed && !onThisLeg && 'bg-[var(--fg-faint)]',
-                        !passed && 'bg-[var(--border)]',
-                        onThisLeg && 'bg-[var(--border)]',
-                      )}
-                    >
-                      {onThisLeg ? (
-                        <>
-                          <span
-                            className="absolute inset-x-0 top-0 rounded-full bg-[var(--accent)]"
-                            style={{ height: `${pct ?? 100}%`, transition: 'height 20s linear' }}
-                          />
-                          {pct != null ? (
-                            <span
-                              className="live-dot absolute left-1/2 z-20 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-[var(--bg-elevated)] bg-[var(--accent)] shadow-md"
-                              style={{ top: `${pct}%`, transition: 'top 20s linear' }}
-                            />
-                          ) : null}
-                        </>
-                      ) : null}
-                    </span>
-                  ) : null}
-
-                  <span
-                    className={clsx(
-                      'absolute top-[26px] left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 rounded-full',
-                      passed && 'size-3.5 bg-[var(--fg-faint)]',
-                      here &&
-                        'live-dot size-6 border-4 border-[var(--bg-elevated)] bg-[var(--accent)] shadow-md',
-                      next && 'size-5 border-[4px] border-[var(--accent)] bg-[var(--bg-elevated)]',
-                      stop.status === 'upcoming' &&
-                        'size-3.5 border-[3px] border-[var(--border-strong)] bg-[var(--bg-elevated)]',
-                    )}
-                  />
-                </div>
-
-                <div className="flex min-w-0 flex-1 items-start justify-between gap-3 py-[15px]">
-                  <span className="min-w-0">
-                    <span
-                      className={clsx(
-                        'block truncate leading-tight',
-                        here || next ? 'text-[16px] font-semibold' : 'text-[15px] font-medium',
-                        passed && 'text-[var(--fg-muted)]',
-                      )}
-                    >
-                      {stop.stopName.replace(/\s+GO(\s+Bus)?$/i, '')}
-                    </span>
-                    {here ? (
-                      <span className="mt-1 inline-block rounded-full bg-[var(--accent)] px-2 py-0.5 text-[10px] font-bold tracking-wide text-[var(--accent-fg)] uppercase">
-                        Train is here
-                      </span>
-                    ) : null}
-                    {next ? (
-                      <span className="mt-1 inline-block rounded-full border border-[var(--accent)] px-2 py-0.5 text-[10px] font-bold tracking-wide text-[var(--accent)] uppercase">
-                        Next stop
-                      </span>
-                    ) : null}
-                    {stop.platform ? (
-                      <span className="mt-0.5 block text-[13px] text-muted">{stop.platform}</span>
-                    ) : null}
-                  </span>
-                  <span className="shrink-0 text-right">
-                    <span
-                      className={clsx(
-                        'tabular text-sm',
-                        passed ? 'text-[var(--fg-faint)]' : 'font-semibold',
-                      )}
-                    >
-                      {formatClock(stop.estimatedDeparture ?? stop.scheduledDeparture)}
-                    </span>
-                    {late && !passed && stop.estimatedDeparture !== stop.scheduledDeparture ? (
-                      <span className="tabular block text-[11px] text-faint line-through">
-                        {formatClock(stop.scheduledDeparture)}
-                      </span>
-                    ) : null}
-                  </span>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-      </section>
+      <JourneyLine trip={trip} now={now} />
 
       <TripAlerts trip={trip} alerts={alerts ?? []} />
 
