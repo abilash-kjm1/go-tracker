@@ -379,7 +379,7 @@ export interface RoutePattern {
   direction: 0 | 1;
   headsign: string;
   /** Stops in travel order, taken from the longest trip in that direction. */
-  stops: Array<{ id: string; name: string }>;
+  stops: Array<{ id: string; name: string; lat?: number; lon?: number }>;
   tripCount: number;
 }
 
@@ -411,7 +411,12 @@ export async function getRoutePatterns(routeId: string): Promise<RoutePattern[]>
     .map(([direction, trip]) => ({
       direction,
       headsign: trip.h,
-      stops: trip.s.map(([id]) => ({ id, name: byId.get(id)?.name ?? id })),
+      stops: trip.s.map(([id]) => ({
+        id,
+        name: byId.get(id)?.name ?? id,
+        lat: byId.get(id)?.lat,
+        lon: byId.get(id)?.lon,
+      })),
       tripCount: counts.get(direction) ?? 0,
     }))
     .sort((a, b) => b.tripCount - a.tripCount);

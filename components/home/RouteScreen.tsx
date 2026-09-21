@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { LineDiagram } from './LineDiagram';
 import { LiveIndicator } from '@/components/ui/LiveIndicator';
 import { ModeIcon, Pill, RouteBadge, Segmented, StarButton } from '@/components/ui/primitives';
 import { useFavorites } from '@/lib/client/favorites';
@@ -11,7 +12,7 @@ import type { LiveVehicle, TransitRoute } from '@/lib/transit/types';
 interface RoutePattern {
   direction: 0 | 1;
   headsign: string;
-  stops: Array<{ id: string; name: string }>;
+  stops: Array<{ id: string; name: string; lat?: number; lon?: number }>;
   tripCount: number;
 }
 
@@ -119,7 +120,7 @@ export function RouteScreen({
         <section className="pb-8">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-[11px] font-semibold tracking-wide text-faint uppercase">
-              Stops served
+              The line right now
             </h2>
             {patterns.length > 1 ? (
               <Segmented<string>
@@ -138,26 +139,11 @@ export function RouteScreen({
             {pattern.stops.length} stops · {pattern.tripCount} trips today
           </p>
 
-          <ol className="overflow-hidden rounded-2xl border hairline bg-[var(--bg-elevated)]">
-            {pattern.stops.map((stop, index) => (
-              <li key={`${stop.id}-${index}`}>
-                <Link
-                  href={`/stations/${encodeURIComponent(stop.id)}`}
-                  className="flex min-h-12 items-center gap-3 border-b px-4 last:border-b-0 hairline hover:bg-[var(--bg-sunken)]"
-                >
-                  <span
-                    aria-hidden
-                    className="size-2 shrink-0 rounded-full"
-                    style={{ background: route.color ?? 'var(--accent)' }}
-                  />
-                  <span className="min-w-0 flex-1 truncate text-[14px]">{stop.name}</span>
-                  <span aria-hidden className="text-[var(--fg-faint)]">
-                    ›
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ol>
+          <LineDiagram
+            stops={pattern.stops}
+            vehicles={live}
+            color={route.color ?? 'var(--accent)'}
+          />
         </section>
       ) : (
         <p className="pb-8 text-[13px] text-muted">
