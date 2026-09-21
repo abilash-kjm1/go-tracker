@@ -169,17 +169,21 @@ export function TripScreen({ tripId }: { tripId: string }) {
         </div>
       ) : null}
 
-      <section aria-label="Journey" className="mt-3 rounded-2xl border px-4 py-2 hairline bg-[var(--bg-elevated)]">
-        <ol className="relative">
+      <section aria-label="Journey" className="mt-3 rounded-2xl border px-4 py-3 hairline bg-[var(--bg-elevated)]">
+        <ol>
           {trip.stops.map((stop, index) => {
             const isLast = index === trip.stops.length - 1;
-            // While the train is between two stops, a dot rides the line between
-            // them, in step with where it really is. At a station it sits on the
-            // stop's own circle (the pulsing "current" one) instead.
             const following = trip.stops[index + 1];
-            const between = stop.status === 'departed' && following?.status === 'next';
-            const legProgress =
-              between &&
+            const passed = stop.status === 'departed';
+            const here = stop.status === 'current';
+            const next = stop.status === 'next';
+
+            // The line from this stop's circle to the next one's. While the train
+            // is on it, the stretch it has covered is filled and a dot rides at
+            // its real position; at a station the dot is the station's own circle.
+            const onThisLeg = passed && following?.status === 'next';
+            const progress =
+              onThisLeg &&
               trip.vehicle &&
               Number.isFinite(trip.vehicle.latitude) &&
               Number.isFinite(trip.vehicle.longitude) &&
@@ -194,80 +198,86 @@ export function TripScreen({ tripId }: { tripId: string }) {
                     { lat: following.lat, lon: following.lon },
                   )
                 : null;
+            const pct = progress != null ? Math.round(progress * 100) : null;
+
             return (
-              <li key={`${stop.stopId}-${index}`} className="relative flex gap-3 py-4">
-                <div className="flex w-5 flex-col items-center">
-                  <span
-                    className={clsx(
-                      'z-10 mt-1 grid size-3.5 place-items-center rounded-full border-2',
-                      stop.status === 'departed' && 'border-[var(--fg-faint)] bg-[var(--fg-faint)]',
-                      // Standing here: solid and pulsing. Heading here: a ring only, so
-                      // it never reads as "the train is already there".
-                      stop.status === 'current' && 'size-4 border-[var(--bg-elevated)] bg-[var(--accent)] shadow ring-2 ring-[var(--accent)] live-dot',
-                      stop.status === 'next' && 'size-4 border-[3px] border-[var(--accent)] bg-[var(--bg-elevated)]',
-                      stop.status === 'upcoming' && 'border-[var(--border-strong)] bg-[var(--bg-elevated)]',
-                    )}
-                    aria-hidden
-                  />
+              <li key={`${stop.stopId}-${index}`} className="relative flex gap-4">
+                {/* Rail: circle centres sit 26px down, so lines join them exactly. */}
+                <div className="relative w-6 shrink-0" aria-hidden>
                   {!isLast ? (
                     <span
                       className={clsx(
-                        'relative w-0.5 flex-1',
-                        stop.status === 'departed' && trip.stops[index + 1]?.status === 'next'
-                          ? 'bg-[var(--accent)]'
-                          : stop.status === 'departed'
-                            ? 'bg-[var(--fg-faint)]'
-                            : 'bg-[var(--border)]',
+                        'absolute top-[26px] -bottom-[26px] left-1/2 w-1 -translate-x-1/2 overflow-visible rounded-full',
+                        passed && !onThisLeg && 'bg-[var(--fg-faint)]',
+                        !passed && 'bg-[var(--border)]',
+                        onThisLeg && 'bg-[var(--border)]',
                       )}
-                      aria-hidden
                     >
-                      {legProgress != null ? (
-                        <span
-                          className="absolute left-1/2 z-20 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[var(--bg-elevated)] bg-[var(--accent)] shadow"
-                          // Moves over the gap to the next refresh, linearly, so it
-                          // keeps travelling instead of hopping and waiting.
-                          style={{ top: `${Math.round(legProgress * 100)}%`, transition: 'top 20s linear' }}
-                          role="img"
-                          aria-label={`Train is ${Math.round(legProgress * 100)}% of the way to ${following?.stopName}`}
-                        />
+                      {onThisLeg ? (
+                        <>
+                          <span
+                            className="absolute inset-x-0 top-0 rounded-full bg-[var(--accent)]"
+                            style={{ height: `${pct ?? 100}%`, transition: 'height 20s linear' }}
+                          />
+                          {pct != null ? (
+                            <span
+                              className="live-dot absolute left-1/2 z-20 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-[var(--bg-elevated)] bg-[var(--accent)] shadow-md"
+                              style={{ top: `${pct}%`, transition: 'top 20s linear' }}
+                            />
+                          ) : null}
+                        </>
                       ) : null}
                     </span>
                   ) : null}
-                </div>
 
-                <div className="flex min-w-0 flex-1 items-baseline justify-between gap-3">
                   <span
                     className={clsx(
-                      'min-w-0 truncate',
-                      stop.status === 'current' || stop.status === 'next' ? 'font-semibold' : 'font-medium',
-                      stop.status === 'departed' && 'text-[var(--fg-muted)]',
+                      'absolute top-[26px] left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 rounded-full',
+                      passed && 'size-3.5 bg-[var(--fg-faint)]',
+                      here &&
+                        'live-dot size-6 border-4 border-[var(--bg-elevated)] bg-[var(--accent)] shadow-md',
+                      next && 'size-5 border-[4px] border-[var(--accent)] bg-[var(--bg-elevated)]',
+                      stop.status === 'upcoming' &&
+                        'size-3.5 border-[3px] border-[var(--border-strong)] bg-[var(--bg-elevated)]',
                     )}
-                  >
-                    {stop.stopName}
-                    {stop.status === 'current' ? (
-                      <span className="ml-2 rounded-full bg-[var(--accent)] px-2 py-0.5 text-[10px] font-bold tracking-wide text-[var(--accent-fg)] uppercase">
+                  />
+                </div>
+
+                <div className="flex min-w-0 flex-1 items-start justify-between gap-3 py-[15px]">
+                  <span className="min-w-0">
+                    <span
+                      className={clsx(
+                        'block truncate leading-tight',
+                        here || next ? 'text-[16px] font-semibold' : 'text-[15px] font-medium',
+                        passed && 'text-[var(--fg-muted)]',
+                      )}
+                    >
+                      {stop.stopName.replace(/\s+GO(\s+Bus)?$/i, '')}
+                    </span>
+                    {here ? (
+                      <span className="mt-1 inline-block rounded-full bg-[var(--accent)] px-2 py-0.5 text-[10px] font-bold tracking-wide text-[var(--accent-fg)] uppercase">
                         Train is here
                       </span>
                     ) : null}
-                    {stop.status === 'next' ? (
-                      <span className="ml-2 rounded-full border border-[var(--accent)] px-2 py-0.5 text-[10px] font-bold tracking-wide text-[var(--accent)] uppercase">
+                    {next ? (
+                      <span className="mt-1 inline-block rounded-full border border-[var(--accent)] px-2 py-0.5 text-[10px] font-bold tracking-wide text-[var(--accent)] uppercase">
                         Next stop
                       </span>
                     ) : null}
                     {stop.platform ? (
-                      <span className="ml-2 text-[13px] font-normal text-muted">{stop.platform}</span>
+                      <span className="mt-0.5 block text-[13px] text-muted">{stop.platform}</span>
                     ) : null}
                   </span>
                   <span className="shrink-0 text-right">
                     <span
                       className={clsx(
                         'tabular text-sm',
-                        stop.status === 'departed' ? 'text-[var(--fg-faint)]' : 'font-medium',
+                        passed ? 'text-[var(--fg-faint)]' : 'font-semibold',
                       )}
                     >
                       {formatClock(stop.estimatedDeparture ?? stop.scheduledDeparture)}
                     </span>
-                    {late && stop.status !== 'departed' ? (
+                    {late && !passed && stop.estimatedDeparture !== stop.scheduledDeparture ? (
                       <span className="tabular block text-[11px] text-faint line-through">
                         {formatClock(stop.scheduledDeparture)}
                       </span>
