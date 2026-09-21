@@ -71,3 +71,17 @@ so the site never goes blank.
 - **Bus positions do not exist** in any feed, so buses are timetable-only apart from the
   terminals that publish live platforms and delays.
 - Map tiles come from VersaTiles, which is free and keyless but not a paid SLA.
+
+## Dependency security notes
+
+`npm audit` still lists a few findings. They were investigated rather than ignored:
+
+- **Next.js** is on the patched 15.5.x line (Vercel flagged 15.5.4 as vulnerable, so it was
+  upgraded to 15.5.25). The remaining `next`/`postcss` items are a build-time CSS tool that
+  only matters when processing CSS supplied by an attacker; this app only builds its own
+  stylesheet. Fixing it means Next 16, a major upgrade.
+- **maplibre-gl** is held on 5.x. The advisory (an HTML sanitiser bug) concerns map popups,
+  which this app never uses. MapLibre 6 fixes it but is ESM-only and ships its background
+  worker as a separate file that must be served and registered by hand; upgrading it
+  compiles cleanly yet leaves the map blank, so it was reverted. Revisit when there is time
+  to wire `setWorkerUrl` and test the map in a browser.
