@@ -101,15 +101,17 @@ export function HeroCard({
 
   return (
     <header
-      className="relative mt-4 overflow-hidden rounded-[26px] text-white shadow-[0_24px_48px_-26px_rgb(0_60_32/0.8)]"
+      // Not overflow-hidden: the stop suggestions have to hang below the card.
+      className="relative mt-4 rounded-[26px] text-white shadow-[0_24px_48px_-26px_rgb(0_60_32/0.8)]"
       style={{ background: `linear-gradient(158deg, ${skin.from} 0%, ${skin.from} 26%, ${skin.to} 100%)` }}
     >
-      {/* Soft glow behind the friends, so the lower half is never flat. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-16 bottom-16 size-64 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgb(255 255 255 / 0.16) 0%, transparent 68%)' }}
-      />
+      {/* Soft glow behind the friends, clipped to the card so it cannot spill. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[26px]">
+        <span
+          className="absolute -right-16 bottom-16 size-64 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgb(255 255 255 / 0.16) 0%, transparent 68%)' }}
+        />
+      </div>
 
       {/* The lines that call here, named once and left still. */}
       <LineStrip />
@@ -181,7 +183,7 @@ function LineStrip() {
   return (
     <div
       aria-hidden
-      className="absolute inset-x-0 top-0 flex h-9 items-center justify-center gap-3 overflow-hidden border-b border-white/15"
+      className="absolute inset-x-0 top-0 flex h-9 items-center justify-center gap-3 overflow-hidden rounded-t-[26px] border-b border-white/15"
       style={{ background: 'rgb(0 0 0 / 0.22)' }}
     >
       {LINES.map((line) => (
