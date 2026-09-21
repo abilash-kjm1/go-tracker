@@ -399,6 +399,21 @@ body {
   transform-origin: 50% 50%;
   animation: gh-flip 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+@keyframes gh-sheen {
+  0% { transform: translateX(-60%) rotate(14deg); opacity: 0; }
+  12% { opacity: 0.5; }
+  40%, 100% { transform: translateX(520%) rotate(14deg); opacity: 0; }
+}
+@keyframes gh-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.gh-sheen {
+  left: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.13), transparent);
+  animation: gh-sheen 9s ease-in-out infinite;
+}
+.gh-rise { animation: gh-rise 0.62s cubic-bezier(0.22, 1, 0.36, 1) both; }
 @keyframes gh-drift-a {
   0%, 100% { transform: translate(0, 0) scale(1); }
   50% { transform: translate(34px, 22px) scale(1.12); }
@@ -410,6 +425,6 @@ body {
 .gh-drift-a { animation: gh-drift-a 19s ease-in-out infinite; }
 .gh-drift-b { animation: gh-drift-b 23s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .gh-shimmer, .gh-draw, .gh-flip, .gh-drift-a, .gh-drift-b { animation: none; }
+  .gh-shimmer, .gh-draw, .gh-flip, .gh-drift-a, .gh-drift-b, .gh-sheen, .gh-rise { animation: none; }
   .gh-draw { stroke-dashoffset: 0; }
 }
