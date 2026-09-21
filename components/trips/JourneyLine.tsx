@@ -2,8 +2,8 @@
 
 import clsx from 'clsx';
 import { useState } from 'react';
-import { progressAlongLeg } from '@/lib/transit/geo';
-import { formatClock } from '@/lib/transit/time';
+import { distanceKm, progressAlongLeg } from '@/lib/transit/geo';
+import { formatAge, formatClock } from '@/lib/transit/time';
 import type { TripDetail, TripStopTime } from '@/lib/transit/types';
 
 /**
@@ -12,7 +12,9 @@ import type { TripDetail, TripStopTime } from '@/lib/transit/types';
  * Above it, a "now" panel says which leg the train is on and when it arrives.
  */
 export function JourneyLine({ trip, now }: { trip: TripDetail; now: number }) {
-  const color = trip.routeColor ?? '#10b981';
+  // GO's line colours are pure primaries (#ff0d00 red); softened towards slate they
+  // stay recognisable without glaring on a light or dark page.
+  const color = `color-mix(in srgb, ${trip.routeColor ?? '#10b981'} 78%, #0f172a)`;
   const stops = trip.stops;
   const [showPassed, setShowPassed] = useState(false);
 
@@ -60,19 +62,35 @@ export function JourneyLine({ trip, now }: { trip: TripDetail; now: number }) {
     <section aria-label="Journey" className="mt-3 space-y-3">
       {hasPosition && from && to ? (
         <NowPanel
+          trip={trip}
+          now={now}
           color={color}
-          fromName={tidy(from.stopName)}
-          toName={tidy(to.stopName)}
+          from={from}
+          to={to}
           progress={progress ?? 0}
           atStation={hereIdx >= 0}
           minutes={minutes}
-          arriveClock={arriveAt ? formatClock(arriveAt) : null}
+          arriveAt={arriveAt}
           stopsLeft={stopsLeft}
         />
       ) : null}
 
       <div className="overflow-hidden rounded-2xl border hairline bg-[var(--bg-elevated)]">
-        <div className="h-1.5" style={{ background: color }} aria-hidden />
+        <div className="flex items-center justify-between gap-3 border-b px-4 py-3 hairline">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold tracking-[0.12em] text-faint uppercase">All stops</p>
+            <p className="truncate text-[14px] font-semibold">
+              {tidy(stops[0]?.stopName ?? '')} <span className="text-faint">to</span>{' '}
+              {tidy(stops.at(-1)?.stopName ?? '')}
+            </p>
+          </div>
+          <span
+            className="tabular shrink-0 rounded-full px-2.5 py-1 text-[12px] font-bold text-white"
+            style={{ background: color }}
+          >
+            {stops.length} stops
+          </span>
+        </div>
         <div className="px-4 pb-2">
           {hiddenCount > 0 ? (
             <button
@@ -132,90 +150,210 @@ function TrainIcon({ className }: { className?: string }) {
 
 // ---- the "now" panel -------------------------------------------------------
 
+function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: 'warn' | 'good' }) {
+  return (
+    <div className="min-w-0 rounded-xl bg-[var(--bg-sunken)] px-3 py-2.5">
+      <p className="text-[10px] font-semibold tracking-[0.12em] text-faint uppercase">{label}</p>
+      <p
+        className={clsx(
+          'tabular mt-0.5 truncate text-[16px] leading-tight font-bold',
+          tone === 'warn' && 'text-[var(--color-warn-500)]',
+          tone === 'good' && 'text-[var(--color-signal-600)]',
+        )}
+      >
+        {value}
+      </p>
+      {sub ? <p className="mt-0.5 truncate text-[11px] text-muted">{sub}</p> : null}
+    </div>
+  );
+}
+
+const kmText = (km: number) => (km < 1 ? `${Math.max(50, Math.round(km * 10) * 100)} m` : `${km.toFixed(1)} km`);
+
 function NowPanel({
+  trip,
+  now,
   color,
-  fromName,
-  toName,
+  from,
+  to,
   progress,
   atStation,
   minutes,
-  arriveClock,
+  arriveAt,
   stopsLeft,
 }: {
+  trip: TripDetail;
+  now: number;
   color: string;
-  fromName: string;
-  toName: string;
+  from: TripStopTime;
+  to: TripStopTime;
   progress: number;
   atStation: boolean;
   minutes: number | null;
-  arriveClock: string | null;
+  arriveAt?: string;
   stopsLeft: number;
 }) {
+  const stops = trip.stops;
+  const vehicle = trip.vehicle;
   const pct = Math.round(progress * 100);
+  const fromName = tidy(from.stopName);
+  const toName = tidy(to.stopName);
+  const final = stops.at(-1);
+  const delayMin = trip.delaySeconds != null ? Math.round(trip.delaySeconds / 60) : 0;
+  const late = delayMin >= 1;
+
+  // Distances along the route's own legs (straight between stops).
+  const legs = stops.slice(1).map((st, i) => {
+    const a = stops[i];
+    return a.lat != null && a.lon != null && st.lat != null && st.lon != null
+      ? distanceKm(a.lat, a.lon, st.lat, st.lon)
+      : 0;
+  });
+  const total = legs.reduce((x, y) => x + y, 0);
+  const toIdx = stops.indexOf(to);
+  const legKm = toIdx > 0 ? legs[toIdx - 1] : 0;
+  const toNextKm = (1 - progress) * legKm;
+  const toEndKm = toNextKm + legs.slice(toIdx).reduce((x, y) => x + y, 0);
+  const doneFrac = total > 0 ? Math.min(1, Math.max(0, (total - toEndKm) / total)) : 0;
+
+  const leftClock = formatClock(from.estimatedDeparture ?? from.scheduledDeparture);
+  const finalClock = final ? formatClock(final.estimatedDeparture ?? final.scheduledArrival ?? final.scheduledDeparture) : '';
+  const rideMinutes =
+    final && stops[0]
+      ? Math.round(
+          (new Date(final.scheduledArrival ?? final.scheduledDeparture ?? 0).getTime() -
+            new Date(stops[0].scheduledDeparture ?? 0).getTime()) /
+            60_000,
+        )
+      : null;
+
   return (
-    <div
-      className="relative overflow-hidden rounded-2xl p-4 text-white shadow-lg"
-      style={{ background: `linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 55%, #000))` }}
-    >
-      {/* Faint rail motif behind the content. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-6 -bottom-8 size-40 rounded-full opacity-15"
-        style={{ background: 'radial-gradient(circle, #fff 0, transparent 65%)' }}
-      />
-
-      <p className="text-[11px] font-semibold tracking-[0.14em] uppercase opacity-80">
-        {atStation ? `At ${fromName}` : 'On the way'}
-      </p>
-
-      <div className="mt-1 flex items-end justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[13px] opacity-80">{atStation ? 'Next stop' : 'Arriving at'}</p>
-          <p className="truncate text-[26px] leading-none font-bold tracking-tight">{toName}</p>
-        </div>
-        <div className="shrink-0 text-right">
-          {minutes != null ? (
-            <p className="tabular text-[34px] leading-none font-bold">
-              {minutes}
-              <span className="ml-1 text-[13px] font-semibold opacity-85">min</span>
+    <div className="overflow-hidden rounded-3xl border bg-[var(--bg-elevated)] shadow-[var(--shadow-card)] hairline">
+      {/* Header: what is this service, and how is it doing. */}
+      <div className="flex items-center justify-between gap-3 px-4 pt-4">
+        <div className="flex min-w-0 items-center gap-2">
+          <span
+            className="grid size-9 shrink-0 place-items-center rounded-xl text-white"
+            style={{ background: color }}
+          >
+            <TrainIcon className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-[14px] leading-tight font-bold">
+              {trip.routeName ?? 'GO Train'}
+              {trip.express ? <span className="ml-1.5 text-[var(--color-warn-500)]">Express</span> : null}
             </p>
-          ) : null}
-          {arriveClock ? <p className="tabular mt-0.5 text-[12px] opacity-85">{arriveClock}</p> : null}
+            <p className="text-[12px] text-muted">
+              Train {trip.tripNumber} to {tidy(trip.destination ?? '')}
+            </p>
+          </div>
+        </div>
+        <span
+          className={clsx(
+            'shrink-0 rounded-full px-3 py-1 text-[12px] font-bold',
+            late
+              ? 'bg-[color-mix(in_srgb,var(--color-warn-500)_18%,transparent)] text-[var(--color-warn-500)]'
+              : 'bg-[color-mix(in_srgb,var(--color-signal-500)_16%,transparent)] text-[var(--color-signal-600)]',
+          )}
+        >
+          {late ? `${delayMin} min late` : 'On time'}
+        </span>
+      </div>
+
+      {/* Flight-tracker: both ends of the leg, the train between them. */}
+      <div className="px-4 pt-5">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold tracking-[0.12em] text-faint uppercase">
+              {atStation ? 'Now at' : 'Left'}
+            </p>
+            <p className="truncate text-[20px] leading-tight font-bold">{fromName}</p>
+            <p className="tabular text-[12px] text-muted">
+              {atStation ? `Departs ${leftClock}` : leftClock}
+            </p>
+          </div>
+          <div className="pb-1 text-center">
+            <p className="tabular text-[34px] leading-none font-black" style={{ color }}>
+              {minutes ?? '–'}
+            </p>
+            <p className="text-[10px] font-bold tracking-[0.14em] text-faint uppercase">min</p>
+          </div>
+          <div className="min-w-0 text-right">
+            <p className="text-[10px] font-semibold tracking-[0.12em] text-faint uppercase">Arriving</p>
+            <p className="truncate text-[20px] leading-tight font-bold">{toName}</p>
+            <p className="tabular text-[12px] text-muted">{arriveAt ? formatClock(arriveAt) : ''}</p>
+          </div>
+        </div>
+
+        <div className="relative mt-5 mb-2 h-8">
+          <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-[var(--border)]" />
+          <div
+            className="absolute top-1/2 left-0 h-1.5 -translate-y-1/2 rounded-full"
+            style={{ width: `${pct}%`, background: color, transition: 'width 20s linear' }}
+          />
+          <span
+            className="absolute top-1/2 left-0 size-4 -translate-y-1/2 rounded-full border-[3.5px] bg-[var(--bg-elevated)]"
+            style={{ borderColor: color }}
+            aria-hidden
+          />
+          <span
+            className="absolute top-1/2 right-0 size-4 -translate-y-1/2 rounded-full border-[3.5px] bg-[var(--bg-elevated)]"
+            style={{ borderColor: 'var(--border-strong)' }}
+            aria-hidden
+          />
+          <span
+            className="live-dot absolute top-1/2 z-10 grid size-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-xl text-white shadow-lg ring-4 ring-[var(--bg-elevated)]"
+            style={{ left: `${Math.max(4, Math.min(96, pct))}%`, background: color, transition: 'left 20s linear' }}
+            role="img"
+            aria-label={atStation ? `Train is at ${fromName}` : `Train is ${pct}% of the way to ${toName}`}
+          >
+            <TrainIcon className="size-5" />
+          </span>
         </div>
       </div>
 
-      {/* The leg as a track, with the train on it. */}
-      <div className="relative mt-5 mb-1">
-        <div className="h-1.5 rounded-full bg-white/25" />
-        <div
-          className="absolute top-0 left-0 h-1.5 rounded-full bg-white"
-          style={{ width: `${pct}%`, transition: 'width 20s linear' }}
+      {/* The numbers a rider actually wants. */}
+      <div className="grid grid-cols-2 gap-2 px-4 pt-3 min-[420px]:grid-cols-3">
+        <Stat label="To next stop" value={kmText(toNextKm)} sub={atStation ? 'at station' : `${pct}% of this leg`} />
+        <Stat label="Stops to go" value={String(stopsLeft)} sub={`to ${tidy(final?.stopName ?? '')}`} />
+        <Stat
+          label="Final arrival"
+          value={finalClock}
+          sub={late ? 'includes the delay' : 'as scheduled'}
+          tone={late ? 'warn' : 'good'}
         />
-        <span
-          className="absolute top-1/2 left-0 size-3 -translate-x-0 -translate-y-1/2 rounded-full border-2 border-white bg-transparent"
-          aria-hidden
+        <Stat label="Left to travel" value={kmText(toEndKm)} sub={`${Math.round(doneFrac * 100)}% done`} />
+        <Stat
+          label="Status"
+          value={vehicle?.isMoving === false ? 'Stopped' : 'Moving'}
+          sub={late ? `${delayMin} min behind schedule` : 'Running to schedule'}
         />
-        <span
-          className="absolute top-1/2 right-0 size-3 -translate-y-1/2 rounded-full bg-white"
-          aria-hidden
+        <Stat
+          label="Full trip"
+          value={rideMinutes != null && rideMinutes > 0 ? `${rideMinutes} min` : '–'}
+          sub={vehicle?.vehicleLabel ? `Vehicle ${vehicle.vehicleLabel}` : undefined}
         />
-        <span
-          className="absolute top-1/2 z-10 grid size-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-xl bg-white shadow-md"
-          style={{ left: `${pct}%`, transition: 'left 20s linear', color }}
-          role="img"
-          aria-label={
-            atStation ? `Train is at ${fromName}` : `Train is ${pct}% of the way to ${toName}`
-          }
-        >
-          <TrainIcon className="size-5" />
-        </span>
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-3 text-[12px] opacity-90">
-        <span className="min-w-0 truncate">{fromName}</span>
-        <span className="shrink-0 rounded-full bg-white/20 px-2.5 py-1 font-semibold">
-          {stopsLeft} stop{stopsLeft === 1 ? '' : 's'} to go
-        </span>
+      {/* Whole-journey progress. */}
+      <div className="px-4 pt-4 pb-4">
+        <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold text-muted">
+          <span className="truncate">{tidy(stops[0]?.stopName ?? '')}</span>
+          <span className="tabular text-faint">{Math.round(doneFrac * 100)}% of journey</span>
+          <span className="truncate">{tidy(final?.stopName ?? '')}</span>
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-[var(--border)]">
+          <div
+            className="h-full rounded-full"
+            style={{ width: `${Math.round(doneFrac * 100)}%`, background: color, transition: 'width 20s linear' }}
+          />
+        </div>
+        {vehicle ? (
+          <p className="mt-2.5 text-[11px] text-faint">
+            Live position updated {formatAge(vehicle.updatedAt, now)}
+            {vehicle.delayReason ? ` · ${vehicle.delayReason}` : ''}
+          </p>
+        ) : null}
       </div>
     </div>
   );
@@ -262,10 +400,9 @@ function StopRow({
       <div className="relative w-10 shrink-0" aria-hidden>
         {!isLast ? (
           <span
-            className="absolute top-[30px] -bottom-[30px] left-1/2 w-2 -translate-x-1/2 rounded-full"
+            className="absolute top-[30px] -bottom-[30px] left-1/2 w-1.5 -translate-x-1/2 rounded-full"
             style={{
-              background: color,
-              opacity: legBehind ? 0.22 : legLive ? 0.22 : 1,
+              background: legBehind || legLive ? 'var(--border-strong)' : color,
             }}
           />
         ) : null}
@@ -309,8 +446,7 @@ function StopRow({
             )}
             style={
               {
-                borderColor: color,
-                opacity: passed ? 0.4 : 1,
+                borderColor: passed ? 'var(--border-strong)' : color,
                 '--halo': color,
               } as React.CSSProperties
             }

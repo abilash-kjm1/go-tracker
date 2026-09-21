@@ -151,9 +151,6 @@ export function TripScreen({ tripId }: { tripId: string }) {
               ) : null}
             </p>
           </div>
-          {trip.vehicle.detail ? (
-            <p className="mt-1.5 text-[13px] text-muted">{trip.vehicle.detail}</p>
-          ) : null}
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-faint">
             <span>Updated {formatAge(trip.vehicle.updatedAt, now)}</span>
             {trip.vehicle.vehicleLabel ? <span>Vehicle {trip.vehicle.vehicleLabel}</span> : null}
