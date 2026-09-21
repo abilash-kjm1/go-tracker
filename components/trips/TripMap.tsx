@@ -4,6 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 
 import maplibregl, { type Map as MapLibreMap, type Marker } from 'maplibre-gl';
 import { useEffect, useRef, useState } from 'react';
+import { formatClockParts } from '@/lib/transit/time';
 import { basemapBackground, basemapStyleUrl } from '@/components/map/mapStyle';
 import { useTheme } from '@/lib/client/theme';
 import type { TripDetail } from '@/lib/transit/types';
@@ -16,7 +17,7 @@ import type { TripDetail } from '@/lib/transit/types';
 export function TripMap({ trip }: { trip: TripDetail }) {
   // Fitting the whole corridor makes a moving train look frozen — it covers
   // about a pixel a minute at that scale. Default to riding with it.
-  const [view, setView] = useState<'follow' | 'route'>('follow');
+  const [view, setView] = useState<'follow' | 'route' | 'free'>('follow');
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
@@ -25,12 +26,26 @@ export function TripMap({ trip }: { trip: TripDetail }) {
   // whichever wins frame the camera exactly once.
   const framedRef = useRef(false);
   const vehicleRef = useRef<[number, number] | null>(null);
-  const viewRef = useRef<'follow' | 'route'>('follow');
+  const viewRef = useRef<'follow' | 'route' | 'free'>('follow');
   const { resolved } = useTheme();
 
-  const points = trip.stops
-    .filter((s) => Number.isFinite(s.lat) && Number.isFinite(s.lon))
-    .map((s) => [s.lon as number, s.lat as number] as [number, number]);
+  const located = trip.stops.filter((s) => Number.isFinite(s.lat) && Number.isFinite(s.lon));
+  const points = located.map((s) => [s.lon as number, s.lat as number] as [number, number]);
+  const nextIndex = located.findIndex((s) => s.status !== 'departed');
+  const stopFeatures = located.map((s, i) => {
+    const clock = formatClockParts(s.estimatedDeparture ?? s.scheduledDeparture ?? s.scheduledArrival);
+    return {
+      type: 'Feature' as const,
+      properties: {
+        name: s.stopName.replace(/\s+GO(\s+Bus)?$/i, ''),
+        time: clock.time ? `${clock.time} ${clock.suffix}`.trim() : '',
+        state: s.status === 'departed' ? 'past' : i === nextIndex ? 'next' : 'ahead',
+      },
+      geometry: { type: 'Point' as const, coordinates: [s.lon as number, s.lat as number] },
+    };
+  });
+  const stopFeaturesRef = useRef(stopFeatures);
+  stopFeaturesRef.current = stopFeatures;
 
   const vehicle = trip.vehicle;
   const hasVehicle = Boolean(
@@ -74,24 +89,42 @@ export function TripMap({ trip }: { trip: TripDetail }) {
       });
       map.addSource('journey-stops', {
         type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: points.map((coordinates) => ({
-            type: 'Feature',
-            properties: {},
-            geometry: { type: 'Point', coordinates },
-          })),
-        },
+        data: { type: 'FeatureCollection', features: stopFeaturesRef.current },
       });
+      const lineColor = trip.routeColor ?? '#10b981';
       map.addLayer({
         id: 'journey-stops',
         type: 'circle',
         source: 'journey-stops',
         paint: {
-          'circle-radius': 3.5,
-          'circle-color': resolved === 'dark' ? '#0b0f17' : '#ffffff',
-          'circle-stroke-color': trip.routeColor ?? '#10b981',
-          'circle-stroke-width': 2,
+          'circle-radius': ['match', ['get', 'state'], 'next', 7, 4.5],
+          'circle-color': [
+            'match', ['get', 'state'],
+            'past', '#9aa4b5',
+            'next', '#f59e0b',
+            resolved === 'dark' ? '#0b0f17' : '#ffffff',
+          ],
+          'circle-stroke-color': ['match', ['get', 'state'], 'past', '#9aa4b5', 'next', '#ffffff', lineColor],
+          'circle-stroke-width': ['match', ['get', 'state'], 'next', 2.5, 2],
+        },
+      });
+      // Every stop is named, so a moving train can be read against the map.
+      map.addLayer({
+        id: 'journey-stop-labels',
+        type: 'symbol',
+        source: 'journey-stops',
+        layout: {
+          'text-field': ['format', ['get', 'name'], {}, '\n', {}, ['get', 'time'], { 'font-scale': 0.85 }],
+          'text-font': ['noto_sans_regular'],
+          'text-size': 12,
+          'text-anchor': 'top',
+          'text-offset': [0, 0.9],
+          'text-optional': true,
+        },
+        paint: {
+          'text-color': resolved === 'dark' ? '#eceff4' : '#1f2735',
+          'text-halo-color': resolved === 'dark' ? '#0b0f17' : '#ffffff',
+          'text-halo-width': 1.6,
         },
       });
 
@@ -130,26 +163,25 @@ export function TripMap({ trip }: { trip: TripDetail }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view]);
 
-  // Keep the vehicle framed without pinning it dead-centre: if the camera
-  // recentred on every fix, the marker would sit still while the map slid
-  // underneath — which reads as "the train isn't moving". Instead let it
-  // travel across the frame and only pan once it approaches an edge.
+  // The camera rides with the train (see the tween below). Dragging the map
+  // hands control back to the rider.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || view !== 'follow' || !vehicle || !hasVehicle) return;
+    if (!map) return;
+    const release = (event: { originalEvent?: unknown }) => {
+      if (event.originalEvent && viewRef.current === 'follow') setView('free');
+    };
+    map.on('dragstart', release);
+    return () => {
+      map.off('dragstart', release);
+    };
+  }, [trip.id, points.length]);
 
-    const point = map.project([vehicle.longitude, vehicle.latitude]);
-    const { width, height } = map.getCanvas().getBoundingClientRect();
-    const insideComfortZone =
-      point.x > width * 0.25 &&
-      point.x < width * 0.75 &&
-      point.y > height * 0.25 &&
-      point.y < height * 0.75;
-
-    if (!insideComfortZone) {
-      map.easeTo({ center: [vehicle.longitude, vehicle.latitude], duration: 1400 });
-    }
-  }, [vehicle?.latitude, vehicle?.longitude, view, hasVehicle, vehicle]);
+  // Passed / next / ahead colours follow the train as the trip progresses.
+  useEffect(() => {
+    const source = mapRef.current?.getSource('journey-stops') as maplibregl.GeoJSONSource | undefined;
+    source?.setData({ type: 'FeatureCollection', features: stopFeatures });
+  }, [stopFeatures]);
 
   // ---- vehicle -----------------------------------------------------------
   useEffect(() => {
@@ -178,16 +210,20 @@ export function TripMap({ trip }: { trip: TripDetail }) {
     const marker = markerRef.current;
     const from = marker.getLngLat();
     const start = performance.now();
-    const duration = 1200;
+    // Spread the move over the whole gap to the next poll and keep it linear:
+    // a short ease-out makes the train jump, then look parked until the next fix.
+    const duration = 20_000;
 
     if (tweenRef.current) cancelAnimationFrame(tweenRef.current);
     const step = (now: number) => {
       const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - (1 - t) ** 3;
-      marker.setLngLat([
-        from.lng + (target[0] - from.lng) * eased,
-        from.lat + (target[1] - from.lat) * eased,
-      ]);
+      const position: [number, number] = [
+        from.lng + (target[0] - from.lng) * t,
+        from.lat + (target[1] - from.lat) * t,
+      ];
+      marker.setLngLat(position);
+      // Riding along: the map slides past the named stops as the train moves.
+      if (viewRef.current === 'follow') map.jumpTo({ center: position });
       if (t < 1) tweenRef.current = requestAnimationFrame(step);
     };
     tweenRef.current = requestAnimationFrame(step);

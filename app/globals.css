@@ -306,10 +306,16 @@ body {
 }
 
 /* Vehicle markers collapse to their icon when the map is zoomed out. */
-.gt-marker[data-compact='true'] {
-  padding: 3px;
+.gt-marker[data-compact='true'],
+.gt-marker[data-followed='true'] {
+  padding: 3px !important;
 }
-.gt-marker[data-compact='true'] .gt-marker-label {
+.gt-marker[data-followed='true'] {
+  z-index: 3;
+  box-shadow: 0 0 0 4px rgb(245 158 11 / 0.35), var(--shadow-card) !important;
+}
+.gt-marker[data-compact='true'] .gt-marker-label,
+.gt-marker[data-followed='true'] .gt-marker-label {
   display: none !important;
 }
 .gt-marker:hover {
