@@ -14,7 +14,8 @@ import type { TripDetail, TripStopTime } from '@/lib/transit/types';
 export function JourneyLine({ trip, now }: { trip: TripDetail; now: number }) {
   // GO's line colours are pure primaries (#ff0d00 red); softened towards slate they
   // stay recognisable without glaring on a light or dark page.
-  const color = `color-mix(in srgb, ${trip.routeColor ?? '#10b981'} 78%, #0f172a)`;
+  // Dark mode lifts it toward white instead, so the line still glows on a dark page.
+  const color = `color-mix(in srgb, color-mix(in srgb, ${trip.routeColor ?? '#10b981'} 86%, #0f172a) calc(100% - var(--lift)), white)`;
   const stops = trip.stops;
   const [showPassed, setShowPassed] = useState(false);
 
@@ -150,20 +151,17 @@ function TrainIcon({ className }: { className?: string }) {
 
 // ---- the "now" panel -------------------------------------------------------
 
-function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: 'warn' | 'good' }) {
+type Hue = 'blue' | 'violet' | 'amber' | 'teal' | 'rose' | 'green';
+
+function Stat({ label, value, sub, hue }: { label: string; value: string; sub?: string; hue: Hue }) {
   return (
-    <div className="min-w-0 rounded-xl bg-[var(--bg-sunken)] px-3 py-2.5">
-      <p className="text-[10px] font-semibold tracking-[0.12em] text-faint uppercase">{label}</p>
-      <p
-        className={clsx(
-          'tabular mt-0.5 truncate text-[16px] leading-tight font-bold',
-          tone === 'warn' && 'text-[var(--color-warn-500)]',
-          tone === 'good' && 'text-[var(--color-signal-600)]',
-        )}
-      >
-        {value}
-      </p>
-      {sub ? <p className="mt-0.5 truncate text-[11px] text-muted">{sub}</p> : null}
+    <div
+      className="min-w-0 rounded-2xl px-3 py-2.5"
+      style={{ background: `var(--tile-${hue}-bg)`, color: `var(--tile-${hue}-fg)` }}
+    >
+      <p className="text-[10px] font-bold tracking-[0.12em] uppercase opacity-75">{label}</p>
+      <p className="tabular mt-0.5 truncate text-[17px] leading-tight font-extrabold">{value}</p>
+      {sub ? <p className="mt-0.5 truncate text-[11px] font-medium opacity-80">{sub}</p> : null}
     </div>
   );
 }
@@ -228,7 +226,13 @@ function NowPanel({
       : null;
 
   return (
-    <div className="overflow-hidden rounded-3xl border bg-[var(--bg-elevated)] shadow-[var(--shadow-card)] hairline">
+    <div
+      className="overflow-hidden rounded-3xl border shadow-[var(--shadow-card)]"
+      style={{
+        background: `linear-gradient(165deg, color-mix(in srgb, ${color} var(--hero-a), var(--bg-elevated)), color-mix(in srgb, ${color} var(--hero-b), var(--bg-elevated)) 60%)`,
+        borderColor: `color-mix(in srgb, ${color} 30%, transparent)`,
+      }}
+    >
       {/* Header: what is this service, and how is it doing. */}
       <div className="flex items-center justify-between gap-3 px-4 pt-4">
         <div className="flex min-w-0 items-center gap-2">
@@ -252,8 +256,8 @@ function NowPanel({
           className={clsx(
             'shrink-0 rounded-full px-3 py-1 text-[12px] font-bold',
             late
-              ? 'bg-[color-mix(in_srgb,var(--color-warn-500)_18%,transparent)] text-[var(--color-warn-500)]'
-              : 'bg-[color-mix(in_srgb,var(--color-signal-500)_16%,transparent)] text-[var(--color-signal-600)]',
+              ? 'bg-[var(--tile-amber-bg)] text-[var(--tile-amber-fg)]'
+              : 'bg-[var(--tile-green-bg)] text-[var(--tile-green-fg)]',
           )}
         >
           {late ? `${delayMin} min late` : 'On time'}
@@ -273,7 +277,7 @@ function NowPanel({
             </p>
           </div>
           <div className="pb-1 text-center">
-            <p className="tabular text-[34px] leading-none font-black" style={{ color }}>
+            <p className="tabular text-[38px] leading-none font-black" style={{ color }}>
               {minutes ?? '–'}
             </p>
             <p className="text-[10px] font-bold tracking-[0.14em] text-faint uppercase">min</p>
@@ -286,10 +290,14 @@ function NowPanel({
         </div>
 
         <div className="relative mt-5 mb-2 h-8">
-          <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-[var(--border)]" />
+          <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-[color-mix(in_srgb,var(--fg)_12%,transparent)]" />
           <div
             className="absolute top-1/2 left-0 h-1.5 -translate-y-1/2 rounded-full"
-            style={{ width: `${pct}%`, background: color, transition: 'width 20s linear' }}
+            style={{
+              width: `${pct}%`,
+              background: `linear-gradient(90deg, color-mix(in srgb, ${color} 55%, #22d3ee), ${color})`,
+              transition: 'width 20s linear',
+            }}
           />
           <span
             className="absolute top-1/2 left-0 size-4 -translate-y-1/2 rounded-full border-[3.5px] bg-[var(--bg-elevated)]"
@@ -314,21 +322,28 @@ function NowPanel({
 
       {/* The numbers a rider actually wants. */}
       <div className="grid grid-cols-2 gap-2 px-4 pt-3 min-[420px]:grid-cols-3">
-        <Stat label="To next stop" value={kmText(toNextKm)} sub={atStation ? 'at station' : `${pct}% of this leg`} />
-        <Stat label="Stops to go" value={String(stopsLeft)} sub={`to ${tidy(final?.stopName ?? '')}`} />
         <Stat
+          hue="blue"
+          label="To next stop"
+          value={kmText(toNextKm)}
+          sub={atStation ? 'at station' : `${pct}% of this leg`}
+        />
+        <Stat hue="violet" label="Stops to go" value={String(stopsLeft)} sub={`to ${tidy(final?.stopName ?? '')}`} />
+        <Stat
+          hue={late ? 'amber' : 'green'}
           label="Final arrival"
           value={finalClock}
           sub={late ? 'includes the delay' : 'as scheduled'}
-          tone={late ? 'warn' : 'good'}
         />
-        <Stat label="Left to travel" value={kmText(toEndKm)} sub={`${Math.round(doneFrac * 100)}% done`} />
+        <Stat hue="teal" label="Left to travel" value={kmText(toEndKm)} sub={`${Math.round(doneFrac * 100)}% done`} />
         <Stat
+          hue={vehicle?.isMoving === false ? 'amber' : 'green'}
           label="Status"
           value={vehicle?.isMoving === false ? 'Stopped' : 'Moving'}
           sub={late ? `${delayMin} min behind schedule` : 'Running to schedule'}
         />
         <Stat
+          hue="rose"
           label="Full trip"
           value={rideMinutes != null && rideMinutes > 0 ? `${rideMinutes} min` : '–'}
           sub={vehicle?.vehicleLabel ? `Vehicle ${vehicle.vehicleLabel}` : undefined}
@@ -345,7 +360,11 @@ function NowPanel({
         <div className="h-2 overflow-hidden rounded-full bg-[var(--border)]">
           <div
             className="h-full rounded-full"
-            style={{ width: `${Math.round(doneFrac * 100)}%`, background: color, transition: 'width 20s linear' }}
+            style={{
+              width: `${Math.round(doneFrac * 100)}%`,
+              background: `linear-gradient(90deg, color-mix(in srgb, ${color} 55%, #22d3ee), ${color})`,
+              transition: 'width 20s linear',
+            }}
           />
         </div>
         {vehicle ? (

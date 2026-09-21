@@ -84,6 +84,23 @@
   --express-surface: rgb(14 116 144 / 0.12);
   --express-border: rgb(14 116 144 / 0.3);
 
+  /* Journey palette: pastel tints with deep text on light backgrounds. */
+  --tile-blue-bg: #e4edff;
+  --tile-blue-fg: #1e40af;
+  --tile-violet-bg: #efe7ff;
+  --tile-violet-fg: #5b21b6;
+  --tile-amber-bg: #fff0cf;
+  --tile-amber-fg: #a04a08;
+  --tile-teal-bg: #d6f4ef;
+  --tile-teal-fg: #0b6b62;
+  --tile-rose-bg: #ffe3ea;
+  --tile-rose-fg: #b0123e;
+  --tile-green-bg: #d9f6e4;
+  --tile-green-fg: #0f6b35;
+  --hero-a: 18%;
+  --hero-b: 5%;
+  --lift: 0%;
+
   color-scheme: light;
 }
 
@@ -116,6 +133,22 @@
     --express: #22d3ee;
     --express-surface: rgb(34 211 238 / 0.14);
     --express-border: rgb(34 211 238 / 0.32);
+    /* Journey palette: glowing translucent tints with bright text on dark. */
+    --tile-blue-bg: rgb(96 165 250 / 0.16);
+    --tile-blue-fg: #9cc4ff;
+    --tile-violet-bg: rgb(167 139 250 / 0.17);
+    --tile-violet-fg: #cdbcff;
+    --tile-amber-bg: rgb(251 191 36 / 0.15);
+    --tile-amber-fg: #fdd870;
+    --tile-teal-bg: rgb(45 212 191 / 0.15);
+    --tile-teal-fg: #6ee7d6;
+    --tile-rose-bg: rgb(251 113 133 / 0.17);
+    --tile-rose-fg: #ffb0bf;
+    --tile-green-bg: rgb(74 222 128 / 0.15);
+    --tile-green-fg: #8ff0b0;
+    --hero-a: 34%;
+    --hero-b: 10%;
+    --lift: 38%;
     color-scheme: dark;
   }
 }
@@ -147,6 +180,22 @@
   --express: #22d3ee;
   --express-surface: rgb(34 211 238 / 0.14);
   --express-border: rgb(34 211 238 / 0.32);
+  /* Journey palette: glowing translucent tints with bright text on dark. */
+  --tile-blue-bg: rgb(96 165 250 / 0.16);
+  --tile-blue-fg: #9cc4ff;
+  --tile-violet-bg: rgb(167 139 250 / 0.17);
+  --tile-violet-fg: #cdbcff;
+  --tile-amber-bg: rgb(251 191 36 / 0.15);
+  --tile-amber-fg: #fdd870;
+  --tile-teal-bg: rgb(45 212 191 / 0.15);
+  --tile-teal-fg: #6ee7d6;
+  --tile-rose-bg: rgb(251 113 133 / 0.17);
+  --tile-rose-fg: #ffb0bf;
+  --tile-green-bg: rgb(74 222 128 / 0.15);
+  --tile-green-fg: #8ff0b0;
+  --hero-a: 34%;
+  --hero-b: 10%;
+  --lift: 38%;
   color-scheme: dark;
 }
 
