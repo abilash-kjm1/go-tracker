@@ -2,41 +2,24 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { SearchIcon } from '@/components/search/SearchOverlay';
-import { CuteBus, CuteSignal, CuteTrain, Stickers } from './HeroFriends';
 import type { Phase } from './phase';
 
 /**
- * The home hero. A vivid GO-green field with a cuddly train and bus, a few
- * stickers, a static line strip along the top edge and a split-flap
- * destination board. The planner is the tear-off stub below the perforation.
+ * The home hero. A deep GO-green field with a transit-map corner motif, the
+ * headline, a live summary and a split-flap board showing where trains are
+ * actually heading right now. The planner is the tear-off stub below the
+ * perforation — it is the product, so it gets the light.
  */
 
 const MINT = '#7dfab8';
-const AMBER = '#ffb81c';
 
-/** Deep behind the headline, vivid towards the stub. Shifts with the Toronto sky. */
-const SURFACE: Record<Phase, { from: string; to: string }> = {
-  morning: { from: '#013a25', to: '#00c46a' },
-  day: { from: '#00301f', to: '#00b25e' },
-  evening: { from: '#022a1d', to: '#009a55' },
-  night: { from: '#000f0a', to: '#00663a' },
+/** Deep behind the headline, richer towards the stub. Shifts with the Toronto sky. */
+const SURFACE: Record<Phase, { from: string; to: string; light: string }> = {
+  morning: { from: '#04331f', to: '#067a46', light: '#8ef0bd' },
+  day: { from: '#042a1b', to: '#056e3f', light: '#7dfab8' },
+  evening: { from: '#03241a', to: '#055f39', light: '#6ee7b7' },
+  night: { from: '#010f0a', to: '#033d26', light: '#34d399' },
 };
-
-/** GO's line colours, in the order they sit on the top strip. */
-const LINES = [
-  { code: 'LW', color: '#98002e' },
-  { code: 'MI', color: '#f47b20' },
-  { code: 'KI', color: '#7ac143' },
-  { code: 'BA', color: '#0054a6' },
-  { code: 'ST', color: '#8b5a2b' },
-  { code: 'RH', color: '#0f7ec2' },
-  { code: 'LE', color: '#ee3124' },
-];
-
-const DESTINATIONS = [
-  'Oakville', 'Burlington', 'Oshawa', 'Barrie', 'Kitchener', 'Niagara Falls',
-  'Hamilton', 'Aurora', 'Milton', 'Union Station',
-];
 
 function useReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -50,7 +33,7 @@ function useReducedMotion() {
   return reduced;
 }
 
-/** Rolls a number up to its new value, so a changing count is felt, not just read. */
+/** Rolls a number to its new value, so a changing count is felt, not just read. */
 function useCountUp(value: number | null, reduced: boolean): number | null {
   const [shown, setShown] = useState(value);
   const fromRef = useRef(value ?? 0);
@@ -63,12 +46,10 @@ function useCountUp(value: number | null, reduced: boolean): number | null {
     }
     const from = fromRef.current;
     const start = performance.now();
-    const duration = 750;
     let frame = 0;
     const step = (now: number) => {
-      const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - (1 - t) ** 3;
-      setShown(Math.round(from + (value - from) * eased));
+      const t = Math.min(1, (now - start) / 700);
+      setShown(Math.round(from + (value - from) * (1 - (1 - t) ** 3)));
       if (t < 1) frame = requestAnimationFrame(step);
       else fromRef.current = value;
     };
@@ -83,6 +64,8 @@ export function HeroCard({
   greeting,
   trainsLive,
   late,
+  linesOut,
+  destinations,
   onSearch,
   children,
 }: {
@@ -91,6 +74,9 @@ export function HeroCard({
   /** null until the first live update arrives. */
   trainsLive: number | null;
   late: number;
+  linesOut: number;
+  /** Where trains are actually heading right now. Empty when nothing is live. */
+  destinations: string[];
   onSearch: () => void;
   children: ReactNode;
 }) {
@@ -101,145 +87,158 @@ export function HeroCard({
 
   return (
     <header
-      className="relative mt-4 overflow-hidden rounded-[26px] text-white shadow-[0_24px_48px_-26px_rgb(0_60_32/0.8)]"
-      style={{ background: `linear-gradient(158deg, ${skin.from} 0%, ${skin.from} 26%, ${skin.to} 100%)` }}
+      className="relative mt-4 overflow-hidden rounded-[28px] text-white shadow-[0_24px_50px_-28px_rgb(0_45_25/0.9)]"
+      style={{ background: `linear-gradient(168deg, ${skin.from} 0%, ${skin.to} 100%)` }}
     >
-      {/* Soft glow behind the friends, so the lower half is never flat. */}
+      {/* A light source at the top right, and the network geometry at the foot. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-16 bottom-16 size-64 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgb(255 255 255 / 0.16) 0%, transparent 68%)' }}
+        className="pointer-events-none absolute -top-20 -right-16 size-72 rounded-full"
+        style={{ background: `radial-gradient(circle, ${skin.light} 0%, transparent 70%)`, opacity: 0.16 }}
       />
+      <RouteMotif />
 
-      {/* The lines that call here, named once and left still. */}
-      <LineStrip />
-      <Stickers />
-
-      <div className="relative px-5 pt-14">
+      <div className="relative px-6 pt-6">
+        {/* Status line: state on the left, search on the right. */}
         <div className="flex items-center justify-between gap-3">
+          <span className="flex items-center gap-2 rounded-full bg-white/10 py-1.5 pr-3.5 pl-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase ring-1 ring-white/15 backdrop-blur">
+            <span className="live-dot size-1.5 rounded-full" style={{ background: MINT }} aria-hidden />
+            {trainsLive == null ? 'Connecting' : 'Live'}
+          </span>
           <button
             type="button"
             onClick={onSearch}
             aria-label="Search stations, lines or buses"
-            className="grid size-11 place-items-center rounded-2xl bg-white text-[#00512f] shadow-[0_8px_18px_-8px_rgb(0_0_0/0.7)] transition-transform active:scale-95"
+            className="grid size-10 place-items-center rounded-full bg-white/10 text-white ring-1 ring-white/15 backdrop-blur transition-colors hover:bg-white/20 active:scale-95"
           >
-            <SearchIcon className="size-5" />
+            <SearchIcon className="size-[18px]" />
           </button>
-          <LedPanel>
-            <span className="live-dot size-2 rounded-full" style={{ background: '#22c55e' }} aria-hidden />
-            {count == null ? 'Live' : `${count} trains`}
-            {late > 0 ? (
-              <span style={{ color: '#ff8a7a' }}>{late} late</span>
-            ) : trainsLive != null ? (
-              <span style={{ color: '#86efac' }}>on time</span>
-            ) : null}
-          </LedPanel>
         </div>
 
-        <p className="mt-8 text-[11px] font-bold tracking-[0.24em] text-white/65 uppercase">{greeting}</p>
-        <h1 className="mt-2.5 text-[46px] leading-[0.95] font-black tracking-[-0.035em]">
+        <p className="mt-9 text-[11px] font-bold tracking-[0.2em] text-white/55 uppercase">{greeting}</p>
+        <h1 className="mt-2 text-[44px] leading-[0.94] font-extrabold tracking-[-0.04em]">
           Where to
           <br />
-          <span className="relative inline-block">
-            <span style={{ color: MINT }}>today?</span>
-            <span aria-hidden className="absolute -bottom-1.5 left-0 h-[6px] w-full rounded-full" style={{ background: MINT }} />
-          </span>
+          <span style={{ color: MINT }}>today?</span>
         </h1>
 
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-          <span className="text-[10px] font-bold tracking-[0.2em] text-white/55 uppercase">Next up</span>
-          <DestinationFlap reduced={reduced} />
-        </div>
-        {onTime != null ? (
-          <p className="mt-3 text-[12.5px] font-medium text-white/75">
-            <span className="font-bold text-white">{onTime}</span> of {trainsLive} trains are running on time
-          </p>
-        ) : null}
+        {/* The live picture, as numbers rather than decoration. */}
+        {trainsLive != null ? (
+          <dl className="mt-7 flex items-stretch gap-4 text-white">
+            <Stat value={count ?? trainsLive} label="trains out" />
+            <Rule />
+            <Stat value={onTime ?? 0} label="on time" tint={late === 0 ? MINT : undefined} />
+            <Rule />
+            <Stat value={linesOut} label={linesOut === 1 ? 'line' : 'lines'} />
+          </dl>
+        ) : (
+          <p className="mt-7 text-[13px] text-white/60">Checking live GO services…</p>
+        )}
 
-        {/* The friends, bobbing along the bottom of the card. */}
-        <div className="pointer-events-none mt-5 flex items-end justify-between gap-1">
-          <CuteTrain className="h-[122px] w-[158px] shrink-0" />
-          <CuteSignal className="mb-3 h-[52px] w-[35px] shrink-0 drop-shadow" />
-          <CuteBus className="h-[98px] w-[118px] shrink-0" />
-        </div>
+        {/* Real destinations, on a board that flips like a station sign. */}
+        {destinations.length > 0 ? (
+          <div className="mt-6 flex items-center gap-3">
+            <span className="shrink-0 text-[10px] font-bold tracking-[0.18em] text-white/45 uppercase">
+              Heading to
+            </span>
+            <DestinationFlap names={destinations} reduced={reduced} />
+          </div>
+        ) : null}
       </div>
 
       {/* Ticket perforation: the planner is the tear-off stub. */}
-      <div aria-hidden className="relative mt-5 h-5">
-        <span className="absolute top-1/2 -left-2.5 size-5 -translate-y-1/2 rounded-full" style={{ background: 'var(--bg)' }} />
-        <span className="absolute top-1/2 -right-2.5 size-5 -translate-y-1/2 rounded-full" style={{ background: 'var(--bg)' }} />
-        <span className="absolute top-1/2 right-4 left-4 border-t-2 border-dashed border-white/30" />
+      <div aria-hidden className="relative mt-7 h-4">
+        <span className="absolute top-1/2 -left-2 size-4 -translate-y-1/2 rounded-full" style={{ background: 'var(--bg)' }} />
+        <span className="absolute top-1/2 -right-2 size-4 -translate-y-1/2 rounded-full" style={{ background: 'var(--bg)' }} />
+        <span className="absolute top-1/2 right-5 left-5 border-t border-dashed border-white/25" />
       </div>
 
-      <div className="relative px-5 pb-5">{children}</div>
+      <div className="relative px-6 pt-1 pb-6">{children}</div>
     </header>
   );
 }
 
-/** The lines that call here, as a still strip along the top edge. */
-function LineStrip() {
+function Stat({ value, label, tint }: { value: number; label: string; tint?: string }) {
   return (
-    <div
-      aria-hidden
-      className="absolute inset-x-0 top-0 flex h-9 items-center justify-center gap-3 overflow-hidden border-b border-white/15"
-      style={{ background: 'rgb(0 0 0 / 0.22)' }}
-    >
-      {LINES.map((line) => (
-        <span key={line.code} className="flex items-center gap-1.5">
-          <span className="size-2 rounded-full" style={{ background: line.color }} />
-          <span className="text-[10px] font-bold tracking-[0.14em] text-white/75 uppercase">{line.code}</span>
-        </span>
-      ))}
+    <div className="min-w-0">
+      <dd className="tabular text-[27px] leading-none font-bold tracking-tight" style={tint ? { color: tint } : undefined}>
+        {value}
+      </dd>
+      <dt className="mt-1.5 text-[11px] font-medium tracking-wide text-white/55">{label}</dt>
     </div>
   );
 }
 
-/** Amber-on-black, with a dot-matrix texture so it reads as a real station sign. */
-function LedPanel({ children }: { children: ReactNode }) {
+function Rule() {
+  return <span aria-hidden className="w-px self-stretch bg-white/15" />;
+}
+
+/**
+ * A split-flap board. It shows one real destination at a time from the live
+ * list, so it never invents a service that is not running.
+ */
+function DestinationFlap({ names, reduced }: { names: string[]; reduced: boolean }) {
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    if (reduced || names.length < 2) return;
+    const timer = setInterval(() => setIndex((i) => (i + 1) % names.length), 2800);
+    return () => clearInterval(timer);
+  }, [reduced, names.length]);
+
+  const name = names[index % names.length];
   return (
     <span
-      className="relative flex items-center gap-2.5 overflow-hidden rounded-lg px-3 py-2 font-mono text-[11px] font-bold tracking-[0.1em] uppercase"
-      style={{ background: '#08150d', color: AMBER, boxShadow: 'inset 0 0 0 1px rgb(255 184 28 / 0.28), 0 6px 18px -8px rgb(0 0 0 / 0.9)' }}
+      className="relative inline-flex h-8 min-w-0 flex-1 items-center overflow-hidden rounded-md px-3 font-mono text-[13px] font-bold tracking-[0.06em] uppercase"
+      style={{
+        background: 'rgb(0 0 0 / 0.38)',
+        color: '#ffd98a',
+        boxShadow: 'inset 0 0 0 1px rgb(255 255 255 / 0.1)',
+      }}
     >
-      {children}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-30"
-        style={{
-          backgroundImage: 'radial-gradient(circle, transparent 42%, rgb(0 0 0 / 0.55) 60%)',
-          backgroundSize: '3px 3px',
-        }}
-      />
+      <span key={name} className={`truncate ${reduced ? '' : 'gh-flip'}`}>
+        {name}
+      </span>
+      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-black/45" />
     </span>
   );
 }
 
-/** A split-flap board that flips through destinations. */
-function DestinationFlap({ reduced }: { reduced: boolean }) {
-  const [index, setIndex] = useState(0);
-  useEffect(() => {
-    if (reduced) return;
-    const timer = setInterval(() => setIndex((i) => (i + 1) % DESTINATIONS.length), 2600);
-    return () => clearInterval(timer);
-  }, [reduced]);
-
-  const name = DESTINATIONS[index];
+/**
+ * Transit-map geometry in the bottom corner: 45° bends, even stroke weights and
+ * station ticks, cropped by the card edge. Decorative, and deliberately quiet.
+ */
+function RouteMotif() {
   return (
-    <span
-      className="relative inline-flex h-9 min-w-[168px] items-center overflow-hidden rounded-lg px-3.5 font-mono text-[14.5px] font-bold tracking-[0.07em] uppercase"
-      style={{
-        background: 'linear-gradient(180deg, #101f14 0%, #08150d 49%, #0d1a11 51%, #060f09 100%)',
-        color: AMBER,
-        boxShadow: 'inset 0 0 0 1px rgb(255 184 28 / 0.3), inset 0 10px 14px -12px rgb(255 255 255 / 0.35), 0 8px 20px -10px rgb(0 0 0 / 0.9)',
-      }}
-      aria-live="off"
+    <svg
+      aria-hidden
+      viewBox="0 0 260 210"
+      className="pointer-events-none absolute right-0 bottom-0 h-[210px] w-[260px]"
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     >
-      <span key={name} className={reduced ? '' : 'gh-flip'} style={{ display: 'inline-block' }}>
-        {name}
-      </span>
-      {/* The hinge line across the middle of a flap, and the glass above it. */}
-      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-black/70" />
-      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-white/[0.06]" />
-    </span>
+      <g strokeWidth="7" opacity="0.14" stroke="#fff">
+        <path d="M268 34 H198 L156 76 H74 L30 120 H-8" />
+        <path d="M268 76 H214 L160 130 H56 L16 170" />
+      </g>
+      <g strokeWidth="7" opacity="0.2">
+        <path d="M268 120 H226 L182 164 H92" stroke={MINT} />
+        <path d="M206 214 V168 L268 106" stroke="#fff" opacity="0.5" />
+      </g>
+      <g fill="#fff" opacity="0.25">
+        {[
+          [198, 34],
+          [156, 76],
+          [74, 76],
+          [214, 76],
+          [160, 130],
+          [226, 120],
+          [182, 164],
+          [206, 168],
+        ].map(([cx, cy]) => (
+          <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="4" />
+        ))}
+      </g>
+    </svg>
   );
 }

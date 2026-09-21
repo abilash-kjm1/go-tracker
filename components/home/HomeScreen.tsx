@@ -56,6 +56,17 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
   }, [vehicles, routes]);
   const lateTotal = lines.reduce((sum, l) => sum + l.late, 0);
 
+  // Where trains are actually heading right now, most-served first. The hero's
+  // board shows these, so it never names a service that is not running.
+  const destinations = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const v of vehicles ?? []) {
+      const name = v.destination?.replace(/\s+GO(\s+Bus)?$/i, '').trim();
+      if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
+    }
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name]) => name);
+  }, [vehicles]);
+
   // What the live card is showing underneath: nothing, all trains, late trains,
   // the list of lines, or one line's trains. Tapping the same thing again closes it.
   const [liveView, setLiveView] = useState<LiveView | null>(null);
@@ -85,6 +96,8 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
         greeting={greeting()}
         trainsLive={vehicles ? trains : null}
         late={lateTotal}
+        linesOut={lines.length}
+        destinations={destinations}
         onSearch={() => setSearchOpen(true)}
       >
         <PlannerForm planner={planner} stops={allStops ?? []} loadingStops={stopsLoading && !allStops} />
