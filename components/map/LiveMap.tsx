@@ -41,7 +41,7 @@ const prefersReducedMotion = () =>
 
 /**
  * The live map. Vehicles are DOM markers tweened between polls so they glide
- * instead of jumping every 15 seconds; stations are a clustered GeoJSON source
+ * instead of jumping every 15 seconds; stations are a GeoJSON source
  * so the map stays fast when every stop is shown.
  */
 export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: TransitRoute[] }) {
@@ -192,43 +192,25 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
     map.addSource('stations', {
       type: 'geojson',
       data: stationGeoJson,
-      cluster: true,
-      clusterRadius: 46,
-      clusterMaxZoom: 11,
     });
 
-    map.addLayer({
-      id: 'station-clusters',
-      type: 'circle',
-      source: 'stations',
-      filter: ['has', 'point_count'],
-      paint: {
-        'circle-color': resolved === 'dark' ? '#1b2130' : '#ffffff',
-        'circle-stroke-color': resolved === 'dark' ? '#7f8b9e' : '#b3bdcc',
-        'circle-stroke-width': 1.5,
-        'circle-radius': ['step', ['get', 'point_count'], 14, 20, 18, 80, 24],
-      },
-    });
-    map.addLayer({
-      id: 'station-cluster-count',
-      type: 'symbol',
-      source: 'stations',
-      filter: ['has', 'point_count'],
-      layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-size': 12 },
-      paint: { 'text-color': resolved === 'dark' ? '#eceff4' : '#2a3140' },
-    });
-    map.addLayer({
-      id: 'station-points',
-      type: 'circle',
-      source: 'stations',
-      filter: ['!', ['has', 'point_count']],
-      paint: {
-        'circle-radius': ['case', ['==', ['get', 'isStation'], 1], 5.5, 3.5],
-        'circle-color': ['case', ['==', ['get', 'isStation'], 1], '#10b981', resolved === 'dark' ? '#7f8b9e' : '#5a6579'],
-        'circle-stroke-color': resolved === 'dark' ? '#0b0f17' : '#ffffff',
-        'circle-stroke-width': 1.5,
-      },
-    });
+    // Train stations at every zoom; bus stops only once close enough to read.
+    const dot = (id: string, isStation: number, minzoom: number) =>
+      map.addLayer({
+        id,
+        type: 'circle',
+        source: 'stations',
+        minzoom,
+        filter: ['==', ['get', 'isStation'], isStation],
+        paint: {
+          'circle-radius': isStation ? 5.5 : 3.5,
+          'circle-color': isStation ? '#10b981' : resolved === 'dark' ? '#7f8b9e' : '#5a6579',
+          'circle-stroke-color': resolved === 'dark' ? '#0b0f17' : '#ffffff',
+          'circle-stroke-width': 1.5,
+        },
+      });
+    dot('station-points', 1, 0);
+    dot('stop-points', 0, 12);
 
     // Names: stations from the regional view down, every stop once zoomed in.
     map.addLayer({
@@ -236,7 +218,7 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
       type: 'symbol',
       source: 'stations',
       minzoom: 9.2,
-      filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'isStation'], 1]],
+      filter: ['==', ['get', 'isStation'], 1],
       layout: {
         'text-field': ['get', 'label'],
         'text-font': ['noto_sans_bold'],
@@ -256,7 +238,7 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
       type: 'symbol',
       source: 'stations',
       minzoom: 13.2,
-      filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'isStation'], 0]],
+      filter: ['==', ['get', 'isStation'], 0],
       layout: {
         'text-field': ['get', 'label'],
         'text-font': ['noto_sans_regular'],
@@ -272,20 +254,13 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
       },
     });
 
-    map.on('click', 'station-points', (e) => {
-      const feature = e.features?.[0];
-      const id = feature?.properties?.id;
-      if (typeof id === 'string') window.location.assign(`/stations/${encodeURIComponent(id)}`);
-    });
-    map.on('click', 'station-clusters', async (e) => {
-      const feature = map.queryRenderedFeatures(e.point, { layers: ['station-clusters'] })[0];
-      const clusterId = feature?.properties?.cluster_id;
-      const source = map.getSource('stations') as GeoJSONSource | undefined;
-      if (!source || clusterId == null) return;
-      const zoom = await source.getClusterExpansionZoom(Number(clusterId));
-      map.easeTo({ center: (feature.geometry as GeoJSON.Point).coordinates as [number, number], zoom });
-    });
-    for (const layer of ['station-points', 'station-clusters']) {
+    for (const layer of ['station-points', 'stop-points']) {
+      map.on('click', layer, (e) => {
+        const id = e.features?.[0]?.properties?.id;
+        if (typeof id === 'string') window.location.assign(`/stations/${encodeURIComponent(id)}`);
+      });
+    }
+    for (const layer of ['station-points', 'stop-points']) {
       map.on('mouseenter', layer, () => (map.getCanvas().style.cursor = 'pointer'));
       map.on('mouseleave', layer, () => (map.getCanvas().style.cursor = ''));
     }
@@ -305,7 +280,7 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    for (const id of ['station-points', 'station-clusters', 'station-cluster-count', 'station-labels', 'stop-labels']) {
+    for (const id of ['station-points', 'stop-points', 'station-labels', 'stop-labels']) {
       if (map.getLayer(id)) {
         map.setLayoutProperty(id, 'visibility', showStations ? 'visible' : 'none');
       }
