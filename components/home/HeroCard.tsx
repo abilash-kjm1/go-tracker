@@ -5,25 +5,33 @@ import { SearchIcon } from '@/components/search/SearchOverlay';
 import type { Phase } from './phase';
 
 /**
- * The home hero, in GO's own colours: a green card with a live network diagram
- * behind it (every line in its colour, running into Union, with little trains
- * travelling along them), a departure-board flap that cycles through
- * destinations, and an animated underline. The planner sits at the bottom.
+ * The home hero, in GO's own colours. The surface is deliberately quiet — a deep
+ * green wash with two slow-drifting glows and a fading dot grid — so the headline
+ * and the planner stay the loudest things on it. The network is expressed as one
+ * tidy line ribbon above the planner rather than lines crossing the text.
  */
 
-const GO_GREEN = '#00853e';
 const LIME = '#c6f26b';
 const AMBER = '#ffb81c';
 
-/** GO's line colours, with the direction each runs out of Union. */
+/** Greens shift with the Toronto sky; all four keep white text well clear of the floor. */
+const SURFACE: Record<Phase, { from: string; to: string; glowA: string; glowB: string }> = {
+  morning: { from: '#00713a', to: '#0aa05a', glowA: '#a7f3a0', glowB: '#5eead4' },
+  day: { from: '#006634', to: '#0f9d52', glowA: '#c6f26b', glowB: '#34d399' },
+  evening: { from: '#04412a', to: '#0c7a49', glowA: '#6ee7b7', glowB: '#2dd4bf' },
+  night: { from: '#021a12', to: '#053d27', glowA: '#34d399', glowB: '#1e6bd6' },
+};
+
+/** GO's line colours, in the order they sit on the ribbon. */
 const LINES = [
-  { id: 'lw', color: '#98002e', d: 'M300 150 C 245 168, 170 205, -20 222' },
-  { id: 'le', color: '#ee3124', d: 'M300 150 C 345 168, 385 190, 430 204' },
-  { id: 'ba', color: '#0054a6', d: 'M300 150 C 292 100, 255 55, 215 -20' },
-  { id: 'st', color: '#8b5a2b', d: 'M300 150 C 335 110, 380 72, 430 44' },
-  { id: 'mi', color: '#f47b20', d: 'M300 150 C 245 132, 150 128, -20 96' },
-  { id: 'ki', color: '#7ac143', d: 'M300 150 C 262 120, 208 92, 120 -20' },
-] as const;
+  { code: 'LW', color: '#98002e' },
+  { code: 'MI', color: '#f47b20' },
+  { code: 'KI', color: '#7ac143' },
+  { code: 'BA', color: '#0054a6' },
+  { code: 'ST', color: '#8b5a2b' },
+  { code: 'RH', color: '#0f7ec2' },
+  { code: 'LE', color: '#ee3124' },
+];
 
 const DESTINATIONS = [
   'Oakville', 'Burlington', 'Oshawa', 'Barrie', 'Kitchener', 'Niagara Falls',
@@ -58,33 +66,43 @@ export function HeroCard({
   onSearch: () => void;
   children: ReactNode;
 }) {
-  const night = phase === 'night' || phase === 'evening';
   const reduced = useReducedMotion();
+  const skin = SURFACE[phase];
   const onTime = trainsLive != null ? Math.max(0, trainsLive - late) : null;
 
   return (
     <header
-      className="relative mt-4 overflow-visible rounded-[28px] text-white shadow-[0_22px_44px_-22px_rgb(0_80_40/0.75)]"
-      style={{
-        background: night
-          ? 'linear-gradient(155deg, #03291a 0%, #005228 55%, #00722f 100%)'
-          : `linear-gradient(155deg, #006632 0%, ${GO_GREEN} 52%, #14a552 100%)`,
-      }}
+      className="relative mt-4 overflow-hidden rounded-[28px] text-white shadow-[0_22px_44px_-22px_rgb(0_70_36/0.7)]"
+      style={{ background: `linear-gradient(160deg, ${skin.from} 0%, ${skin.to} 100%)` }}
     >
-      {/* Livery stripe: white and lime, with a shimmer running along it. */}
-      <div aria-hidden className="absolute inset-x-0 top-0 h-[7px] overflow-hidden rounded-t-[28px]">
-        <div className="h-full w-full" style={{ background: `linear-gradient(90deg, #fff 0 38%, ${LIME} 38% 100%)` }} />
-        <div className="gh-shimmer absolute inset-y-0 w-1/3" />
+      {/* Two soft glows drift behind everything, so the green is never flat. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <span
+          className="gh-drift-a absolute -top-24 -left-20 size-72 rounded-full"
+          style={{ background: `radial-gradient(circle, ${skin.glowA} 0%, transparent 68%)`, opacity: 0.4, filter: 'blur(28px)' }}
+        />
+        <span
+          className="gh-drift-b absolute -right-24 -bottom-16 size-80 rounded-full"
+          style={{ background: `radial-gradient(circle, ${skin.glowB} 0%, transparent 68%)`, opacity: 0.32, filter: 'blur(34px)' }}
+        />
       </div>
 
-      {/* Network diagram, clipped to the card's upper area. */}
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[290px] overflow-hidden rounded-t-[28px]">
-        <NetworkMap reduced={reduced} />
-        {/* Keeps the headline readable over the lines. */}
-        <div
-          className="absolute inset-0"
-          style={{ background: 'linear-gradient(95deg, rgb(0 50 24 / 0.68) 0%, rgb(0 60 28 / 0.35) 55%, transparent 80%)' }}
-        />
+      {/* Dot grid, fading out before it reaches the planner. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage: 'radial-gradient(circle, rgb(255 255 255 / 0.3) 1px, transparent 1px)',
+          backgroundSize: '20px 20px',
+          maskImage: 'linear-gradient(180deg, rgb(0 0 0 / 0.55) 0%, transparent 62%)',
+          WebkitMaskImage: 'linear-gradient(180deg, rgb(0 0 0 / 0.55) 0%, transparent 62%)',
+        }}
+      />
+
+      {/* Livery stripe: white and lime, with a shimmer running along it. */}
+      <div aria-hidden className="absolute inset-x-0 top-0 h-[7px] overflow-hidden">
+        <div className="h-full w-full" style={{ background: `linear-gradient(90deg, #fff 0 38%, ${LIME} 38% 100%)` }} />
+        <div className="gh-shimmer absolute inset-y-0 w-1/3" />
       </div>
 
       <div className="relative px-5 pt-6 pb-5">
@@ -98,7 +116,7 @@ export function HeroCard({
             <SearchIcon className="size-5" />
           </button>
 
-          {/* Departure-board style status. */}
+          {/* Station-sign style status. */}
           <span
             className="flex items-center gap-2.5 rounded-lg px-3 py-2 font-mono text-[11px] font-bold tracking-[0.1em] uppercase"
             style={{ background: '#08150d', color: AMBER, boxShadow: 'inset 0 0 0 1px rgb(255 184 28 / 0.25)' }}
@@ -113,8 +131,8 @@ export function HeroCard({
           </span>
         </div>
 
-        <p className="mt-5 text-[13px] font-semibold tracking-wide text-white/85">{greeting}</p>
-        <h1 className="mt-0.5 text-[44px] leading-[0.98] font-black tracking-[-0.03em]">
+        <p className="mt-6 text-[13px] font-semibold tracking-wide text-white/85">{greeting}</p>
+        <h1 className="mt-1 text-[44px] leading-[0.98] font-black tracking-[-0.03em]">
           Where to
           <br />
           <span className="relative inline-block" style={{ color: LIME }}>
@@ -132,15 +150,18 @@ export function HeroCard({
           </span>
         </h1>
 
-        <div className="mt-5 flex items-center gap-2.5">
+        <div className="mt-6 flex flex-wrap items-center gap-2.5">
           <span className="text-[12px] font-semibold text-white/80">Next up</span>
           <DestinationFlap reduced={reduced} />
         </div>
         {onTime != null ? (
-          <p className="mt-2 text-[12.5px] font-medium text-white/80">
+          <p className="mt-2.5 text-[12.5px] font-medium text-white/80">
             {onTime} of {trainsLive} trains are running on time right now.
           </p>
         ) : null}
+
+        {/* The whole network as one clean rule, with a train riding it. */}
+        <LineRibbon reduced={reduced} />
 
         <div className="mt-4">{children}</div>
       </div>
@@ -173,109 +194,63 @@ function DestinationFlap({ reduced }: { reduced: boolean }) {
   );
 }
 
-/** Lines converging on Union, with trains running along them. */
-function NetworkMap({ reduced }: { reduced: boolean }) {
+/**
+ * Every GO line as one horizontal rule: a run of colour segments with station
+ * dots on it, and a small train gliding across. Decorative, and out of the way
+ * of the text above it.
+ */
+function LineRibbon({ reduced }: { reduced: boolean }) {
+  const width = 300;
+  const segment = width / LINES.length;
   return (
-    <svg viewBox="0 0 400 260" preserveAspectRatio="xMaxYMin slice" className="absolute inset-0 size-full" fill="none">
+    <svg
+      aria-hidden
+      viewBox={`0 0 ${width} 16`}
+      preserveAspectRatio="none"
+      className="mt-5 h-4 w-full"
+      fill="none"
+    >
       <defs>
-        {LINES.map((line) => (
-          <path key={line.id} id={`gh-${line.id}`} d={line.d} />
-        ))}
+        <path id="gh-ribbon" d={`M4 8 H ${width - 4}`} />
       </defs>
-
-      {/* White casing first, so every colour reads on green. */}
-      {LINES.map((line) => (
-        <use key={`c-${line.id}`} href={`#gh-${line.id}`} stroke="rgb(255 255 255 / 0.9)" strokeWidth="9" strokeLinecap="round" />
-      ))}
-      {LINES.map((line) => (
-        <use key={`l-${line.id}`} href={`#gh-${line.id}`} stroke={line.color} strokeWidth="5.4" strokeLinecap="round" />
-      ))}
-      {/* Stations: evenly spaced dots along each line. */}
-      {LINES.map((line) => (
-        <use
-          key={`s-${line.id}`}
-          href={`#gh-${line.id}`}
-          stroke="#fff"
-          strokeWidth="3.2"
-          strokeLinecap="round"
-          strokeDasharray="0.01 26"
-          opacity="0.95"
-        />
-      ))}
-
-      {/* Trains, out and back. */}
       {LINES.map((line, i) => (
-        <Train
-          key={`t-${line.id}`}
-          color={line.color}
-          path={`#gh-${line.id}`}
-          dur={9 + i * 1.7}
-          begin={-i * 1.9}
-          reverse={i % 2 === 1}
-          reduced={reduced}
-          restX={230 + i * 8}
-          restY={160 + i * 4}
+        <line
+          key={line.code}
+          x1={i === 0 ? 4 : i * segment}
+          y1="8"
+          x2={i === LINES.length - 1 ? width - 4 : (i + 1) * segment}
+          y2="8"
+          stroke={line.color}
+          strokeWidth="5"
+          strokeLinecap={i === 0 || i === LINES.length - 1 ? 'round' : 'butt'}
         />
       ))}
-
-      {/* Union: the hub, with a pulse going out. */}
-      <circle cx="300" cy="150" r="11" fill="#fff" />
-      <circle cx="300" cy="150" r="6.5" fill={GO_GREEN} />
-      {!reduced ? (
-        <circle cx="300" cy="150" r="11" stroke="#fff" strokeWidth="2" fill="none">
-          <animate attributeName="r" values="11;34" dur="2.8s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.75;0" dur="2.8s" repeatCount="indefinite" />
-        </circle>
-      ) : null}
-      <text x="300" y="176" textAnchor="middle" fontSize="10" fontWeight="800" fill="#fff" fontFamily="system-ui, sans-serif" letterSpacing="0.6" opacity="0.95">
-        UNION
-      </text>
+      {LINES.map((line, i) => (
+        <circle key={`d-${line.code}`} cx={i * segment + segment / 2} cy="8" r="2.4" fill="#fff" opacity="0.95" />
+      ))}
+      {reduced ? (
+        <g transform={`translate(${width / 2} 8)`}>
+          <RibbonTrain />
+        </g>
+      ) : (
+        <g>
+          <RibbonTrain />
+          <animateMotion dur="11s" repeatCount="indefinite" calcMode="linear">
+            <mpath href="#gh-ribbon" />
+          </animateMotion>
+        </g>
+      )}
     </svg>
   );
 }
 
-function Train({
-  color,
-  path,
-  dur,
-  begin,
-  reverse,
-  reduced,
-  restX,
-  restY,
-}: {
-  color: string;
-  path: string;
-  dur: number;
-  begin: number;
-  reverse: boolean;
-  reduced: boolean;
-  restX: number;
-  restY: number;
-}) {
-  const body = (
-    <g>
-      <rect x="-9" y="-4.6" width="18" height="9.2" rx="3.4" fill="#fff" stroke={color} strokeWidth="2" />
-      <rect x="-5" y="-2" width="4" height="3.4" rx="1" fill={color} />
-      <rect x="0.6" y="-2" width="4" height="3.4" rx="1" fill={color} />
-      <circle cx="9.5" cy="0" r="1.6" fill="#fde047" />
-    </g>
-  );
-  if (reduced) return <g transform={`translate(${restX} ${restY})`}>{body}</g>;
+function RibbonTrain() {
   return (
     <g>
-      {body}
-      <animateMotion
-        dur={`${dur}s`}
-        begin={`${begin}s`}
-        repeatCount="indefinite"
-        rotate={reverse ? 'auto-reverse' : 'auto'}
-        keyPoints={reverse ? '1;0' : '0;1'}
-        keyTimes="0;1"
-        calcMode="linear"
-      >
-        <mpath href={path} />
-      </animateMotion>
+      <rect x="-11" y="-5" width="22" height="10" rx="4" fill="#fff" />
+      <rect x="-6.5" y="-2.2" width="4.5" height="3.6" rx="1.1" fill="#0f172a" opacity="0.65" />
+      <rect x="0" y="-2.2" width="4.5" height="3.6" rx="1.1" fill="#0f172a" opacity="0.65" />
+      <circle cx="8.4" cy="0" r="1.5" fill="#fde047" />
     </g>
   );
 }

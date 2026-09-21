@@ -399,7 +399,17 @@ body {
   transform-origin: 50% 50%;
   animation: gh-flip 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+@keyframes gh-drift-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(34px, 22px) scale(1.12); }
+}
+@keyframes gh-drift-b {
+  0%, 100% { transform: translate(0, 0) scale(1.08); }
+  50% { transform: translate(-30px, -18px) scale(1); }
+}
+.gh-drift-a { animation: gh-drift-a 19s ease-in-out infinite; }
+.gh-drift-b { animation: gh-drift-b 23s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .gh-shimmer, .gh-draw, .gh-flip { animation: none; }
+  .gh-shimmer, .gh-draw, .gh-flip, .gh-drift-a, .gh-drift-b { animation: none; }
   .gh-draw { stroke-dashoffset: 0; }
 }
