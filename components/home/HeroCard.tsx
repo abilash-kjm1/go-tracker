@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { SearchIcon } from '@/components/search/SearchOverlay';
+import { CuteBus, CuteSignal, CuteTrain, Stickers } from './HeroFriends';
 import type { Phase } from './phase';
 
 /**
- * The home hero. A vivid GO-green field with a drifting hatch, a line ticker
- * along the top edge, a split-flap destination board and the network as one
- * line ribbon with a light pulse running through it. The planner is the
- * tear-off stub below the perforation.
+ * The home hero. A vivid GO-green field with a cuddly train and bus, a few
+ * stickers, a static line strip along the top edge and a split-flap
+ * destination board. The planner is the tear-off stub below the perforation.
  */
 
 const MINT = '#7dfab8';
@@ -22,15 +22,15 @@ const SURFACE: Record<Phase, { from: string; to: string }> = {
   night: { from: '#000f0a', to: '#00663a' },
 };
 
-/** GO's line colours, in the order they sit on the ribbon and the ticker. */
+/** GO's line colours, in the order they sit on the top strip. */
 const LINES = [
-  { code: 'LW', name: 'Lakeshore West', color: '#98002e' },
-  { code: 'MI', name: 'Milton', color: '#f47b20' },
-  { code: 'KI', name: 'Kitchener', color: '#7ac143' },
-  { code: 'BA', name: 'Barrie', color: '#0054a6' },
-  { code: 'ST', name: 'Stouffville', color: '#8b5a2b' },
-  { code: 'RH', name: 'Richmond Hill', color: '#0f7ec2' },
-  { code: 'LE', name: 'Lakeshore East', color: '#ee3124' },
+  { code: 'LW', color: '#98002e' },
+  { code: 'MI', color: '#f47b20' },
+  { code: 'KI', color: '#7ac143' },
+  { code: 'BA', color: '#0054a6' },
+  { code: 'ST', color: '#8b5a2b' },
+  { code: 'RH', color: '#0f7ec2' },
+  { code: 'LE', color: '#ee3124' },
 ];
 
 const DESTINATIONS = [
@@ -104,17 +104,16 @@ export function HeroCard({
       className="relative mt-4 overflow-hidden rounded-[26px] text-white shadow-[0_24px_48px_-26px_rgb(0_60_32/0.8)]"
       style={{ background: `linear-gradient(158deg, ${skin.from} 0%, ${skin.from} 26%, ${skin.to} 100%)` }}
     >
-      {/* Diagonal hatch, drifting like sleepers passing under a train. */}
+      {/* Soft glow behind the friends, so the lower half is never flat. */}
       <div
         aria-hidden
-        className={`pointer-events-none absolute -inset-x-10 inset-y-0 ${reduced ? '' : 'gh-hatch'}`}
-        style={{
-          backgroundImage: 'repeating-linear-gradient(118deg, rgb(255 255 255 / 0.05) 0 2px, transparent 2px 18px)',
-        }}
+        className="pointer-events-none absolute -right-16 bottom-16 size-64 rounded-full"
+        style={{ background: 'radial-gradient(circle, rgb(255 255 255 / 0.16) 0%, transparent 68%)' }}
       />
 
-      {/* Line ticker along the top edge. */}
-      <LineTicker reduced={reduced} />
+      {/* The lines that call here, named once and left still. */}
+      <LineStrip />
+      <Stickers />
 
       <div className="relative px-5 pt-14">
         <div className="flex items-center justify-between gap-3">
@@ -143,12 +142,7 @@ export function HeroCard({
           <br />
           <span className="relative inline-block">
             <span style={{ color: MINT }}>today?</span>
-            {/* A marker stroke wipes in under the word and out again. */}
-            <span
-              aria-hidden
-              className={`absolute -bottom-1.5 left-0 h-[6px] w-full origin-left rounded-full ${reduced ? '' : 'gh-highlight'}`}
-              style={{ background: MINT }}
-            />
+            <span aria-hidden className="absolute -bottom-1.5 left-0 h-[6px] w-full rounded-full" style={{ background: MINT }} />
           </span>
         </h1>
 
@@ -162,7 +156,12 @@ export function HeroCard({
           </p>
         ) : null}
 
-        <LineRibbon reduced={reduced} />
+        {/* The friends, bobbing along the bottom of the card. */}
+        <div className="pointer-events-none mt-5 flex items-end justify-between gap-1">
+          <CuteTrain className="h-[122px] w-[158px] shrink-0" />
+          <CuteSignal className="mb-3 h-[52px] w-[35px] shrink-0 drop-shadow" />
+          <CuteBus className="h-[98px] w-[118px] shrink-0" />
+        </div>
       </div>
 
       {/* Ticket perforation: the planner is the tear-off stub. */}
@@ -177,29 +176,20 @@ export function HeroCard({
   );
 }
 
-/** Line names scrolling past the top edge, the way a concourse sign does. */
-function LineTicker({ reduced }: { reduced: boolean }) {
-  const run = (
-    <span className="flex shrink-0 items-center gap-6 pr-6">
-      {LINES.map((line) => (
-        <span key={line.code} className="flex items-center gap-2 whitespace-nowrap">
-          <span className="size-2 rounded-full" style={{ background: line.color }} aria-hidden />
-          <span className="text-[10px] font-bold tracking-[0.18em] text-white/75 uppercase">{line.name}</span>
-        </span>
-      ))}
-    </span>
-  );
-
+/** The lines that call here, as a still strip along the top edge. */
+function LineStrip() {
   return (
     <div
       aria-hidden
-      className="absolute inset-x-0 top-0 flex h-9 items-center overflow-hidden border-b border-white/15"
+      className="absolute inset-x-0 top-0 flex h-9 items-center justify-center gap-3 overflow-hidden border-b border-white/15"
       style={{ background: 'rgb(0 0 0 / 0.22)' }}
     >
-      <div className={`flex ${reduced ? '' : 'gh-ticker'}`}>
-        {run}
-        {run}
-      </div>
+      {LINES.map((line) => (
+        <span key={line.code} className="flex items-center gap-1.5">
+          <span className="size-2 rounded-full" style={{ background: line.color }} />
+          <span className="text-[10px] font-bold tracking-[0.14em] text-white/75 uppercase">{line.code}</span>
+        </span>
+      ))}
     </div>
   );
 }
@@ -251,47 +241,5 @@ function DestinationFlap({ reduced }: { reduced: boolean }) {
       <span aria-hidden className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-black/70" />
       <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-white/[0.06]" />
     </span>
-  );
-}
-
-/**
- * Every GO line as one horizontal rule, with a light pulse running along it —
- * a signal travelling the network rather than a single train.
- */
-function LineRibbon({ reduced }: { reduced: boolean }) {
-  const width = 300;
-  const segment = width / LINES.length;
-  return (
-    <svg aria-hidden viewBox={`0 0 ${width} 16`} preserveAspectRatio="none" className="mt-7 h-3.5 w-full" fill="none">
-      <line x1="6" y1="8" x2={width - 6} y2="8" stroke="rgb(0 0 0 / 0.3)" strokeWidth="9" strokeLinecap="round" />
-      {LINES.map((line, i) => (
-        <line
-          key={line.code}
-          x1={i === 0 ? 6 : i * segment}
-          y1="8"
-          x2={i === LINES.length - 1 ? width - 6 : (i + 1) * segment}
-          y2="8"
-          stroke={line.color}
-          strokeWidth="5.5"
-          strokeLinecap={i === 0 || i === LINES.length - 1 ? 'round' : 'butt'}
-        />
-      ))}
-      {LINES.map((line, i) => (
-        <circle key={`d-${line.code}`} cx={i * segment + segment / 2} cy="8" r="2.5" fill="#fff" opacity="0.95" />
-      ))}
-      {!reduced ? (
-        <line
-          x1="6"
-          y1="8"
-          x2={width - 6}
-          y2="8"
-          stroke="#fff"
-          strokeWidth="5.5"
-          strokeLinecap="round"
-          className="gh-pulse"
-          strokeDasharray="26 262"
-        />
-      ) : null}
-    </svg>
   );
 }
