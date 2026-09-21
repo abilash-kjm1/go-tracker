@@ -41,10 +41,18 @@ export function LineDiagram({
       const nextIndex = vehicle.nextStopId != null ? indexById.get(vehicle.nextStopId) : undefined;
       if (nextIndex == null) continue;
 
-      // Only this direction: where the train is heading must come later here.
-      const destination = tidy(vehicle.destination ?? '').toLowerCase();
-      const destIndex = stops.findIndex((s) => tidy(s.name).toLowerCase() === destination);
+      // Only this direction. Where it is heading must come later along this
+      // pattern, and where it started must come earlier. The second test is
+      // what settles a train on its final approach, whose destination and next
+      // stop are the same and so says nothing about which way it is going.
+      const named = (value?: string) => {
+        const wanted = tidy(value ?? '').toLowerCase();
+        return wanted ? stops.findIndex((s) => tidy(s.name).toLowerCase() === wanted) : -1;
+      };
+      const destIndex = named(vehicle.destination);
+      const originIndex = named(vehicle.origin);
       if (destIndex >= 0 && destIndex < nextIndex) continue;
+      if (originIndex >= 0 && originIndex > nextIndex) continue;
 
       const previous = stops[nextIndex - 1];
       const next = stops[nextIndex];
