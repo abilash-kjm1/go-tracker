@@ -203,3 +203,18 @@ export function useStopAlertWatcher(
     }
   }, [trip, alerts, markFired]);
 }
+
+/** Adds alerts from outside React (the planner arms a trip's alerts on start). */
+export function armAlerts(newAlerts: StopAlert[]) {
+  const existing = read();
+  const seen = new Set(existing.map((a) => alertKey(a.tripId, a.stopId)));
+  const merged = [...existing, ...newAlerts.filter((a) => !seen.has(alertKey(a.tripId, a.stopId)))];
+  write(merged);
+  return merged;
+}
+
+/** Drops every alert belonging to these trips — used when a journey ends. */
+export function clearAlertsForTrips(tripIds: string[]) {
+  const ids = new Set(tripIds);
+  write(read().filter((a) => !ids.has(a.tripId)));
+}

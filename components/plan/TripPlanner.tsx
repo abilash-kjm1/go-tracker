@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { JourneyCard } from './JourneyCard';
 import { LiveIndicator } from '@/components/ui/LiveIndicator';
 import { EmptyState, ModeIcon, Skeleton } from '@/components/ui/primitives';
+import { useActiveTrip } from '@/lib/client/activeTrip';
 import { useTransit } from '@/lib/client/useTransit';
 import type { Journey, TransitStop } from '@/lib/transit/types';
 
@@ -151,6 +152,7 @@ export function PlannerForm({
 /** Journey cards for the chosen pair. Renders nothing until both ends are set. */
 export function PlannerResults({ planner }: { planner: TripPlannerState }) {
   const { from, to, ready, data, meta, error, loading, freshness } = planner;
+  const { trip: active, start } = useActiveTrip();
   if (!ready) return null;
 
   return (
@@ -193,6 +195,17 @@ export function PlannerResults({ planner }: { planner: TripPlannerState }) {
             style={{ animationDelay: `${Math.min(index, 6) * 20}ms` }}
           >
             <JourneyCard journey={journey} tone={index % 2 === 0 ? 'a' : 'b'} />
+            <button
+              type="button"
+              onClick={() => void start(journey, to!.id, to!.name)}
+              className="mt-1.5 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border text-[13px] font-bold transition-colors hairline bg-[var(--bg-elevated)] hover:bg-[var(--bg-sunken)]"
+            >
+              {active?.id === journey.id ? (
+                <span className="text-[var(--accent)]">Following this trip</span>
+              ) : (
+                <>Start this trip</>
+              )}
+            </button>
           </li>
         ))}
       </ul>
