@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { useDangleStops } from '@/lib/client/dangleStops';
 import { useFavorites } from '@/lib/client/favorites';
 
 /**
@@ -20,7 +21,6 @@ const REST_LENGTH = 148;
 const MAX_STRETCH = 150;
 const HOLD_MS = 520;
 const ANCHOR_RIGHT = 38;
-const STORAGE_KEY = 'gotracker:dangle:v1';
 
 /** Where the lamp points when nothing is starred yet. */
 const FALLBACK = [{ id: 'UN', name: 'Union Station GO' }];
@@ -37,9 +37,11 @@ export function SignalDangle() {
   const router = useRouter();
   const pathname = usePathname();
   const { favorites, ready } = useFavorites();
+  const { stops: chosen, hidden } = useDangleStops();
 
-  const [hidden, setHidden] = useState(false);
   const [reduced, setReduced] = useState(false);
+  // Bigger on a phone, where it is the only thing in that corner.
+  const [size, setSize] = useState(56);
   const [index, setIndex] = useState(0);
   const [turns, setTurns] = useState(0);
   const [holding, setHolding] = useState(false);
@@ -55,6 +57,7 @@ export function SignalDangle() {
   const anchorRef = useRef<HTMLDivElement>(null);
 
   const stops = (() => {
+    if (chosen.length) return chosen;
     const starred = favorites.filter((f) => f.kind === 'stop').map((f) => ({ id: f.id, name: f.name }));
     return starred.length ? starred : FALLBACK;
   })();
@@ -63,11 +66,11 @@ export function SignalDangle() {
 
   useEffect(() => {
     setReduced(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    try {
-      setHidden(localStorage.getItem(STORAGE_KEY) === 'off');
-    } catch {
-      // Storage unavailable: the lamp simply shows.
-    }
+    const narrow = window.matchMedia('(max-width: 767px)');
+    const applySize = () => setSize(narrow.matches ? 76 : 56);
+    applySize();
+    narrow.addEventListener('change', applySize);
+    return () => narrow.removeEventListener('change', applySize);
   }, []);
 
   // ---- the spring --------------------------------------------------------
@@ -212,7 +215,7 @@ export function SignalDangle() {
         aria-label={`${stop.name.replace(/\s+GO(\s+Bus)?$/i, '')} shortcut. Tap to change station, press and hold to open.`}
         className="pointer-events-auto absolute touch-none select-none"
         style={{
-          right: ANCHOR_RIGHT - 28,
+          right: ANCHOR_RIGHT - size / 2,
           top: 0,
           transform: `translate(${pos.x}px, ${pos.y}px) rotate(${angle * 0.55}deg)`,
           transformOrigin: '50% 0%',
@@ -240,7 +243,7 @@ export function SignalDangle() {
             transition: 'transform 0.55s cubic-bezier(0.3, 0, 0.2, 1)',
           }}
         >
-          <SignalLamp code={shortCode(stop)} lit={lit} holding={holding} />
+          <SignalLamp code={shortCode(stop)} lit={lit} holding={holding} size={size} />
         </div>
 
         {/* The hold ring fills to show the shortcut is about to open. */}
@@ -272,9 +275,19 @@ function shortCode(stop: { id: string; name: string }) {
 }
 
 /** The cast-iron signal head, with the lamp alive inside it. */
-function SignalLamp({ code, lit, holding }: { code: string; lit: string; holding: boolean }) {
+function SignalLamp({
+  code,
+  lit,
+  holding,
+  size,
+}: {
+  code: string;
+  lit: string;
+  holding: boolean;
+  size: number;
+}) {
   return (
-    <svg viewBox="0 0 100 100" className="size-14 drop-shadow-lg" aria-hidden>
+    <svg viewBox="0 0 100 100" className="drop-shadow-lg" style={{ width: size, height: size }} aria-hidden>
       <defs>
         <linearGradient id="sd-iron" x1="0.2" y1="0" x2="0.8" y2="1">
           <stop offset="0" stopColor="#5b6472" />

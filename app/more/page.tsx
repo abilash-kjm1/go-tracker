@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { SignalShortcutSettings } from '@/components/settings/SignalShortcutSettings';
 import { ThemePicker } from '@/components/ui/ThemePicker';
 import { config } from '@/lib/transit/config';
 
@@ -25,6 +26,15 @@ export default function MorePage() {
         </h2>
         <div className="rounded-2xl border px-4 py-4 hairline bg-[var(--bg-elevated)]">
           <ThemePicker />
+        </div>
+      </section>
+
+      <section className="mb-6">
+        <h2 className="px-1 pb-2 text-[11px] font-semibold tracking-wide text-faint uppercase">
+          Signal shortcut
+        </h2>
+        <div className="rounded-2xl border px-4 py-4 hairline bg-[var(--bg-elevated)]">
+          <SignalShortcutSettings />
         </div>
       </section>
 
