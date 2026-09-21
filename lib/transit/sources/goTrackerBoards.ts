@@ -26,7 +26,7 @@ import {
  */
 
 const BASE =
-  process.env.GOTRACKER_LIVE_BASE_URL ?? 'https://www.gotracker.ca/gotracker/mobile/proxy/web';
+  process.env.GOTRACKER_LIVE_BASE_URL || 'https://www.gotracker.ca/gotracker/mobile/proxy/web';
 
 async function getJson(path: string): Promise<unknown> {
   const res = await fetch(`${BASE}/${path.replace(/^\//, '')}`, {

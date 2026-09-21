@@ -2,24 +2,28 @@
 
 import 'server-only';
 
+// Every string setting uses `||`, not `??`. Hosting dashboards often import a
+// blank value from .env.example, and `??` would treat "" as a real setting: the
+// live-data address became empty and every upstream call failed with "Failed to
+// parse URL". A blank must mean "not set".
 const num = (value: string | undefined, fallback: number) => {
   const n = Number(value);
   return Number.isFinite(n) && n > 0 ? n : fallback;
 };
 
 export const config = {
-  provider: (process.env.TRANSIT_PROVIDER ?? 'gotracker').toLowerCase(),
+  provider: (process.env.TRANSIT_PROVIDER || 'gotracker').toLowerCase(),
 
   goTracker: {
     baseUrl:
-      process.env.GOTRACKER_BASE_URL ?? 'https://www.gotracker.ca/GOTracker/web/GODataAPIProxy.svc',
+      process.env.GOTRACKER_BASE_URL || 'https://www.gotracker.ca/GOTracker/web/GODataAPIProxy.svc',
     // The upstream rejects requests that arrive without a same-site Referer.
-    referer: process.env.GOTRACKER_REFERER ?? 'https://www.gotracker.ca/GOTracker/en/index.aspx',
+    referer: process.env.GOTRACKER_REFERER || 'https://www.gotracker.ca/GOTracker/en/index.aspx',
     refreshSeconds: num(process.env.GOTRACKER_REFRESH_SECONDS, 15),
   },
 
   metrolinx: {
-    baseUrl: process.env.METROLINX_API_BASE_URL ?? 'https://api.openmetrolinx.com/OpenDataAPI',
+    baseUrl: process.env.METROLINX_API_BASE_URL || 'https://api.openmetrolinx.com/OpenDataAPI',
     apiKey: process.env.METROLINX_API_KEY ?? '',
   },
 
