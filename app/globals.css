@@ -372,17 +372,49 @@ body {
   z-index: 2;
 }
 
-/* ---- Home hero ----------------------------------------------------------- */
+/* ---- Home hero (GO green) ------------------------------------------------ */
 @keyframes gh-flip {
-  0% { transform: perspective(240px) rotateX(-90deg); opacity: 0; }
-  60% { transform: perspective(240px) rotateX(10deg); opacity: 1; }
-  100% { transform: perspective(240px) rotateX(0deg); opacity: 1; }
+  0% { transform: perspective(220px) rotateX(-92deg); opacity: 0; }
+  55% { transform: perspective(220px) rotateX(14deg); opacity: 1; }
+  100% { transform: perspective(220px) rotateX(0deg); opacity: 1; }
+}
+@keyframes gh-bob {
+  0%, 100% { transform: translateY(0) rotate(-0.6deg); }
+  50% { transform: translateY(-6px) rotate(0.6deg); }
+}
+@keyframes gh-blink {
+  0%, 91%, 100% { transform: scaleY(1); }
+  94% { transform: scaleY(0.1); }
+}
+@keyframes gh-wheel {
+  to { transform: rotate(360deg); }
+}
+@keyframes gh-puff {
+  0% { transform: translate(0, 0) scale(0.4); opacity: 0; }
+  25% { opacity: 0.85; }
+  100% { transform: translate(-16px, -26px) scale(1.5); opacity: 0; }
+}
+@keyframes gh-float {
+  0%, 100% { transform: translateY(0) rotate(var(--tilt, 0deg)); }
+  50% { transform: translateY(-7px) rotate(calc(var(--tilt, 0deg) * -0.6)); }
+}
+@keyframes gh-glow {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
 }
 .gh-flip {
-  display: inline-block;
   transform-origin: 50% 50%;
-  animation: gh-flip 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: gh-flip 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+.gh-bob { animation: gh-bob 3.2s ease-in-out infinite; }
+.gh-bob-slow { animation: gh-bob 4.1s ease-in-out infinite; animation-delay: -1.2s; }
+.gh-blink { animation: gh-blink 5.5s ease-in-out infinite; }
+.gh-wheel { animation: gh-wheel 2.6s linear infinite; }
+.gh-puff { animation: gh-puff 3s ease-out infinite; }
+.gh-float { animation: gh-float 4.6s ease-in-out infinite; }
+.gh-glow { animation: gh-glow 2.2s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .gh-flip { animation: none; }
+  .gh-flip, .gh-bob, .gh-bob-slow, .gh-blink, .gh-wheel, .gh-float, .gh-glow { animation: none; }
+  .gh-puff { display: none; }
+  .gh-float { transform: rotate(var(--tilt, 0deg)); }
 }
