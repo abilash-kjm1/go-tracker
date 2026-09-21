@@ -143,6 +143,7 @@ export function RouteScreen({
             stops={pattern.stops}
             vehicles={live}
             color={route.color ?? 'var(--accent)'}
+            headsign={shortHeadsign(pattern.headsign)}
           />
         </section>
       ) : (

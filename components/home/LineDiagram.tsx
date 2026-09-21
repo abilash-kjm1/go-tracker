@@ -5,7 +5,9 @@ import { useMemo } from 'react';
 import { progressAlongLeg } from '@/lib/transit/geo';
 import type { LiveVehicle } from '@/lib/transit/types';
 
-const ROW = 46;
+const ROW = 48;
+/** Distance from the card's left edge to the centre of the rail. */
+const RAIL_X = 86;
 const tidy = (name: string) => name.replace(/\s+GO(\s+Bus)?$/i, '');
 
 export interface PatternStop {
@@ -16,25 +18,25 @@ export interface PatternStop {
 }
 
 /**
- * The whole line at once: every stop in travel order, with each train that is
- * running placed where it actually is between two stops.
- *
- * A vehicle is put on this direction only when its destination lies ahead of
- * its next stop in this pattern, which is what tells the two directions apart.
+ * The whole line at once. Stations are named to the right of the rail and the
+ * trains ride on the rail itself, labelled to its left, so a train never covers
+ * a station name and its position on the line is the position you read.
  */
 export function LineDiagram({
   stops,
   vehicles,
   color,
+  headsign,
 }: {
   stops: PatternStop[];
   vehicles: LiveVehicle[];
   color: string;
+  headsign?: string;
 }) {
   const placed = useMemo(() => {
     const indexById = new Map(stops.map((s, i) => [s.id, i]));
 
-    return vehicles.flatMap((vehicle) => {
+    const found = vehicles.flatMap((vehicle) => {
       const nextIndex = vehicle.nextStopId != null ? indexById.get(vehicle.nextStopId) : undefined;
       if (nextIndex == null) return [];
 
@@ -63,82 +65,135 @@ export function LineDiagram({
       }
 
       // Standing at the first stop of the run has no leg behind it.
-      const y = nextIndex === 0 ? 0 : (nextIndex - 1 + progress) * ROW;
+      const y = (nextIndex === 0 ? 0 : nextIndex - 1 + progress) * ROW + ROW / 2;
       return [{ vehicle, y }];
     });
-  }, [stops, vehicles]);
 
-  // Two trains close together would sit on top of each other, so step them
-  // sideways instead of moving them, which would misreport where they are.
-  const laid = useMemo(() => {
+    // Two trains close together would sit on top of each other, so step them
+    // outwards instead of moving them, which would misreport where they are.
     const laneEnds: number[] = [];
-    return [...placed]
+    return found
       .sort((a, b) => a.y - b.y)
       .map((entry) => {
-        let lane = laneEnds.findIndex((end) => entry.y - end > 30);
+        let lane = laneEnds.findIndex((end) => entry.y - end > 34);
         if (lane < 0) lane = laneEnds.length;
         laneEnds[lane] = entry.y;
         return { ...entry, lane: Math.min(lane, 2) };
       });
-  }, [placed]);
+  }, [stops, vehicles]);
+
+  const height = stops.length * ROW;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border hairline bg-[var(--bg-elevated)]">
-      <ol className="relative py-2">
-        {stops.map((stop, index) => (
-          <li key={`${stop.id}-${index}`} className="relative">
-            <Link
-              href={`/stations/${encodeURIComponent(stop.id)}`}
-              className="flex items-center gap-3 px-4 hover:bg-[var(--bg-sunken)]"
-              style={{ height: ROW }}
-            >
-              <span className="relative w-4 shrink-0" aria-hidden>
-                {index < stops.length - 1 ? (
-                  <span
-                    className="absolute top-1/2 left-1/2 w-[3px] -translate-x-1/2"
-                    style={{ height: ROW, background: color }}
-                  />
-                ) : null}
-                <span
-                  className="absolute top-1/2 left-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] bg-[var(--bg-elevated)]"
-                  style={{ borderColor: color }}
-                />
-              </span>
-              <span className="min-w-0 flex-1 truncate text-[14px]">{tidy(stop.name)}</span>
-            </Link>
-          </li>
-        ))}
+    <div className="overflow-hidden rounded-2xl border hairline bg-[var(--bg-elevated)]">
+      <div
+        className="flex items-center justify-between gap-3 border-b px-4 py-2.5 hairline"
+        style={{ background: `color-mix(in srgb, ${color} 8%, transparent)` }}
+      >
+        <p className="flex min-w-0 items-center gap-2 text-[12px] font-bold">
+          <span aria-hidden style={{ color }}>
+            ↓
+          </span>
+          <span className="truncate">towards {tidy(headsign ?? stops.at(-1)?.name ?? '')}</span>
+        </p>
+        <p className="tabular shrink-0 text-[11.5px] font-semibold text-muted">
+          {placed.length} running
+        </p>
+      </div>
 
-        {/* Trains, floating on the line between their stops. */}
-        {laid.map(({ vehicle, y, lane }) => {
+      <div className="relative" style={{ height }}>
+        {/* One continuous rail behind everything. */}
+        <span
+          aria-hidden
+          className="absolute w-[5px] rounded-full"
+          style={{
+            left: RAIL_X - 2.5,
+            top: ROW / 2,
+            height: height - ROW,
+            background: `linear-gradient(180deg, color-mix(in srgb, ${color} 55%, transparent), ${color} 12%, ${color} 88%, color-mix(in srgb, ${color} 55%, transparent))`,
+          }}
+        />
+
+        <ol>
+          {stops.map((stop, index) => {
+            const major = index === 0 || index === stops.length - 1;
+            return (
+              <li key={`${stop.id}-${index}`}>
+                <Link
+                  href={`/stations/${encodeURIComponent(stop.id)}`}
+                  className="group relative flex items-center transition-colors hover:bg-[var(--bg-sunken)]"
+                  style={{ height: ROW, paddingLeft: RAIL_X + 18 }}
+                >
+                  <span
+                    aria-hidden
+                    className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--bg-elevated)]"
+                    style={{
+                      left: RAIL_X,
+                      width: major ? 15 : 11,
+                      height: major ? 15 : 11,
+                      border: `${major ? 4.5 : 3.5}px solid ${color}`,
+                    }}
+                  />
+                  <span
+                    className={`min-w-0 flex-1 truncate ${major ? 'text-[15px] font-bold' : 'text-[14px] font-medium'}`}
+                  >
+                    {tidy(stop.name)}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
+
+        {/* Trains, riding the rail itself. */}
+        {placed.map(({ vehicle, y, lane }) => {
           const delayMin = vehicle.delaySeconds != null ? Math.round(vehicle.delaySeconds / 60) : 0;
           const late = delayMin >= 2;
+          const moving = vehicle.isMoving !== false;
           return (
             <Link
               key={vehicle.id}
               href={vehicle.tripId ? `/trips/${encodeURIComponent(vehicle.tripId)}` : '/map'}
-              className="absolute flex items-center gap-2 rounded-full py-1 pr-2.5 pl-1 text-[11px] font-bold shadow-md ring-2 ring-[var(--bg-elevated)]"
+              className="absolute left-0 flex items-center justify-end gap-2 pr-2"
               style={{
-                top: y + ROW / 2 + 8,
-                right: 12 + lane * 82,
+                top: y,
+                width: RAIL_X + 9,
                 transform: 'translateY(-50%)',
-                background: color,
-                color: '#fff',
                 transition: 'top 20s linear',
               }}
-              aria-label={`Train ${vehicle.tripNumber ?? ''} to ${vehicle.destination ?? ''}${late ? `, ${delayMin} minutes late` : ', on time'}`}
+              aria-label={`Train ${vehicle.tripNumber ?? ''} to ${tidy(vehicle.destination ?? '')}${late ? `, ${delayMin} minutes late` : ', on time'}`}
             >
-              <span className="grid size-5 place-items-center rounded-full bg-white/25">
+              {/* Every train here shares the heading in the card's header, so the
+                  label only needs the trip number and how late it is. */}
+              <span className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11.5px] font-bold shadow-sm ring-1 ring-black/5 bg-[var(--bg-elevated)]">
+                <span className="tabular" style={{ color }}>
+                  {vehicle.tripNumber ?? '•'}
+                </span>
+                {late ? (
+                  <span className="tabular text-[10.5px] font-extrabold text-[var(--color-warn-500)]">
+                    +{delayMin}
+                  </span>
+                ) : null}
+              </span>
+
+              {/* The token sits exactly on the rail. */}
+              <span
+                className="grid size-[22px] shrink-0 place-items-center rounded-full text-white shadow-md ring-[3px] ring-[var(--bg-elevated)]"
+                style={{ background: late ? 'var(--color-warn-500)' : color }}
+              >
                 <TrainGlyph />
               </span>
-              <span className="tabular">{vehicle.tripNumber ?? '•'}</span>
-              {late ? (
-                <span className="rounded-full bg-black/25 px-1.5 py-0.5">+{delayMin}</span>
+              {moving ? (
+                <span
+                  aria-hidden
+                  className="live-dot absolute size-[22px] rounded-full"
+                  style={{ right: 8, background: late ? 'var(--color-warn-500)' : color, opacity: 0.35 }}
+                />
               ) : null}
             </Link>
           );
         })}
-      </ol>
+      </div>
 
       {placed.length === 0 ? (
         <p className="border-t px-4 py-3 text-center text-[12.5px] text-muted hairline">
@@ -152,9 +207,9 @@ export function LineDiagram({
 function TrainGlyph() {
   return (
     <svg viewBox="0 0 20 20" className="size-3" fill="none" aria-hidden>
-      <rect x="5" y="3" width="10" height="10" rx="3" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M5 8.5h10" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M7 16l1.4-2.6M13 16l-1.4-2.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <rect x="5" y="3" width="10" height="10" rx="3" stroke="currentColor" strokeWidth="2" />
+      <path d="M5 8.5h10" stroke="currentColor" strokeWidth="2" />
+      <path d="M7 16l1.4-2.6M13 16l-1.4-2.6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
