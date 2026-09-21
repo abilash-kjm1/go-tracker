@@ -371,3 +371,53 @@ body {
   transform: scale(1.06);
   z-index: 2;
 }
+
+/* ---- Home hero scene ---------------------------------------------------- */
+@keyframes hs-train {
+  from { transform: translateX(-175px); }
+  to { transform: translateX(430px); }
+}
+@keyframes hs-bus {
+  from { transform: translateX(430px); }
+  to { transform: translateX(-70px); }
+}
+@keyframes hs-cloud {
+  from { transform: translateX(-70px); }
+  to { transform: translateX(430px); }
+}
+@keyframes hs-twinkle {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+@keyframes hs-bob {
+  from { transform: translateY(-2px); }
+  to { transform: translateY(2.5px); }
+}
+@keyframes hs-breathe {
+  from { opacity: 0.65; }
+  to { opacity: 1; }
+}
+@keyframes hs-scroll-road {
+  to { stroke-dashoffset: -22; }
+}
+@keyframes hs-scroll-sleepers {
+  to { stroke-dashoffset: -9; }
+}
+.hs-train { animation: hs-train 17s linear infinite; }
+.hs-bus { animation: hs-bus 24s linear infinite; animation-delay: -9s; }
+.hs-cloud-a { animation: hs-cloud 70s linear infinite; }
+.hs-cloud-b { animation: hs-cloud 95s linear infinite; animation-delay: -40s; }
+.hs-cloud-c { animation: hs-cloud 80s linear infinite; animation-delay: -18s; }
+.hs-twinkle { animation: hs-twinkle 3.2s ease-in-out infinite; }
+.hs-bob { animation: hs-bob 9s ease-in-out infinite alternate; }
+.hs-breathe { animation: hs-breathe 4.5s ease-in-out infinite alternate; }
+.hs-road { animation: hs-scroll-road 0.9s linear infinite; }
+.hs-sleepers { animation: hs-scroll-sleepers 0.7s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .hs-train, .hs-bus, .hs-cloud-a, .hs-cloud-b, .hs-cloud-c,
+  .hs-twinkle, .hs-bob, .hs-breathe, .hs-road, .hs-sleepers {
+    animation: none;
+  }
+  .hs-train { transform: translateX(120px); }
+  .hs-bus { transform: translateX(300px); }
+}
