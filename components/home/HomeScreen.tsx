@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { SearchIcon, SearchOverlay } from '@/components/search/SearchOverlay';
+import { PlannerForm, PlannerResults, useTripPlanner } from '@/components/plan/TripPlanner';
 import { StationSummaryCard } from '@/components/stations/StationSummaryCard';
 import { LiveIndicator } from '@/components/ui/LiveIndicator';
 import { ModeIcon, Skeleton } from '@/components/ui/primitives';
@@ -26,6 +27,13 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
 
   const { data: routes } = useTransit<TransitRoute[]>('/api/transit/routes?type=train');
 
+  // Every stop, for the planner's type-ahead. Fetched here (and CDN-cached) rather
+  // than baked into the page, so the home screen stays light.
+  const { data: allStops, loading: stopsLoading } = useTransit<TransitStop[]>(
+    '/api/transit/stations?limit=1000',
+  );
+  const planner = useTripPlanner(allStops ?? []);
+
   const trains = vehicles?.filter((v) => v.vehicleType === 'train').length ?? 0;
   const buses = vehicles?.filter((v) => v.vehicleType === 'bus').length ?? 0;
 
@@ -48,44 +56,45 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-safe">
-      {/* Hero: the one question the app answers, with the two ways in. */}
+      {/* Hero: the one question the app answers, with the planner built in. */}
       <header
-        className="relative mt-4 overflow-hidden rounded-[28px] p-5 pb-5 text-white shadow-[var(--shadow-card)]"
+        className="relative mt-4 rounded-[28px] p-5 pb-5 text-white shadow-[var(--shadow-card)]"
         style={{
           background:
             'radial-gradient(120% 90% at 100% 0%, #38bdf8 0%, transparent 55%), linear-gradient(140deg, #047857 0%, #0f766e 48%, #0c4a6e 100%)',
         }}
       >
-        <Rails />
-        <p className="relative text-[13px] font-medium text-white/80">{greeting()}</p>
-        <h1 className="relative mt-0.5 text-[30px] leading-[1.1] font-extrabold tracking-tight">
-          Where are you
-          <br />
-          going today?
-        </h1>
+        {/* Clipped separately so the stop suggestions can hang below the card. */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[28px]">
+          <Rails />
+        </div>
 
-        <button
-          type="button"
-          onClick={() => setSearchOpen(true)}
-          className="relative mt-5 flex min-h-13 w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left text-[15px] font-medium text-slate-500 shadow-lg"
-        >
-          <SearchIcon className="size-5 text-slate-400" />
-          Search stations, lines or buses
-        </button>
+        <div className="relative flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[13px] font-medium text-white/80">{greeting()}</p>
+            <h1 className="mt-0.5 text-[28px] leading-[1.1] font-extrabold tracking-tight">
+              Where are you
+              <br />
+              going today?
+            </h1>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search stations, lines or buses"
+            className="grid size-11 shrink-0 place-items-center rounded-full bg-white/15 ring-1 ring-white/30 backdrop-blur transition-colors hover:bg-white/25"
+          >
+            <SearchIcon className="size-5 text-white" />
+          </button>
+        </div>
 
-        <Link
-          href="/plan"
-          className="relative mt-2.5 flex min-h-12 items-center justify-between gap-3 rounded-2xl bg-white/15 px-4 text-[14px] font-bold backdrop-blur ring-1 ring-white/25 transition-colors hover:bg-white/25"
-        >
-          <span className="flex items-center gap-2.5">
-            <span className="grid size-2 place-items-center rounded-full bg-white" aria-hidden />
-            <span className="h-px w-5 bg-white/60" aria-hidden />
-            <span className="size-2 rounded-full ring-2 ring-white" aria-hidden />
-            <span className="ml-1">Plan a trip from A to B</span>
-          </span>
-          <span aria-hidden>→</span>
-        </Link>
+        <div className="relative mt-5">
+          <PlannerForm planner={planner} stops={allStops ?? []} loadingStops={stopsLoading && !allStops} />
+        </div>
       </header>
+
+      {/* Straight under the form, so choosing two stops answers itself in place. */}
+      <PlannerResults planner={planner} />
 
       {/* Shortcuts. */}
       <nav aria-label="Shortcuts" className="mt-4 grid grid-cols-4 gap-2.5">
