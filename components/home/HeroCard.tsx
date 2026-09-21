@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { SearchIcon } from '@/components/search/SearchOverlay';
-import { CuteBus, CuteSignal, CuteTrain, Stickers } from './HeroFriends';
+import { CuteBus, CuteSignal, CuteTrain } from './HeroFriends';
 import type { Phase } from './phase';
 
 /**
@@ -115,7 +115,6 @@ export function HeroCard({
 
       {/* The lines that call here, named once and left still. */}
       <LineStrip />
-      <Stickers />
 
       <div className="relative px-5 pt-14">
         <div className="flex items-center justify-between gap-3">

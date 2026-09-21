@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useOnline } from '@/lib/client/useTransit';
 import { ActiveTripBar } from '@/components/trips/ActiveTripBar';
+import { SignalDangle } from '@/components/ui/SignalDangle';
 
 const NAV = [
   { href: '/', label: 'Home', icon: HomeIcon },
@@ -89,6 +90,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </ul>
       </nav>
 
+      <SignalDangle />
       <ActiveTripBar />
     </div>
   );

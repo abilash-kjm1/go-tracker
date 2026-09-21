@@ -425,3 +425,20 @@ body {
   .gh-puff { display: none; }
   .gh-float { transform: rotate(var(--tilt, 0deg)); }
 }
+
+/* ---- Signal dangle ------------------------------------------------------- */
+@keyframes sd-breathe {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.55; }
+}
+@keyframes sd-glint {
+  0%, 72% { transform: translateX(0) rotate(18deg); }
+  86% { transform: translateX(150px) rotate(18deg); }
+  100% { transform: translateX(150px) rotate(18deg); }
+}
+.sd-breathe { animation: sd-breathe 3.6s ease-in-out infinite; }
+.sd-glint { animation: sd-glint 6.5s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .sd-breathe, .sd-glint { animation: none; }
+  .sd-glint { display: none; }
+}
