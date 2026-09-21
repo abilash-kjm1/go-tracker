@@ -16,6 +16,7 @@ import {
 import dynamic from 'next/dynamic';
 import { useFavorites } from '@/lib/client/favorites';
 import { useTicker, useTransit } from '@/lib/client/useTransit';
+import { progressAlongLeg } from '@/lib/transit/geo';
 import { formatAge, formatClock } from '@/lib/transit/time';
 import type { TransitAlert, TripDetail } from '@/lib/transit/types';
 
@@ -172,8 +173,29 @@ export function TripScreen({ tripId }: { tripId: string }) {
         <ol className="relative">
           {trip.stops.map((stop, index) => {
             const isLast = index === trip.stops.length - 1;
+            // While the train is between two stops, a dot rides the line between
+            // them, in step with where it really is. At a station it sits on the
+            // stop's own circle (the pulsing "current" one) instead.
+            const following = trip.stops[index + 1];
+            const between = stop.status === 'departed' && following?.status === 'next';
+            const legProgress =
+              between &&
+              trip.vehicle &&
+              Number.isFinite(trip.vehicle.latitude) &&
+              Number.isFinite(trip.vehicle.longitude) &&
+              stop.lat != null &&
+              stop.lon != null &&
+              following?.lat != null &&
+              following?.lon != null
+                ? progressAlongLeg(
+                    trip.vehicle.latitude,
+                    trip.vehicle.longitude,
+                    { lat: stop.lat, lon: stop.lon },
+                    { lat: following.lat, lon: following.lon },
+                  )
+                : null;
             return (
-              <li key={`${stop.stopId}-${index}`} className="relative flex gap-3 py-2.5">
+              <li key={`${stop.stopId}-${index}`} className="relative flex gap-3 py-4">
                 <div className="flex w-5 flex-col items-center">
                   <span
                     className={clsx(
@@ -181,7 +203,7 @@ export function TripScreen({ tripId }: { tripId: string }) {
                       stop.status === 'departed' && 'border-[var(--fg-faint)] bg-[var(--fg-faint)]',
                       // Standing here: solid and pulsing. Heading here: a ring only, so
                       // it never reads as "the train is already there".
-                      stop.status === 'current' && 'border-[var(--accent)] bg-[var(--accent)] live-dot',
+                      stop.status === 'current' && 'size-4 border-[var(--bg-elevated)] bg-[var(--accent)] shadow ring-2 ring-[var(--accent)] live-dot',
                       stop.status === 'next' && 'size-4 border-[3px] border-[var(--accent)] bg-[var(--bg-elevated)]',
                       stop.status === 'upcoming' && 'border-[var(--border-strong)] bg-[var(--bg-elevated)]',
                     )}
@@ -190,7 +212,7 @@ export function TripScreen({ tripId }: { tripId: string }) {
                   {!isLast ? (
                     <span
                       className={clsx(
-                        'w-0.5 flex-1',
+                        'relative w-0.5 flex-1',
                         stop.status === 'departed' && trip.stops[index + 1]?.status === 'next'
                           ? 'bg-[var(--accent)]'
                           : stop.status === 'departed'
@@ -198,7 +220,18 @@ export function TripScreen({ tripId }: { tripId: string }) {
                             : 'bg-[var(--border)]',
                       )}
                       aria-hidden
-                    />
+                    >
+                      {legProgress != null ? (
+                        <span
+                          className="absolute left-1/2 z-20 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[var(--bg-elevated)] bg-[var(--accent)] shadow"
+                          // Moves over the gap to the next refresh, linearly, so it
+                          // keeps travelling instead of hopping and waiting.
+                          style={{ top: `${Math.round(legProgress * 100)}%`, transition: 'top 20s linear' }}
+                          role="img"
+                          aria-label={`Train is ${Math.round(legProgress * 100)}% of the way to ${following?.stopName}`}
+                        />
+                      ) : null}
+                    </span>
                   ) : null}
                 </div>
 

@@ -33,3 +33,23 @@ export function distanceToSegmentKm(
   const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, (px * bx + py * by) / len2));
   return Math.hypot(px - t * bx, py - t * by);
 }
+
+/**
+ * How far along the leg a-b a point is, 0 at `a` and 1 at `b`, by projecting it
+ * onto the leg. Used to place a moving vehicle between two stops.
+ */
+export function progressAlongLeg(
+  lat: number,
+  lon: number,
+  a: { lat: number; lon: number },
+  b: { lat: number; lon: number },
+): number {
+  const kx = 111.32 * Math.cos((lat * Math.PI) / 180);
+  const ky = 110.57;
+  const px = (lon - a.lon) * kx;
+  const py = (lat - a.lat) * ky;
+  const bx = (b.lon - a.lon) * kx;
+  const by = (b.lat - a.lat) * ky;
+  const len2 = bx * bx + by * by;
+  return len2 === 0 ? 0 : Math.max(0, Math.min(1, (px * bx + py * by) / len2));
+}
