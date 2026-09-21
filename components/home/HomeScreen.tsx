@@ -52,6 +52,26 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
     return [...byRoute.values()].sort((a, b) => b.count - a.count);
   }, [vehicles, routes]);
   const lateTotal = lines.reduce((sum, l) => sum + l.late, 0);
+
+  // What the live card is showing underneath: nothing, all trains, late trains,
+  // the list of lines, or one line's trains. Tapping the same thing again closes it.
+  const [liveView, setLiveView] = useState<LiveView | null>(null);
+  const toggleView = (next: LiveView) =>
+    setLiveView((current) => (sameView(current, next) ? null : next));
+
+  const trainList = useMemo(() => {
+    const trainsOnly = (vehicles ?? []).filter((v) => v.vehicleType === 'train');
+    const routeOf = (id?: string) => routes?.find((r) => r.id === id);
+    const rows = trainsOnly.map((v) => ({ v, route: routeOf(v.routeId) }));
+    if (!liveView) return [];
+    if (liveView.kind === 'late') {
+      return rows
+        .filter((r) => (r.v.delaySeconds ?? 0) >= 120)
+        .sort((a, b) => (b.v.delaySeconds ?? 0) - (a.v.delaySeconds ?? 0));
+    }
+    if (liveView.kind === 'line') return rows.filter((r) => r.v.routeId === liveView.routeId);
+    return rows.sort((a, b) => (a.route?.name ?? '').localeCompare(b.route?.name ?? ''));
+  }, [vehicles, routes, liveView]);
   const favoriteStops = favorites.filter((f) => f.kind === 'stop');
 
   return (
@@ -110,77 +130,96 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
         />
       </nav>
 
-      {/* Live network: what is out there right now. */}
-      <Link
-        href="/map"
-        className="group mt-4 block rounded-3xl border px-4 py-4 transition-colors hairline bg-[var(--bg-elevated)] shadow-[var(--shadow-card)]"
-      >
+      {/* Live network: what is out there right now. Every number opens its trains. */}
+      <section className="mt-4 rounded-3xl border px-4 py-4 hairline bg-[var(--bg-elevated)] shadow-[var(--shadow-card)]">
         <div className="flex items-center justify-between gap-3">
           <LiveIndicator freshness={freshness} updatedAt={meta?.updatedAt ?? null} />
-          <span className="text-[13px] font-bold text-[var(--accent)] transition-transform group-hover:translate-x-0.5">
+          <Link href="/map" className="text-[13px] font-bold text-[var(--accent)]">
             Open live map →
-          </span>
+          </Link>
         </div>
 
         <div className="mt-3 grid grid-cols-3 gap-2">
-          <div className="rounded-2xl px-3 py-2.5" style={{ background: 'var(--tile-green-bg)', color: 'var(--tile-green-fg)' }}>
-            <p className="text-[10px] font-bold tracking-[0.12em] uppercase opacity-75">Trains now</p>
-            <p className="tabular text-[28px] leading-none font-extrabold">
-              {vehicles ? trains : <Skeleton className="h-7 w-10" />}
-            </p>
-          </div>
-          <div
-            className="rounded-2xl px-3 py-2.5"
-            style={{
-              background: lateTotal > 0 ? 'var(--tile-amber-bg)' : 'var(--tile-teal-bg)',
-              color: lateTotal > 0 ? 'var(--tile-amber-fg)' : 'var(--tile-teal-fg)',
-            }}
-          >
-            <p className="text-[10px] font-bold tracking-[0.12em] uppercase opacity-75">
-              {lateTotal > 0 ? 'Running late' : 'On time'}
-            </p>
-            <p className="tabular text-[28px] leading-none font-extrabold">
-              {vehicles ? (lateTotal > 0 ? lateTotal : trains) : <Skeleton className="h-7 w-10" />}
-            </p>
-          </div>
-          <div className="rounded-2xl px-3 py-2.5" style={{ background: 'var(--tile-violet-bg)', color: 'var(--tile-violet-fg)' }}>
-            <p className="text-[10px] font-bold tracking-[0.12em] uppercase opacity-75">Lines out</p>
-            <p className="tabular text-[28px] leading-none font-extrabold">
-              {vehicles && routes ? lines.length : <Skeleton className="h-7 w-10" />}
-            </p>
-          </div>
+          <StatButton
+            hue="green"
+            label="Trains now"
+            value={vehicles ? trains : null}
+            active={liveView?.kind === 'all'}
+            onClick={() => toggleView({ kind: 'all' })}
+          />
+          <StatButton
+            hue={lateTotal > 0 ? 'amber' : 'teal'}
+            label={lateTotal > 0 ? 'Running late' : 'On time'}
+            value={vehicles ? (lateTotal > 0 ? lateTotal : trains) : null}
+            active={liveView?.kind === (lateTotal > 0 ? 'late' : 'all')}
+            onClick={() => toggleView(lateTotal > 0 ? { kind: 'late' } : { kind: 'all' })}
+          />
+          <StatButton
+            hue="violet"
+            label="Lines out"
+            value={vehicles && routes ? lines.length : null}
+            active={liveView?.kind === 'lines'}
+            onClick={() => toggleView({ kind: 'lines' })}
+          />
         </div>
 
         {lines.length > 0 ? (
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {lines.map(({ route, count, late }) => (
-              <span
-                key={route.id}
-                className="flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-1 text-[12px] font-semibold ring-1 ring-[var(--border)]"
-              >
-                <span
-                  className="grid h-5 min-w-7 place-items-center rounded-full px-1.5 text-[10px] font-extrabold text-white"
-                  style={{ background: route.color ?? '#64748b' }}
+            {lines.map(({ route, count, late }) => {
+              const active = liveView?.kind === 'line' && liveView.routeId === route.id;
+              return (
+                <button
+                  key={route.id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => toggleView({ kind: 'line', routeId: route.id })}
+                  className="flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-1 text-[12px] font-semibold transition-transform active:scale-[0.97]"
+                  style={
+                    active
+                      ? {
+                          background: 'var(--tile-violet-bg)',
+                          color: 'var(--tile-violet-fg)',
+                          boxShadow: `inset 0 0 0 1.5px ${route.color ?? '#64748b'}`,
+                        }
+                      : { boxShadow: 'inset 0 0 0 1px var(--border-strong)' }
+                  }
                 >
-                  {route.code}
-                </span>
-                <span className="tabular">{count}</span>
-                {late > 0 ? (
-                  <span className="text-[var(--tile-amber-fg)]" title={`${late} running late`}>
-                    · {late} late
+                  <span
+                    className="grid h-5 min-w-7 place-items-center rounded-full px-1.5 text-[10px] font-extrabold text-white"
+                    style={{ background: route.color ?? '#64748b' }}
+                  >
+                    {route.code}
                   </span>
-                ) : null}
-              </span>
-            ))}
+                  <span className="tabular">{count}</span>
+                  {late > 0 ? <span className="text-[var(--tile-amber-fg)]">· {late} late</span> : null}
+                </button>
+              );
+            })}
           </div>
         ) : null}
 
-        <p className="mt-3 text-[11px] text-faint">
-          {buses === 0
-            ? 'GO publishes live positions for trains only; buses show timetable and platform info.'
-            : `${buses} bus${buses === 1 ? '' : 'es'} reporting a position.`}
-        </p>
-      </Link>
+        {liveView ? (
+          <LiveList
+            view={liveView}
+            trains={trainList}
+            lines={lines}
+            onPickLine={(routeId) => setLiveView({ kind: 'line', routeId })}
+            onClose={() => setLiveView(null)}
+            routeName={
+              liveView.kind === 'line'
+                ? lines.find((l) => l.route.id === liveView.routeId)?.route.name
+                : undefined
+            }
+          />
+        ) : (
+          <p className="mt-3 text-[11px] text-faint">
+            Tap a number or a line to see its trains.{' '}
+            {buses === 0
+              ? 'GO publishes live positions for trains only; buses show timetable and platform info.'
+              : `${buses} bus${buses === 1 ? '' : 'es'} reporting a position.`}
+          </p>
+        )}
+      </section>
 
       {alerts && alerts.length > 0 ? (
         <Link
@@ -367,5 +406,195 @@ function AlertGlyph() {
       <path d="M12 10v4.5" />
       <circle cx="12" cy="17" r=".9" fill="currentColor" />
     </svg>
+  );
+}
+
+type LiveView =
+  | { kind: 'all' }
+  | { kind: 'late' }
+  | { kind: 'lines' }
+  | { kind: 'line'; routeId: string };
+
+function sameView(a: LiveView | null, b: LiveView): boolean {
+  if (!a || a.kind !== b.kind) return false;
+  return a.kind !== 'line' || (b.kind === 'line' && a.routeId === b.routeId);
+}
+
+function StatButton({
+  hue,
+  label,
+  value,
+  active,
+  onClick,
+}: {
+  hue: Hue;
+  label: string;
+  value: number | null;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className="rounded-2xl px-3 py-2.5 text-left transition-transform active:scale-[0.97]"
+      style={{
+        background: `var(--tile-${hue}-bg)`,
+        color: `var(--tile-${hue}-fg)`,
+        boxShadow: active ? `inset 0 0 0 2px var(--tile-${hue}-fg)` : undefined,
+      }}
+    >
+      <p className="flex items-center justify-between text-[10px] font-bold tracking-[0.12em] uppercase opacity-75">
+        {label}
+        <span aria-hidden className={active ? 'rotate-180' : ''}>▾</span>
+      </p>
+      <p className="tabular text-[28px] leading-none font-extrabold">
+        {value == null ? <Skeleton className="h-7 w-10" /> : value}
+      </p>
+    </button>
+  );
+}
+
+type LineSummary = { route: TransitRoute; count: number; late: number };
+type TrainRow = { v: LiveVehicle; route?: TransitRoute };
+
+function LiveList({
+  view,
+  trains,
+  lines,
+  onPickLine,
+  onClose,
+  routeName,
+}: {
+  view: LiveView;
+  trains: TrainRow[];
+  lines: LineSummary[];
+  onPickLine: (routeId: string) => void;
+  onClose: () => void;
+  routeName?: string;
+}) {
+  const title =
+    view.kind === 'all'
+      ? 'All trains right now'
+      : view.kind === 'late'
+        ? 'Trains running late'
+        : view.kind === 'lines'
+          ? 'Lines with trains out'
+          : `${routeName ?? 'Line'} trains`;
+
+  return (
+    <div className="mt-4 border-t pt-3 hairline">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h3 className="text-[13px] font-bold">{title}</h3>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-full bg-[var(--bg-sunken)] px-3 py-1 text-[12px] font-semibold text-muted"
+        >
+          Close
+        </button>
+      </div>
+
+      {view.kind === 'lines' ? (
+        <ul className="space-y-1.5">
+          {lines.map(({ route, count, late }) => (
+            <li key={route.id}>
+              <button
+                type="button"
+                onClick={() => onPickLine(route.id)}
+                className="flex w-full items-center gap-3 rounded-2xl bg-[var(--bg-sunken)] px-3 py-2.5 text-left"
+              >
+                <span
+                  className="grid h-7 min-w-9 place-items-center rounded-full px-2 text-[11px] font-extrabold text-white"
+                  style={{ background: route.color ?? '#64748b' }}
+                >
+                  {route.code}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[14px] font-semibold">{route.name}</span>
+                  <span className="text-[12px] text-muted">
+                    {count} train{count === 1 ? '' : 's'} out
+                    {late > 0 ? ` · ${late} running late` : ' · all on time'}
+                  </span>
+                </span>
+                <span aria-hidden className="text-faint">›</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : trains.length === 0 ? (
+        <p className="rounded-xl bg-[var(--bg-sunken)] px-3 py-3 text-[13px] text-muted">
+          {view.kind === 'late' ? 'No trains are running late right now.' : 'No trains to show.'}
+        </p>
+      ) : (
+        <ul className="space-y-1.5">
+          {trains.map(({ v, route }) => (
+            <TrainRowItem key={v.id} vehicle={v} route={route} />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function TrainRowItem({ vehicle: v, route }: { vehicle: LiveVehicle; route?: TransitRoute }) {
+  const delayMin = v.delaySeconds != null ? Math.round(v.delaySeconds / 60) : 0;
+  const late = delayMin >= 2;
+  const dest = (v.destination ?? '').replace(/\s+GO$/i, '');
+  const nextStop = (v.nextStopName ?? '').replace(/\s+GO(\s+Bus)?$/i, '');
+
+  return (
+    <li className="overflow-hidden rounded-2xl bg-[var(--bg-sunken)]">
+      <div className="flex items-stretch">
+        <Link
+          href={v.tripId ? `/trips/${encodeURIComponent(v.tripId)}` : '/map'}
+          className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5"
+        >
+          <span
+            className="grid h-7 min-w-9 shrink-0 place-items-center rounded-full px-2 text-[11px] font-extrabold text-white"
+            style={{ background: route?.color ?? '#64748b' }}
+          >
+            {route?.code ?? '?'}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[14px] font-semibold">
+              {dest ? `to ${dest}` : (route?.name ?? 'Train')}
+              {v.tripNumber ? (
+                <span className="ml-1.5 text-[12px] font-medium text-faint">#{v.tripNumber}</span>
+              ) : null}
+            </span>
+            <span className="block truncate text-[12px] text-muted">
+              {v.isMoving === false ? 'Stopped' : 'Moving'}
+              {nextStop ? ` · next ${nextStop}` : ''}
+            </span>
+            {late && v.delayReason ? (
+              <span className="block truncate text-[11px] font-medium text-[var(--tile-amber-fg)]">
+                {v.delayReason}
+              </span>
+            ) : null}
+          </span>
+          <span
+            className="tabular shrink-0 rounded-full px-2.5 py-1 text-[12px] font-bold"
+            style={
+              late
+                ? { background: 'var(--tile-amber-bg)', color: 'var(--tile-amber-fg)' }
+                : { background: 'var(--tile-green-bg)', color: 'var(--tile-green-fg)' }
+            }
+          >
+            {late ? `+${delayMin} min` : 'On time'}
+          </span>
+        </Link>
+        {v.tripId ? (
+          <Link
+            href={`/map?trip=${encodeURIComponent(v.tripId)}`}
+            aria-label="Show this train on the map"
+            className="grid w-11 shrink-0 place-items-center border-l text-[var(--accent)] hairline"
+          >
+            <MapGlyph />
+          </Link>
+        ) : null}
+      </div>
+    </li>
   );
 }
