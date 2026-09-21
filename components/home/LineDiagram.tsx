@@ -76,6 +76,7 @@ export function LineDiagram({
   }, [stops, vehicles]);
 
   const running = [...byNextStop.values()].reduce((sum, list) => sum + list.length, 0);
+  const nameById = useMemo(() => new Map(stops.map((s) => [s.id, s.name])), [stops]);
 
   return (
     <div className="overflow-hidden rounded-2xl border hairline bg-[var(--bg-elevated)]">
@@ -110,7 +111,12 @@ export function LineDiagram({
                 {/* Trains heading for this stop appear just above it. */}
                 {(byNextStop.get(index) ?? []).map(({ vehicle }) => (
                   <li key={vehicle.id}>
-                    <TrainRow vehicle={vehicle} color={color} nextStopName={stop.name} />
+                    <TrainRow
+                      vehicle={vehicle}
+                      color={color}
+                      nextStopName={stop.name}
+                      atStopName={vehicle.atStopId ? nameById.get(vehicle.atStopId) : undefined}
+                    />
                   </li>
                 ))}
 
@@ -157,10 +163,13 @@ function TrainRow({
   vehicle,
   color,
   nextStopName,
+  atStopName,
 }: {
   vehicle: LiveVehicle;
   color: string;
   nextStopName: string;
+  /** The stop it is standing at, which is the one behind it, not the one ahead. */
+  atStopName?: string;
 }) {
   const delayMin = vehicle.delaySeconds != null ? Math.round(vehicle.delaySeconds / 60) : 0;
   const late = delayMin >= 2;
@@ -190,7 +199,11 @@ function TrainRow({
           {vehicle.tripNumber ?? 'Train'}
         </span>
         <span className="block truncate text-[11.5px] text-muted">
-          {stopped ? 'at' : 'approaching'} {tidy(nextStopName)}
+          {stopped && atStopName
+            ? `at ${tidy(atStopName)}`
+            : stopped
+              ? `stopped before ${tidy(nextStopName)}`
+              : `approaching ${tidy(nextStopName)}`}
         </span>
       </span>
 
