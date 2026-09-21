@@ -137,7 +137,7 @@ export function PlannerForm({
               key={`${journey.from}-${journey.to}`}
               type="button"
               onClick={() => pick(journey)}
-              className="shrink-0 rounded-full bg-white/15 px-3 py-1.5 text-[12px] font-semibold whitespace-nowrap text-white ring-1 ring-white/25 backdrop-blur"
+              className="shrink-0 rounded-full bg-[var(--bg-elevated)]/75 px-3 py-1.5 text-[12px] font-semibold whitespace-nowrap text-[var(--fg)] shadow-sm ring-1 ring-black/10 backdrop-blur"
             >
               {journey.fromName.replace(/\s+GO$/i, '')} → {journey.toName.replace(/\s+GO$/i, '')}
             </button>

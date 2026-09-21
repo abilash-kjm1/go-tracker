@@ -421,3 +421,43 @@ body {
   .hs-train { transform: translateX(120px); }
   .hs-bus { transform: translateX(300px); }
 }
+
+/* ---- Home hero card ------------------------------------------------------ */
+@keyframes hc-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.08); }
+}
+@keyframes hc-peek {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -4px); }
+}
+@keyframes hc-wave {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  50% { transform: rotate(-6deg) translateY(-1.5px); }
+}
+@keyframes hc-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes hc-bob {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-4px) rotate(3deg); }
+}
+@keyframes hc-ring {
+  0%, 100% { transform: scale(1); opacity: var(--ring-o, 0.16); }
+  50% { transform: scale(1.08); opacity: calc(var(--ring-o, 0.16) * 0.4); }
+}
+@keyframes hc-drip {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.22); }
+}
+.hc-blink { animation: hc-blink 5s ease-in-out infinite; }
+.hc-peek { animation: hc-peek 4.6s ease-in-out infinite; }
+.hc-wave { animation: hc-wave 3.4s ease-in-out infinite; }
+.hc-spin { animation: hc-spin 24s linear infinite; }
+.hc-bob { animation: hc-bob 3.8s ease-in-out infinite; }
+.hc-ring { animation: hc-ring 5.5s ease-in-out infinite; }
+.hc-drip { transform-origin: top; animation: hc-drip 3.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .hc-blink, .hc-peek, .hc-wave, .hc-spin, .hc-bob, .hc-ring, .hc-drip { animation: none; }
+  .hc-peek { transform: translate(-50%, 0); }
+}

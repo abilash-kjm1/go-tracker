@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { SearchIcon, SearchOverlay } from '@/components/search/SearchOverlay';
-import { HeroScene, SKY, usePhase } from './HeroScene';
+import { HeroCard } from './HeroCard';
+import { usePhase } from './HeroScene';
 import { PlannerForm, PlannerResults, useTripPlanner } from '@/components/plan/TripPlanner';
 import { StationSummaryCard } from '@/components/stations/StationSummaryCard';
 import { LiveIndicator } from '@/components/ui/LiveIndicator';
@@ -78,44 +79,16 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-safe">
-      {/* Hero: an animated scene, the one question the app answers, and the planner. */}
-      <header
-        className="relative mt-4 rounded-[28px] text-white shadow-[var(--shadow-card)]"
-        style={{
-          background: `linear-gradient(180deg, ${SKY[phase].ground} 0%, color-mix(in srgb, ${SKY[phase].ground} 60%, #000) 100%)`,
-        }}
+      {/* Hero: a warm card with a train mascot, the headline and the planner. */}
+      <HeroCard
+        phase={phase}
+        greeting={greeting()}
+        trainsLive={vehicles ? trains : null}
+        late={lateTotal}
+        onSearch={() => setSearchOpen(true)}
       >
-        {/* Clipped on its own so the stop suggestions can hang below the card. */}
-        <div className="absolute inset-x-0 top-0 h-[214px] overflow-hidden rounded-t-[28px]">
-          <HeroScene phase={phase} />
-        </div>
-
-        <div className="relative flex items-start justify-between gap-3 px-5 pt-5">
-          <div>
-            <p className="text-[13px] font-semibold text-white/85 [text-shadow:0_1px_6px_rgb(0_0_0/0.4)]">{greeting()}</p>
-            <h1 className="mt-0.5 text-[28px] leading-[1.1] font-extrabold tracking-tight [text-shadow:0_2px_14px_rgb(0_0_0/0.45)]">
-              Where are you
-              <br />
-              going today?
-            </h1>
-          </div>
-          <button
-            type="button"
-            onClick={() => setSearchOpen(true)}
-            aria-label="Search stations, lines or buses"
-            className="grid size-11 shrink-0 place-items-center rounded-full bg-white/20 ring-1 ring-white/35 backdrop-blur transition-colors hover:bg-white/30"
-          >
-            <SearchIcon className="size-5 text-white" />
-          </button>
-        </div>
-
-        {/* Room for the train to run past. */}
-        <div className="h-[100px]" aria-hidden />
-
-        <div className="relative px-5 pb-5">
-          <PlannerForm planner={planner} stops={allStops ?? []} loadingStops={stopsLoading && !allStops} />
-        </div>
-      </header>
+        <PlannerForm planner={planner} stops={allStops ?? []} loadingStops={stopsLoading && !allStops} />
+      </HeroCard>
 
       {/* Straight under the form, so choosing two stops answers itself in place. */}
       <PlannerResults planner={planner} />
