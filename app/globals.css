@@ -250,6 +250,13 @@ body {
 @utility h-nav {
   height: calc(4rem + env(safe-area-inset-bottom));
 }
+/* Sits clear of the mobile tab bar, home indicator included. */
+@utility above-nav {
+  bottom: calc(4rem + env(safe-area-inset-bottom) + 0.5rem);
+  @media (min-width: 768px) {
+    bottom: 1rem;
+  }
+}
 @utility scroll-touch {
   -webkit-overflow-scrolling: touch;
 }

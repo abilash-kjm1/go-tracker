@@ -32,7 +32,7 @@ export function ActiveTripBar() {
   const nextStop = nextIndex >= 0 ? stops[nextIndex].stopName.replace(/\s+GO(\s+Bus)?$/i, '') : null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-16 z-30 px-3 pb-1 md:bottom-4 md:left-60">
+    <div className="above-nav pointer-events-none fixed inset-x-0 z-30 px-3 md:left-60">
       <Link
         href="/my-trip"
         className="pointer-events-auto mx-auto flex max-w-2xl items-center gap-3 rounded-2xl px-4 py-2.5 text-white shadow-[0_14px_30px_-14px_rgb(0_0_0/0.8)]"
