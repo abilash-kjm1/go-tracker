@@ -1,48 +1,47 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { SearchIcon } from '@/components/search/SearchOverlay';
-import type { Phase } from './HeroScene';
-
-interface Palette {
-  from: string;
-  to: string;
-  ink: string;
-  accent: string;
-  band: string;
-  pill: string;
-  pillInk: string;
-  sun: string;
-  ray: string;
-}
-
-/** A warm card that shifts with the Toronto sky. Text colours are chosen per palette. */
-const PALETTE: Record<Phase, Palette> = {
-  morning: {
-    from: '#fff1d2', to: '#f7c46f', ink: '#4a2a0c', accent: '#b23a17',
-    band: '#f5a623', pill: 'rgb(255 255 255 / 0.55)', pillInk: '#5a3510', sun: '#ffd36b', ray: '#f5a623',
-  },
-  day: {
-    from: '#fde7c8', to: '#efa66b', ink: '#4a2410', accent: '#9a3412',
-    band: '#f5a623', pill: 'rgb(255 255 255 / 0.5)', pillInk: '#5a2f14', sun: '#ffd25e', ray: '#f59e0b',
-  },
-  evening: {
-    from: '#ffd9c9', to: '#e9808a', ink: '#4b1d2c', accent: '#a3162f',
-    band: '#ff7a59', pill: 'rgb(255 255 255 / 0.5)', pillInk: '#5b2233', sun: '#ff9f5a', ray: '#ff7a59',
-  },
-  night: {
-    from: '#3a2f74', to: '#1e1b4b', ink: '#fdf2e0', accent: '#ffd28a',
-    band: '#8b7cf6', pill: 'rgb(255 255 255 / 0.12)', pillInk: '#efe6ff', sun: '#e9ecff', ray: '#a5b4fc',
-  },
-};
-
-const SERIF = "'Iowan Old Style','Palatino Linotype',Palatino,Georgia,'Times New Roman',serif";
+import type { Phase } from './phase';
 
 /**
- * The home hero: a warm card with a train mascot peeking over its top edge, a
- * dripping lantern rail, a sun (or moon) that follows the Toronto sky, ripple
- * rings and a big serif headline. The planner slots in at the bottom.
+ * The home hero, in GO's own colours: a green card with a live network diagram
+ * behind it (every line in its colour, running into Union, with little trains
+ * travelling along them), a departure-board flap that cycles through
+ * destinations, and an animated underline. The planner sits at the bottom.
  */
+
+const GO_GREEN = '#00853e';
+const LIME = '#c6f26b';
+const AMBER = '#ffb81c';
+
+/** GO's line colours, with the direction each runs out of Union. */
+const LINES = [
+  { id: 'lw', color: '#98002e', d: 'M300 150 C 245 168, 170 205, -20 222' },
+  { id: 'le', color: '#ee3124', d: 'M300 150 C 345 168, 385 190, 430 204' },
+  { id: 'ba', color: '#0054a6', d: 'M300 150 C 292 100, 255 55, 215 -20' },
+  { id: 'st', color: '#8b5a2b', d: 'M300 150 C 335 110, 380 72, 430 44' },
+  { id: 'mi', color: '#f47b20', d: 'M300 150 C 245 132, 150 128, -20 96' },
+  { id: 'ki', color: '#7ac143', d: 'M300 150 C 262 120, 208 92, 120 -20' },
+] as const;
+
+const DESTINATIONS = [
+  'Oakville', 'Burlington', 'Oshawa', 'Barrie', 'Kitchener', 'Niagara Falls',
+  'Hamilton', 'Aurora', 'Milton', 'Union Station',
+];
+
+function useReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReduced(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
+  return reduced;
+}
+
 export function HeroCard({
   phase,
   greeting,
@@ -59,203 +58,224 @@ export function HeroCard({
   onSearch: () => void;
   children: ReactNode;
 }) {
-  const c = PALETTE[phase];
-  const night = phase === 'night';
+  const night = phase === 'night' || phase === 'evening';
+  const reduced = useReducedMotion();
   const onTime = trainsLive != null ? Math.max(0, trainsLive - late) : null;
 
   return (
-    <header className="relative mt-[88px]" style={{ color: c.ink }}>
-      {/* Outside the card: sun or moon, and a little bus token. */}
-      <Sun color={c.sun} ray={c.ray} moon={night} />
-      <BusToken />
+    <header
+      className="relative mt-4 overflow-visible rounded-[28px] text-white shadow-[0_22px_44px_-22px_rgb(0_80_40/0.75)]"
+      style={{
+        background: night
+          ? 'linear-gradient(155deg, #03291a 0%, #005228 55%, #00722f 100%)'
+          : `linear-gradient(155deg, #006632 0%, ${GO_GREEN} 52%, #14a552 100%)`,
+      }}
+    >
+      {/* Livery stripe: white and lime, with a shimmer running along it. */}
+      <div aria-hidden className="absolute inset-x-0 top-0 h-[7px] overflow-hidden rounded-t-[28px]">
+        <div className="h-full w-full" style={{ background: `linear-gradient(90deg, #fff 0 38%, ${LIME} 38% 100%)` }} />
+        <div className="gh-shimmer absolute inset-y-0 w-1/3" />
+      </div>
 
-      {/* Mascot sits behind the card; only his head and hands show. */}
-      <Mascot night={night} />
-
-      <div
-        className="relative rounded-[28px] px-5 pt-6 pb-5 shadow-[0_18px_40px_-18px_rgb(120_60_10/0.55)]"
-        style={{ background: `linear-gradient(150deg, ${c.from} 0%, ${c.to} 100%)` }}
-      >
-        {/* Lantern rail along the top edge. */}
+      {/* Network diagram, clipped to the card's upper area. */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[290px] overflow-hidden rounded-t-[28px]">
+        <NetworkMap reduced={reduced} />
+        {/* Keeps the headline readable over the lines. */}
         <div
-          aria-hidden
-          className="absolute -top-[5px] right-5 left-5 h-[9px] rounded-full"
-          style={{ background: c.band, boxShadow: `0 6px 14px -4px ${c.band}` }}
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(95deg, rgb(0 50 24 / 0.68) 0%, rgb(0 60 28 / 0.35) 55%, transparent 80%)' }}
         />
-        <Drip left="21%" h={16} color={c.band} />
-        <Drip left="61%" h={24} color={c.band} delay="0.6s" />
-        <Drip left="90%" h={12} color={c.band} delay="1.2s" />
+      </div>
 
-        {/* Ripple rings, like a signal going out. */}
-        <div aria-hidden className="pointer-events-none absolute top-0 right-0 size-40 overflow-hidden rounded-tr-[28px]">
-          <span className="hc-ring absolute -top-16 -right-16 size-48 rounded-full border" style={{ borderColor: c.ink, '--ring-o': 0.16 } as React.CSSProperties} />
-          <span className="hc-ring absolute -top-24 -right-24 size-64 rounded-full border" style={{ borderColor: c.ink, '--ring-o': 0.1, animationDelay: '1.4s' } as React.CSSProperties} />
-        </div>
-
-        <div className="relative flex items-center justify-between gap-3">
+      <div className="relative px-5 pt-6 pb-5">
+        <div className="flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={onSearch}
             aria-label="Search stations, lines or buses"
-            className="grid size-11 place-items-center rounded-full shadow-sm transition-transform active:scale-95"
-            style={{ background: c.pill, color: c.pillInk }}
+            className="grid size-11 place-items-center rounded-full bg-white text-[#006632] shadow-md transition-transform active:scale-95"
           >
             <SearchIcon className="size-5" />
           </button>
+
+          {/* Departure-board style status. */}
           <span
-            className="flex items-center gap-2 rounded-full px-3.5 py-2 text-[10.5px] font-extrabold tracking-[0.14em] uppercase"
-            style={{ background: c.pill, color: c.pillInk }}
+            className="flex items-center gap-2.5 rounded-lg px-3 py-2 font-mono text-[11px] font-bold tracking-[0.1em] uppercase"
+            style={{ background: '#08150d', color: AMBER, boxShadow: 'inset 0 0 0 1px rgb(255 184 28 / 0.25)' }}
           >
-            <span className="live-dot size-2 rounded-full bg-[#16a34a]" aria-hidden />
-            {trainsLive == null ? 'Live' : `${trainsLive} trains live`}
-            {late > 0 ? <span style={{ color: c.accent }}>· {late} late</span> : null}
+            <span className="live-dot size-2 rounded-full" style={{ background: '#22c55e' }} aria-hidden />
+            {trainsLive == null ? 'Live' : `${trainsLive} trains`}
+            {late > 0 ? (
+              <span style={{ color: '#ff8a7a' }}>{late} late</span>
+            ) : trainsLive != null ? (
+              <span style={{ color: '#86efac' }}>on time</span>
+            ) : null}
           </span>
         </div>
 
-        <p className="relative mt-5 text-[14px] font-semibold opacity-80">{greeting}</p>
-        <h1
-          className="relative mt-0.5 text-[46px] leading-[0.98] font-bold tracking-tight"
-          style={{ fontFamily: SERIF, color: c.accent }}
-        >
-          Where to,
+        <p className="mt-5 text-[13px] font-semibold tracking-wide text-white/85">{greeting}</p>
+        <h1 className="mt-0.5 text-[44px] leading-[0.98] font-black tracking-[-0.03em]">
+          Where to
           <br />
-          today?
+          <span className="relative inline-block" style={{ color: LIME }}>
+            today?
+            <svg aria-hidden viewBox="0 0 150 12" className="absolute -bottom-2 left-0 h-3 w-full" fill="none" preserveAspectRatio="none">
+              <path
+                d="M3 8 C 30 1, 60 11, 90 5 S 135 3, 147 7"
+                stroke={LIME}
+                strokeWidth="3.4"
+                strokeLinecap="round"
+                pathLength="1"
+                className={reduced ? '' : 'gh-draw'}
+              />
+            </svg>
+          </span>
         </h1>
-        <p className="relative mt-2 text-[14px] font-medium opacity-80">
-          {onTime == null
-            ? 'Pick where you are and where you want to be.'
-            : `${onTime} of ${trainsLive} trains are on time right now.`}
-        </p>
 
-        <div className="relative mt-4">{children}</div>
+        <div className="mt-5 flex items-center gap-2.5">
+          <span className="text-[12px] font-semibold text-white/80">Next up</span>
+          <DestinationFlap reduced={reduced} />
+        </div>
+        {onTime != null ? (
+          <p className="mt-2 text-[12.5px] font-medium text-white/80">
+            {onTime} of {trainsLive} trains are running on time right now.
+          </p>
+        ) : null}
+
+        <div className="mt-4">{children}</div>
       </div>
-
-      {/* A little paw-print of a corner sticker, bottom left. */}
-      <span
-        aria-hidden
-        className="absolute -bottom-3 -left-2 grid size-9 -rotate-12 place-items-center rounded-full border-2 text-[15px] shadow-md"
-        style={{ background: c.from, borderColor: c.ink }}
-      >
-        🎫
-      </span>
     </header>
   );
 }
 
-function Drip({ left, h, color, delay = '0s' }: { left: string; h: number; color: string; delay?: string }) {
+/** A split-flap board that flips through destinations. */
+function DestinationFlap({ reduced }: { reduced: boolean }) {
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    if (reduced) return;
+    const timer = setInterval(() => setIndex((i) => (i + 1) % DESTINATIONS.length), 2600);
+    return () => clearInterval(timer);
+  }, [reduced]);
+
+  const name = DESTINATIONS[index];
   return (
     <span
-      aria-hidden
-      className="hc-drip absolute top-1 w-2 rounded-b-full"
-      style={{ left, height: h, background: color, animationDelay: delay }}
+      className="relative inline-flex h-8 min-w-[150px] items-center overflow-hidden rounded-md px-3 font-mono text-[14px] font-bold tracking-[0.06em] uppercase"
+      style={{ background: '#08150d', color: AMBER, boxShadow: 'inset 0 0 0 1px rgb(255 184 28 / 0.28)' }}
+      aria-live="off"
     >
-      <span className="absolute bottom-0 left-1/2 size-3 -translate-x-1/2 translate-y-1/3 rounded-full" style={{ background: color }} />
+      <span key={name} className={reduced ? '' : 'gh-flip'} style={{ display: 'inline-block' }}>
+        {name}
+      </span>
+      {/* The hinge line across the middle of a flap. */}
+      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-black/60" />
     </span>
   );
 }
 
-function Sun({ color, ray, moon }: { color: string; ray: string; moon: boolean }) {
+/** Lines converging on Union, with trains running along them. */
+function NetworkMap({ reduced }: { reduced: boolean }) {
   return (
-    <svg
-      aria-hidden
-      viewBox="0 0 60 60"
-      className="pointer-events-none absolute -top-14 right-1 size-14"
-    >
-      <g className={moon ? '' : 'hc-spin'} style={{ transformOrigin: '30px 30px' }}>
-        {!moon
-          ? Array.from({ length: 10 }, (_, i) => (
-              <line
-                key={i}
-                x1="30" y1="4" x2="30" y2="11"
-                stroke={ray}
-                strokeWidth="3"
-                strokeLinecap="round"
-                transform={`rotate(${i * 36} 30 30)`}
-              />
-            ))
-          : null}
-      </g>
-      <circle cx="30" cy="30" r="13" fill={color} stroke="#3b2412" strokeWidth="2.4" />
-      {moon ? <circle cx="35" cy="26" r="11" fill="#1e1b4b" opacity="0.55" /> : null}
+    <svg viewBox="0 0 400 260" preserveAspectRatio="xMaxYMin slice" className="absolute inset-0 size-full" fill="none">
+      <defs>
+        {LINES.map((line) => (
+          <path key={line.id} id={`gh-${line.id}`} d={line.d} />
+        ))}
+      </defs>
+
+      {/* White casing first, so every colour reads on green. */}
+      {LINES.map((line) => (
+        <use key={`c-${line.id}`} href={`#gh-${line.id}`} stroke="rgb(255 255 255 / 0.9)" strokeWidth="9" strokeLinecap="round" />
+      ))}
+      {LINES.map((line) => (
+        <use key={`l-${line.id}`} href={`#gh-${line.id}`} stroke={line.color} strokeWidth="5.4" strokeLinecap="round" />
+      ))}
+      {/* Stations: evenly spaced dots along each line. */}
+      {LINES.map((line) => (
+        <use
+          key={`s-${line.id}`}
+          href={`#gh-${line.id}`}
+          stroke="#fff"
+          strokeWidth="3.2"
+          strokeLinecap="round"
+          strokeDasharray="0.01 26"
+          opacity="0.95"
+        />
+      ))}
+
+      {/* Trains, out and back. */}
+      {LINES.map((line, i) => (
+        <Train
+          key={`t-${line.id}`}
+          color={line.color}
+          path={`#gh-${line.id}`}
+          dur={9 + i * 1.7}
+          begin={-i * 1.9}
+          reverse={i % 2 === 1}
+          reduced={reduced}
+          restX={230 + i * 8}
+          restY={160 + i * 4}
+        />
+      ))}
+
+      {/* Union: the hub, with a pulse going out. */}
+      <circle cx="300" cy="150" r="11" fill="#fff" />
+      <circle cx="300" cy="150" r="6.5" fill={GO_GREEN} />
+      {!reduced ? (
+        <circle cx="300" cy="150" r="11" stroke="#fff" strokeWidth="2" fill="none">
+          <animate attributeName="r" values="11;34" dur="2.8s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.75;0" dur="2.8s" repeatCount="indefinite" />
+        </circle>
+      ) : null}
+      <text x="300" y="176" textAnchor="middle" fontSize="10" fontWeight="800" fill="#fff" fontFamily="system-ui, sans-serif" letterSpacing="0.6" opacity="0.95">
+        UNION
+      </text>
     </svg>
   );
 }
 
-function BusToken() {
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 60 44"
-      className="hc-bob pointer-events-none absolute -top-11 -left-3 z-20 h-10 w-[52px]"
-    >
-      <rect x="4" y="6" width="52" height="27" rx="8" fill="#fb923c" stroke="#3b2412" strokeWidth="2.4" />
-      <rect x="10" y="12" width="12" height="9" rx="2.5" fill="#fff7e6" stroke="#3b2412" strokeWidth="1.6" />
-      <rect x="26" y="12" width="12" height="9" rx="2.5" fill="#fff7e6" stroke="#3b2412" strokeWidth="1.6" />
-      <rect x="42" y="12" width="9" height="9" rx="2.5" fill="#fff7e6" stroke="#3b2412" strokeWidth="1.6" />
-      <path d="M4 26h52" stroke="#3b2412" strokeWidth="1.6" />
-      <circle cx="16" cy="34" r="5" fill="#3b2412" />
-      <circle cx="44" cy="34" r="5" fill="#3b2412" />
-      <circle cx="16" cy="34" r="1.7" fill="#fff7e6" />
-      <circle cx="44" cy="34" r="1.7" fill="#fff7e6" />
-    </svg>
+function Train({
+  color,
+  path,
+  dur,
+  begin,
+  reverse,
+  reduced,
+  restX,
+  restY,
+}: {
+  color: string;
+  path: string;
+  dur: number;
+  begin: number;
+  reverse: boolean;
+  reduced: boolean;
+  restX: number;
+  restY: number;
+}) {
+  const body = (
+    <g>
+      <rect x="-9" y="-4.6" width="18" height="9.2" rx="3.4" fill="#fff" stroke={color} strokeWidth="2" />
+      <rect x="-5" y="-2" width="4" height="3.4" rx="1" fill={color} />
+      <rect x="0.6" y="-2" width="4" height="3.4" rx="1" fill={color} />
+      <circle cx="9.5" cy="0" r="1.6" fill="#fde047" />
+    </g>
   );
-}
-
-/** A friendly little train, peeking over the card and holding on with both hands. */
-function Mascot({ night }: { night: boolean }) {
-  const ink = '#3b2412';
+  if (reduced) return <g transform={`translate(${restX} ${restY})`}>{body}</g>;
   return (
-    <>
-      <svg
-        aria-hidden
-        viewBox="0 0 140 96"
-        className="hc-peek pointer-events-none absolute -top-[74px] left-1/2 z-0 h-[96px] w-[140px] -translate-x-1/2"
+    <g>
+      {body}
+      <animateMotion
+        dur={`${dur}s`}
+        begin={`${begin}s`}
+        repeatCount="indefinite"
+        rotate={reverse ? 'auto-reverse' : 'auto'}
+        keyPoints={reverse ? '1;0' : '0;1'}
+        keyTimes="0;1"
+        calcMode="linear"
       >
-        {/* Signal lamps for ears. */}
-        <circle cx="26" cy="26" r="13" fill="#34d399" stroke={ink} strokeWidth="2.6" />
-        <circle cx="26" cy="26" r="6" fill="#fff7e6" />
-        <circle cx="114" cy="26" r="13" fill="#34d399" stroke={ink} strokeWidth="2.6" />
-        <circle cx="114" cy="26" r="6" fill="#fff7e6" />
-
-        {/* Head: the front of a train. */}
-        <rect x="18" y="12" width="104" height="78" rx="36" fill="#34d399" stroke={ink} strokeWidth="2.8" />
-        <rect x="31" y="27" width="78" height="54" rx="24" fill="#fff7e6" />
-
-        {/* Headlight and GO badge. */}
-        <circle cx="70" cy="11" r="8" fill="#fde047" stroke={ink} strokeWidth="2.4" />
-        <rect x="54" y="15" width="32" height="13" rx="6.5" fill="#059669" stroke={ink} strokeWidth="2" />
-        <text x="70" y="25" textAnchor="middle" fontSize="9.5" fontWeight="800" fill="#fff" fontFamily="system-ui, sans-serif">
-          GO
-        </text>
-
-        {/* Face. */}
-        <g className="hc-blink" style={{ transformOrigin: '70px 50px' }}>
-          <circle cx="54" cy="50" r="5.2" fill={ink} />
-          <circle cx="86" cy="50" r="5.2" fill={ink} />
-          <circle cx="55.8" cy="48" r="1.7" fill="#fff" />
-          <circle cx="87.8" cy="48" r="1.7" fill="#fff" />
-        </g>
-        <ellipse cx="44" cy="61" rx="7.5" ry="5" fill="#ff8fa3" opacity="0.75" />
-        <ellipse cx="96" cy="61" rx="7.5" ry="5" fill="#ff8fa3" opacity="0.75" />
-        <path d="M62 60q8 8 16 0" fill="none" stroke={ink} strokeWidth="2.6" strokeLinecap="round" />
-        {night ? <path d="M40 14q30-14 60 0" fill="none" stroke="#fde68a" strokeWidth="2" opacity="0.6" /> : null}
-      </svg>
-
-      {/* Hands, in front of the card edge. */}
-      <svg
-        aria-hidden
-        viewBox="0 0 140 30"
-        className="pointer-events-none absolute -top-[15px] left-1/2 z-20 h-[30px] w-[140px] -translate-x-1/2"
-      >
-        <g className="hc-wave" style={{ transformOrigin: '38px 18px' }}>
-          <ellipse cx="38" cy="16" rx="13.5" ry="10.5" fill="#fff7e6" stroke={ink} strokeWidth="2.6" />
-          <path d="M31 11v9M38 10v10M45 11v9" stroke={ink} strokeWidth="1.8" strokeLinecap="round" />
-        </g>
-        <g className="hc-wave" style={{ transformOrigin: '102px 18px', animationDelay: '0.5s' }}>
-          <ellipse cx="102" cy="16" rx="13.5" ry="10.5" fill="#fff7e6" stroke={ink} strokeWidth="2.6" />
-          <path d="M95 11v9M102 10v10M109 11v9" stroke={ink} strokeWidth="1.8" strokeLinecap="round" />
-        </g>
-      </svg>
-    </>
+        <mpath href={path} />
+      </animateMotion>
+    </g>
   );
 }

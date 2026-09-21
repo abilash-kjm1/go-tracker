@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { SearchIcon, SearchOverlay } from '@/components/search/SearchOverlay';
 import { HeroCard } from './HeroCard';
-import { usePhase } from './HeroScene';
+import { usePhase } from './phase';
 import { PlannerForm, PlannerResults, useTripPlanner } from '@/components/plan/TripPlanner';
 import { StationSummaryCard } from '@/components/stations/StationSummaryCard';
 import { LiveIndicator } from '@/components/ui/LiveIndicator';
