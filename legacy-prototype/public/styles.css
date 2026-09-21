@@ -1,0 +1,57 @@
+:root {
+  --bg: #0f1216;
+  --panel: #171c22;
+  --line: #262e37;
+  --text: #e8edf2;
+  --muted: #94a2b0;
+  --go-green: #00853f;
+  --warn: #e8a33d;
+  --bad: #e2564a;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 16px;
+  font: 15px/1.45 system-ui, -apple-system, Segoe UI, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+h1 { font-size: 20px; margin: 0; }
+.controls { display: flex; gap: 8px; flex: 1 1 320px; }
+input, button {
+  font: inherit;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+}
+input { flex: 1; min-width: 0; }
+input:focus { outline: 2px solid var(--go-green); outline-offset: 1px; }
+button { background: var(--go-green); border-color: var(--go-green); color: #fff; cursor: pointer; }
+button:hover { filter: brightness(1.1); }
+.banner {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #3a1f1d;
+  border: 1px solid var(--bad);
+}
+main { margin-top: 16px; }
+.meta { color: var(--muted); font-size: 13px; margin-bottom: 8px; min-height: 18px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+td.count { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+td.time { font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); font-size: 12px; }
+.pill.ok { border-color: var(--go-green); color: #7ee2a8; }
+.pill.warn { border-color: var(--warn); color: var(--warn); }
+.pill.bad { border-color: var(--bad); color: var(--bad); }
+.empty { color: var(--muted); }
+footer { margin-top: 24px; color: var(--muted); font-size: 12px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+@media (max-width: 620px) {
+  th:nth-child(5), td:nth-child(5) { display: none; }
+}

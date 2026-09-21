@@ -1,0 +1,30 @@
+name: Refresh GO schedule
+
+# The timetable is baked into each deployment (see `vercel-build`), so it only
+# stays current if the site is redeployed. This asks Vercel to rebuild every day
+# at 08:30 UTC (about 4:30am Toronto, after service ends and before the morning
+# peak), which re-downloads the GO GTFS feed and rolls the 14-day window forward.
+#
+# Setup: in Vercel, Project Settings -> Git -> Deploy Hooks, create one named
+# "daily-refresh" on your production branch, then add its URL as a repository
+# secret called VERCEL_DEPLOY_HOOK.
+
+on:
+  schedule:
+    - cron: '30 8 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Vercel rebuild
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "VERCEL_DEPLOY_HOOK is not set - skipping. See the comment at the top of this file."
+            exit 1
+          fi
+          curl --fail --silent --show-error -X POST "$HOOK"
+          echo "Rebuild requested."

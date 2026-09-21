@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GO Tracker</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>🚆</text></svg>">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header>
+  <h1>🚆 GO Tracker</h1>
+  <div class="controls">
+    <label class="sr-only" for="station">Station</label>
+    <input id="station" list="stations" placeholder="Search a station or stop…" autocomplete="off">
+    <datalist id="stations"></datalist>
+    <button id="refresh" type="button">Refresh</button>
+  </div>
+</header>
+
+<p id="banner" class="banner" hidden></p>
+
+<main>
+  <div id="meta" class="meta"></div>
+  <table id="board">
+    <thead>
+      <tr>
+        <th>In</th><th>Departs</th><th>Line</th><th>Destination</th><th>Platform</th><th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <p id="empty" class="empty">Pick a station to see live departures.</p>
+</main>
+
+<footer>Data: Metrolinx Open Data API · refreshes every 60s</footer>
+<script src="/app.js" type="module"></script>
+</body>
+</html>

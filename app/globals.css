@@ -1,0 +1,318 @@
+@import 'tailwindcss';
+
+/*
+ * GO Tracker visual identity.
+ *
+ * Graphite surfaces, one signal accent, and a single family of rounded
+ * surfaces. Route colours come from the GTFS feed, so the chrome stays neutral
+ * and lets the network's own colours do the identifying.
+ */
+
+@theme {
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI',
+    Roboto, sans-serif;
+
+  --color-ink-50: #f6f8fa;
+  --color-ink-100: #eceff4;
+  --color-ink-200: #d7dde6;
+  --color-ink-300: #b3bdcc;
+  --color-ink-400: #7f8b9e;
+  --color-ink-500: #5a6579;
+  --color-ink-600: #3d4657;
+  --color-ink-700: #2a3140;
+  --color-ink-800: #1b2130;
+  --color-ink-900: #121722;
+  --color-ink-950: #0b0f17;
+
+  --color-signal-300: #6ee7b7;
+  --color-signal-400: #34d399;
+  --color-signal-500: #10b981;
+  --color-signal-600: #059669;
+
+  --color-warn-400: #fbbf24;
+  --color-warn-500: #f59e0b;
+  --color-alert-400: #f87171;
+  --color-alert-500: #ef4444;
+
+  --radius-sheet: 1.75rem;
+}
+
+:root {
+  --bg: var(--color-ink-50);
+  --bg-elevated: #ffffff;
+  --bg-sunken: #eef1f6;
+  --fg: var(--color-ink-900);
+  --fg-muted: var(--color-ink-500);
+  /* ink-400 was only ~3.6:1 on the light background. */
+  --fg-faint: #67728a;
+  --border: rgb(15 23 42 / 0.09);
+  --border-strong: rgb(15 23 42 / 0.16);
+  --accent: var(--color-signal-600);
+  --accent-fg: #ffffff;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06), 0 8px 24px -16px rgb(15 23 42 / 0.25);
+
+  /*
+   * Direction colours. Deliberately outside the status palette (green / amber
+   * / red) so "which way is it going" never reads as "is it late".
+   */
+  --dir-a: #3b6fe0;
+  --dir-a-surface: rgb(59 111 224 / 0.1);
+  --dir-a-border: rgb(59 111 224 / 0.28);
+  --dir-b: #8b46d6;
+  --dir-b-surface: rgb(139 70 214 / 0.1);
+  --dir-b-border: rgb(139 70 214 / 0.28);
+
+  /*
+   * Spine colours: the deep, saturated end of the direction hues, so white
+   * glyphs read on them in either theme. Direction owns the card's biggest
+   * block; the line (LW, GT...) is only a small pill, so the line's own colour
+   * never has to harmonise with the direction hue.
+   */
+  --spine-a: #2f5fd0;
+  --spine-b: #7a3fc2;
+  --dir-c: #64748b;
+  --dir-c-surface: rgb(100 116 139 / 0.1);
+  --dir-c-border: rgb(100 116 139 / 0.28);
+  --dir-d: #a16207;
+  --dir-d-surface: rgb(161 98 7 / 0.1);
+  --dir-d-border: rgb(161 98 7 / 0.28);
+
+  /* Express. Teal, so it reads as a property of the service and can never be
+     mistaken for a status (green/amber/red) or a direction (blue/purple). */
+  --express: #0e7490;
+  --express-surface: rgb(14 116 144 / 0.12);
+  --express-border: rgb(14 116 144 / 0.3);
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'],
+:root:not([data-theme='light']) {
+  @media (prefers-color-scheme: dark) {
+    --bg: var(--color-ink-950);
+    --bg-elevated: var(--color-ink-900);
+    --bg-sunken: #070a10;
+    --fg: var(--color-ink-50);
+    --fg-muted: var(--color-ink-300);
+    --fg-faint: #8d98ab;
+    --border: rgb(148 163 184 / 0.14);
+    --border-strong: rgb(148 163 184 / 0.26);
+    --accent: var(--color-signal-400);
+    --accent-fg: #06110c;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -20px rgb(0 0 0 / 0.9);
+    --dir-a: #7aa2ff;
+    --dir-a-surface: rgb(122 162 255 / 0.14);
+    --dir-a-border: rgb(122 162 255 / 0.34);
+    --dir-b: #c48bff;
+    --dir-b-surface: rgb(196 139 255 / 0.14);
+    --dir-b-border: rgb(196 139 255 / 0.34);
+    --dir-c: #94a3b8;
+    --dir-c-surface: rgb(148 163 184 / 0.14);
+    --dir-c-border: rgb(148 163 184 / 0.32);
+    --dir-d: #d9a441;
+    --dir-d-surface: rgb(217 164 65 / 0.14);
+    --dir-d-border: rgb(217 164 65 / 0.32);
+    --express: #22d3ee;
+    --express-surface: rgb(34 211 238 / 0.14);
+    --express-border: rgb(34 211 238 / 0.32);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: var(--color-ink-950);
+  --bg-elevated: var(--color-ink-900);
+  --bg-sunken: #070a10;
+  --fg: var(--color-ink-50);
+  --fg-muted: var(--color-ink-300);
+  --fg-faint: #8d98ab;
+  --border: rgb(148 163 184 / 0.14);
+  --border-strong: rgb(148 163 184 / 0.26);
+  --accent: var(--color-signal-400);
+  --accent-fg: #06110c;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -20px rgb(0 0 0 / 0.9);
+  --dir-a: #7aa2ff;
+  --dir-a-surface: rgb(122 162 255 / 0.14);
+  --dir-a-border: rgb(122 162 255 / 0.34);
+  --dir-b: #c48bff;
+  --dir-b-surface: rgb(196 139 255 / 0.14);
+  --dir-b-border: rgb(196 139 255 / 0.34);
+  --dir-c: #94a3b8;
+  --dir-c-surface: rgb(148 163 184 / 0.14);
+  --dir-c-border: rgb(148 163 184 / 0.32);
+  --dir-d: #d9a441;
+  --dir-d-surface: rgb(217 164 65 / 0.14);
+  --dir-d-border: rgb(217 164 65 / 0.32);
+  --express: #22d3ee;
+  --express-surface: rgb(34 211 238 / 0.14);
+  --express-border: rgb(34 211 238 / 0.32);
+  color-scheme: dark;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+}
+
+/*
+ * Defined with @utility (not @layer utilities) so Tailwind generates variants
+ * for them — `sm:surface` and `md:pt-safe` have to work.
+ */
+@utility surface {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+}
+@utility hairline {
+  border-color: var(--border);
+}
+@utility text-muted {
+  color: var(--fg-muted);
+}
+@utility text-faint {
+  color: var(--fg-faint);
+}
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility mb-safe {
+  margin-bottom: env(safe-area-inset-bottom);
+}
+@utility h-nav {
+  height: calc(4rem + env(safe-area-inset-bottom));
+}
+@utility scroll-touch {
+  -webkit-overflow-scrolling: touch;
+}
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* --- motion ------------------------------------------------------------- */
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-rise {
+  animation: rise 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-sheet {
+  animation: sheet-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.live-dot {
+  animation: pulse-ring 2.4s ease-out infinite;
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-sunken);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--fg) 7%, transparent),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --- maplibre ----------------------------------------------------------- */
+
+.maplibregl-ctrl-attrib {
+  font-size: 10px;
+  background: color-mix(in oklab, var(--bg-elevated) 86%, transparent) !important;
+  color: var(--fg-muted);
+  border-radius: 6px;
+}
+.maplibregl-ctrl-attrib a {
+  color: var(--fg-muted);
+}
+.maplibregl-canvas:focus {
+  outline: none;
+}
+
+/* Vehicle markers collapse to their icon when the map is zoomed out. */
+.gt-marker[data-compact='true'] {
+  padding: 3px;
+}
+.gt-marker[data-compact='true'] .gt-marker-label {
+  display: none !important;
+}
+.gt-marker:hover {
+  transform: scale(1.06);
+  z-index: 2;
+}
