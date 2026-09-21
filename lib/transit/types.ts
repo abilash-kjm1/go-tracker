@@ -57,6 +57,8 @@ export interface LiveVehicle {
 
   nextStopId?: string;
   nextStopName?: string;
+  /** The station it is standing at (or has only just left), when GO reports one. */
+  atStopId?: string;
 
   /** Free-text status from the upstream, e.g. "On Time at Bronte GO". */
   detail?: string;
@@ -167,7 +169,11 @@ export interface TripStopTime {
   estimatedDeparture?: string;
   /** Rider-facing boarding location, when the data provides one. */
   platform?: string;
-  status: 'departed' | 'current' | 'upcoming';
+  /**
+   * departed: the vehicle has passed it. current: the vehicle is standing at it.
+   * next: the one it is heading for. upcoming: further along.
+   */
+  status: 'departed' | 'current' | 'next' | 'upcoming';
 }
 
 export interface TripDetail {

@@ -1,3 +1,4 @@
+import { distanceToSegmentKm } from '../geo';
 import 'server-only';
 
 import { cached, peek, upstreamStats } from '../cache';
@@ -139,7 +140,7 @@ export class GoTrackerTemporaryProvider implements TransitDataProvider {
     const delaySeconds = rawDelay != null ? Math.max(0, rawDelay) : undefined;
 
     const next = scheduled
-      ? await this.projectNextStop(scheduled, delaySeconds ?? 0, row.InStationId)
+      ? await this.projectNextStop(scheduled, delaySeconds ?? 0, row.InStationId, lat, lon)
       : null;
 
     return {
@@ -160,6 +161,7 @@ export class GoTrackerTemporaryProvider implements TransitDataProvider {
       express: toBool(row.Express),
       nextStopId: next?.stopId,
       nextStopName: next?.stopName,
+      atStopId: row.InStationId?.trim() || undefined,
       detail: row.Detail?.trim() || undefined,
       delayReason: row.DelayMemo?.trim() || undefined,
       vehicleLabel: row.EquipmentCode?.trim() || undefined,
@@ -177,10 +179,34 @@ export class GoTrackerTemporaryProvider implements TransitDataProvider {
     scheduled: { trip: { s: Array<[string, number | null, number | null]> }; dateKey: string },
     delaySeconds: number,
     inStationId?: string,
+    lat?: number,
+    lon?: number,
   ): Promise<{ stopId: string; stopName: string } | null> {
     const now = Date.now();
     const stops = scheduled.trip.s;
     const atIndex = inStationId ? stops.findIndex(([id]) => id === inStationId) : -1;
+
+    // Between stations the timetable is the wrong witness: an early or late
+    // train is nowhere near where the schedule says. Use where it actually is,
+    // and take the stop at the far end of the nearest leg of its route.
+    if (atIndex < 0 && lat != null && lon != null && Number.isFinite(lat) && Number.isFinite(lon)) {
+      const located = await Promise.all(stops.map(([id]) => getStop(id)));
+      let bestLeg = -1;
+      let bestKm = Infinity;
+      for (let i = 0; i < located.length - 1; i++) {
+        const a = located[i];
+        const b = located[i + 1];
+        if (!a || !b) continue;
+        const km = distanceToSegmentKm(lat, lon, a, b);
+        if (km < bestKm) {
+          bestKm = km;
+          bestLeg = i;
+        }
+      }
+      // Within a few km of its line: trust the position over the clock.
+      const target = bestLeg >= 0 && bestKm < 3 ? located[bestLeg + 1] : null;
+      if (target) return { stopId: target.id, stopName: target.name };
+    }
 
     for (let i = Math.max(atIndex + 1, 0); i < stops.length; i++) {
       const [stopId, arr, dep] = stops[i];
@@ -441,18 +467,21 @@ export class GoTrackerTemporaryProvider implements TransitDataProvider {
           ? new Date(scheduledDeparture.getTime() + delaySeconds * 1000)
           : scheduledDeparture;
 
+      // With a live position the timeline is drawn from where the vehicle is:
+      // passed stops behind it, the stop it is standing at, the one it is
+      // heading for. Without one it can only say what the clock says.
       let status: TripStopTime['status'] = 'upcoming';
       if (live?.nextStopId) {
-        if (stopId === live.nextStopId) {
+        const standingHere = !!live.atStopId && live.atStopId === stopId && live.isMoving === false;
+        if (standingHere) {
           status = 'current';
+          currentMarked = true;
+        } else if (stopId === live.nextStopId) {
+          status = 'next';
           currentMarked = true;
         } else status = currentMarked ? 'upcoming' : 'departed';
-      } else if (estimated) {
-        if (estimated.getTime() < now) status = 'departed';
-        else if (!currentMarked) {
-          status = 'current';
-          currentMarked = true;
-        }
+      } else if (estimated && estimated.getTime() < now) {
+        status = 'departed';
       }
 
       stops.push({

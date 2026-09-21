@@ -31,7 +31,11 @@ export function TripMap({ trip }: { trip: TripDetail }) {
 
   const located = trip.stops.filter((s) => Number.isFinite(s.lat) && Number.isFinite(s.lon));
   const points = located.map((s) => [s.lon as number, s.lat as number] as [number, number]);
-  const nextIndex = located.findIndex((s) => s.status !== 'departed');
+  const nextIndex = Math.max(
+    located.findIndex((s) => s.status === 'next'),
+    located.findIndex((s) => s.status === 'current'),
+    located.findIndex((s) => s.status !== 'departed'),
+  );
   const stopFeatures = located.map((s, i) => {
     const clock = formatClockParts(s.estimatedDeparture ?? s.scheduledDeparture ?? s.scheduledArrival);
     return {

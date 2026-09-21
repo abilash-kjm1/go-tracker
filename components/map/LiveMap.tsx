@@ -297,7 +297,11 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
     const located = (trip?.stops ?? []).filter(
       (st) => Number.isFinite(st.lat) && Number.isFinite(st.lon),
     );
-    const next = located.findIndex((st) => st.status !== 'departed');
+    const next = Math.max(
+      located.findIndex((st) => st.status === 'next'),
+      located.findIndex((st) => st.status === 'current'),
+      located.findIndex((st) => st.status !== 'departed'),
+    );
     const color = trip?.routeColor ?? '#10b981';
     const line = {
       type: 'Feature' as const,
@@ -680,7 +684,7 @@ function FollowCard({
   onRecentre: () => void;
   onStop: () => void;
 }) {
-  const upcoming = (trip?.stops ?? []).filter((st) => st.status !== 'departed');
+  const upcoming = (trip?.stops ?? []).filter((st) => st.status === 'next' || st.status === 'upcoming');
   const next = upcoming[0];
   const nextClock = next
     ? formatClockParts(next.estimatedDeparture ?? next.scheduledDeparture ?? next.scheduledArrival)

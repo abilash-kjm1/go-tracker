@@ -179,7 +179,10 @@ export function TripScreen({ tripId }: { tripId: string }) {
                     className={clsx(
                       'z-10 mt-1 grid size-3.5 place-items-center rounded-full border-2',
                       stop.status === 'departed' && 'border-[var(--fg-faint)] bg-[var(--fg-faint)]',
+                      // Standing here: solid and pulsing. Heading here: a ring only, so
+                      // it never reads as "the train is already there".
                       stop.status === 'current' && 'border-[var(--accent)] bg-[var(--accent)] live-dot',
+                      stop.status === 'next' && 'size-4 border-[3px] border-[var(--accent)] bg-[var(--bg-elevated)]',
                       stop.status === 'upcoming' && 'border-[var(--border-strong)] bg-[var(--bg-elevated)]',
                     )}
                     aria-hidden
@@ -188,7 +191,11 @@ export function TripScreen({ tripId }: { tripId: string }) {
                     <span
                       className={clsx(
                         'w-0.5 flex-1',
-                        stop.status === 'departed' ? 'bg-[var(--fg-faint)]' : 'bg-[var(--border)]',
+                        stop.status === 'departed' && trip.stops[index + 1]?.status === 'next'
+                          ? 'bg-[var(--accent)]'
+                          : stop.status === 'departed'
+                            ? 'bg-[var(--fg-faint)]'
+                            : 'bg-[var(--border)]',
                       )}
                       aria-hidden
                     />
@@ -199,11 +206,21 @@ export function TripScreen({ tripId }: { tripId: string }) {
                   <span
                     className={clsx(
                       'min-w-0 truncate',
-                      stop.status === 'current' ? 'font-semibold' : 'font-medium',
+                      stop.status === 'current' || stop.status === 'next' ? 'font-semibold' : 'font-medium',
                       stop.status === 'departed' && 'text-[var(--fg-muted)]',
                     )}
                   >
                     {stop.stopName}
+                    {stop.status === 'current' ? (
+                      <span className="ml-2 rounded-full bg-[var(--accent)] px-2 py-0.5 text-[10px] font-bold tracking-wide text-[var(--accent-fg)] uppercase">
+                        Train is here
+                      </span>
+                    ) : null}
+                    {stop.status === 'next' ? (
+                      <span className="ml-2 rounded-full border border-[var(--accent)] px-2 py-0.5 text-[10px] font-bold tracking-wide text-[var(--accent)] uppercase">
+                        Next stop
+                      </span>
+                    ) : null}
                     {stop.platform ? (
                       <span className="ml-2 text-[13px] font-normal text-muted">{stop.platform}</span>
                     ) : null}
