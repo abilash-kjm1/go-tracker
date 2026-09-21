@@ -220,130 +220,261 @@ function Hanger({
 
 // ---- the four charms -------------------------------------------------------
 
-/** A struck metal token that flips end over end. */
-function Token({ station }: { station: (typeof STATIONS)[number] }) {
+/**
+ * Engraved lettering: a dark cut with a light lip below it, which is what makes
+ * type read as machined into a surface rather than printed on top.
+ */
+function Engraved({
+  children,
+  y,
+  size,
+  dark,
+  light,
+  family = 'ui-monospace, SFMono-Regular, monospace',
+  spacing = 1,
+}: {
+  children: string;
+  y: number;
+  size: number;
+  dark: string;
+  light: string;
+  family?: string;
+  spacing?: number;
+}) {
   return (
-    <svg viewBox="0 0 100 100" className="size-[86px] drop-shadow-lg" aria-hidden>
+    <g textAnchor="middle" fontFamily={family} fontWeight={700} letterSpacing={spacing}>
+      <text x="50" y={y + 1.1} fontSize={size} fill={light} opacity="0.55">
+        {children}
+      </text>
+      <text x="50" y={y} fontSize={size} fill={dark}>
+        {children}
+      </text>
+    </g>
+  );
+}
+
+/** Anodised aluminium, brushed and laser-etched. */
+function MachinedTag({ station }: { station: (typeof STATIONS)[number] }) {
+  return (
+    <svg viewBox="0 0 100 100" className="size-[92px]" aria-hidden>
       <defs>
-        <linearGradient id="tok-face" x1="0" y1="0" x2="0.7" y2="1">
-          <stop offset="0" stopColor="#fdf6e3" />
-          <stop offset="0.45" stopColor="#d8c48c" />
-          <stop offset="1" stopColor="#a8843f" />
+        <linearGradient id="mt-body" x1="0" y1="0" x2="0.25" y2="1">
+          <stop offset="0" stopColor="#fbfcfd" />
+          <stop offset="0.12" stopColor="#d9dee5" />
+          <stop offset="0.34" stopColor="#aab2bd" />
+          <stop offset="0.52" stopColor="#eef1f5" />
+          <stop offset="0.7" stopColor="#9aa3af" />
+          <stop offset="0.88" stopColor="#c3cad3" />
+          <stop offset="1" stopColor="#848d99" />
         </linearGradient>
-        <linearGradient id="tok-shine" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#fff" stopOpacity="0.9" />
-          <stop offset="0.5" stopColor="#fff" stopOpacity="0" />
+        <linearGradient id="mt-rim" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.95" />
+          <stop offset="0.5" stopColor="#ffffff" stopOpacity="0.1" />
+          <stop offset="1" stopColor="#5b6472" stopOpacity="0.8" />
         </linearGradient>
+        {/* Brushed grain: fine noise stretched sideways. */}
+        <filter id="mt-brush" x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.02 1.4" numOctaves="2" result="n" />
+          <feColorMatrix in="n" type="saturate" values="0" />
+          <feComponentTransfer>
+            <feFuncA type="linear" slope="0.16" intercept="0" />
+          </feComponentTransfer>
+        </filter>
+        <clipPath id="mt-clip">
+          <rect x="21" y="12" width="58" height="76" rx="15" />
+        </clipPath>
       </defs>
-      <circle cx="50" cy="50" r="40" fill="url(#tok-face)" stroke="#6f5522" strokeWidth="3" />
-      <circle cx="50" cy="50" r="33" fill="none" stroke="#6f5522" strokeWidth="1.5" opacity="0.5" />
-      {/* Milled edge. */}
-      {Array.from({ length: 36 }, (_, i) => (
-        <line
-          key={i}
-          x1="50"
-          y1="11"
-          x2="50"
-          y2="15"
-          stroke="#6f5522"
-          strokeWidth="1.6"
-          opacity="0.55"
-          transform={`rotate(${i * 10} 50 50)`}
-        />
-      ))}
-      <text x="50" y="57" textAnchor="middle" fontSize="26" fontWeight="800" fill="#4a3612" fontFamily="ui-monospace, monospace" letterSpacing="1">
+
+      <rect x="21" y="14" width="58" height="76" rx="15" fill="#39404a" opacity="0.35" />
+      <rect x="21" y="12" width="58" height="76" rx="15" fill="url(#mt-body)" />
+      <g clipPath="url(#mt-clip)">
+        <rect x="21" y="12" width="58" height="76" filter="url(#mt-brush)" />
+      </g>
+      <rect x="21" y="12" width="58" height="76" rx="15" fill="none" stroke="url(#mt-rim)" strokeWidth="1.6" />
+
+      {/* Fixing hole, with its own shadow inside. */}
+      <circle cx="50" cy="24" r="5.4" fill="#6b7480" />
+      <circle cx="50" cy="24.8" r="5.4" fill="#0f1319" opacity="0.5" />
+      <circle cx="50" cy="24" r="5.4" fill="none" stroke="#eef1f5" strokeWidth="1.2" opacity="0.85" />
+
+      <Engraved y={58} size={23} dark="#454c57" light="#ffffff" spacing={1.5}>
         {station.code}
-      </text>
-      <text x="50" y="72" textAnchor="middle" fontSize="7.5" fill="#6f5522" fontFamily="ui-monospace, monospace" letterSpacing="2">
-        GO RAIL
-      </text>
-      <path d="M50 10a40 40 0 0 0-40 40h14a26 26 0 0 1 26-26Z" fill="url(#tok-shine)" />
+      </Engraved>
+      <Engraved y={74} size={6.5} dark="#5a626d" light="#ffffff" spacing={3}>
+        GO TRACKER
+      </Engraved>
     </svg>
   );
 }
 
-/** A station-board roller that turns on its side, flipping the code past. */
-function Roller({ station }: { station: (typeof STATIONS)[number] }) {
+/** Hard enamel in a polished gold cloison. */
+function EnamelPin({ station }: { station: (typeof STATIONS)[number] }) {
   return (
-    <svg viewBox="0 0 100 100" className="size-[86px] drop-shadow-lg" aria-hidden>
+    <svg viewBox="0 0 100 100" className="size-[92px]" aria-hidden>
       <defs>
-        <linearGradient id="rol-body" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#2b3442" />
-          <stop offset="0.18" stopColor="#0d141d" />
-          <stop offset="0.5" stopColor="#151f2b" />
-          <stop offset="0.82" stopColor="#0d141d" />
-          <stop offset="1" stopColor="#2b3442" />
+        <linearGradient id="ep-gold" x1="0.15" y1="0" x2="0.85" y2="1">
+          <stop offset="0" stopColor="#fff4c9" />
+          <stop offset="0.22" stopColor="#e6bd63" />
+          <stop offset="0.45" stopColor="#a87b28" />
+          <stop offset="0.62" stopColor="#f6dd97" />
+          <stop offset="0.82" stopColor="#c2913a" />
+          <stop offset="1" stopColor="#8a6420" />
         </linearGradient>
-      </defs>
-      <rect x="10" y="26" width="80" height="48" rx="10" fill="url(#rol-body)" stroke="#000" strokeWidth="2" />
-      {/* End caps, so it reads as a cylinder. */}
-      <rect x="6" y="30" width="7" height="40" rx="3.5" fill="#94a3b8" />
-      <rect x="87" y="30" width="7" height="40" rx="3.5" fill="#94a3b8" />
-      <text x="50" y="58" textAnchor="middle" fontSize="24" fontWeight="800" fill="#ffb81c" fontFamily="ui-monospace, monospace" letterSpacing="1.5">
-        {station.code}
-      </text>
-      {/* The hinge across the middle of a flap. */}
-      <line x1="12" y1="50" x2="88" y2="50" stroke="#000" strokeWidth="1.6" opacity="0.8" />
-      <rect x="10" y="26" width="80" height="20" rx="10" fill="#fff" opacity="0.05" />
-    </svg>
-  );
-}
-
-/** A brass compass whose needle sweeps round and settles. */
-function Compass({ station }: { station: (typeof STATIONS)[number] }) {
-  return (
-    <svg viewBox="0 0 100 100" className="size-[86px] drop-shadow-lg" aria-hidden>
-      <defs>
-        <radialGradient id="cmp-face" cx="0.35" cy="0.3">
-          <stop offset="0" stopColor="#fffaf0" />
-          <stop offset="1" stopColor="#e6d5ad" />
+        <radialGradient id="ep-enamel" cx="0.34" cy="0.26" r="0.85">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.5" />
+          <stop offset="0.28" stopColor={station.color} />
+          <stop offset="1" stopColor="#000000" stopOpacity="0.55" />
         </radialGradient>
-      </defs>
-      <circle cx="50" cy="50" r="42" fill="#b98f3e" stroke="#6d5323" strokeWidth="3" />
-      <circle cx="50" cy="50" r="34" fill="url(#cmp-face)" stroke="#6d5323" strokeWidth="1.5" />
-      {['N', 'E', 'S', 'W'].map((letter, i) => (
-        <text
-          key={letter}
-          x="50"
-          y="24"
-          textAnchor="middle"
-          fontSize="8"
-          fontWeight="700"
-          fill="#6d5323"
-          fontFamily="system-ui, sans-serif"
-          transform={`rotate(${i * 90} 50 50)`}
-        >
-          {letter}
-        </text>
-      ))}
-      <path d="M50 26 57 50 50 46 43 50Z" fill={station.color} />
-      <path d="M50 74 43 50 50 54 57 50Z" fill="#7b8794" />
-      <circle cx="50" cy="50" r="4" fill="#6d5323" />
-      <rect x="31" y="58" width="38" height="16" rx="8" fill="#6d5323" />
-      <text x="50" y="70" textAnchor="middle" fontSize="11" fontWeight="800" fill="#ffe9b8" fontFamily="ui-monospace, monospace">
-        {station.code}
-      </text>
-    </svg>
-  );
-}
-
-/** A faceted gem in the line's colour, glinting as it turns. */
-function Prism({ station }: { station: (typeof STATIONS)[number] }) {
-  return (
-    <svg viewBox="0 0 100 100" className="size-[86px] drop-shadow-lg" aria-hidden>
-      <defs>
-        <linearGradient id="gem-l" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#fff" stopOpacity="0.75" />
+        <linearGradient id="ep-gloss" x1="0" y1="0" x2="0.4" y2="1">
+          <stop offset="0" stopColor="#fff" stopOpacity="0.85" />
+          <stop offset="0.55" stopColor="#fff" stopOpacity="0.06" />
           <stop offset="1" stopColor="#fff" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d="M50 8 84 34 71 86H29L16 34Z" fill={station.color} stroke="#fff" strokeWidth="2.5" strokeLinejoin="round" />
-      <path d="M50 8 71 86 50 60 29 86Z" fill="#000" opacity="0.18" />
-      <path d="M50 8 16 34l34 26Z" fill="url(#gem-l)" />
-      <path d="M16 34h68" stroke="#fff" strokeWidth="1.6" opacity="0.45" />
-      <text x="50" y="52" textAnchor="middle" fontSize="20" fontWeight="800" fill="#fff" fontFamily="system-ui, sans-serif">
+
+      <ellipse cx="50" cy="90" rx="26" ry="4" fill="#0b0f16" opacity="0.28" />
+      <circle cx="50" cy="50" r="41" fill="url(#ep-gold)" />
+      <circle cx="50" cy="50" r="41" fill="none" stroke="#7a5716" strokeWidth="1.2" opacity="0.7" />
+      <circle cx="50" cy="50" r="33.5" fill={station.color} />
+      <circle cx="50" cy="50" r="33.5" fill="url(#ep-enamel)" />
+      {/* The cloison: a raised gold rib holding the enamel. */}
+      <circle cx="50" cy="50" r="33.5" fill="none" stroke="url(#ep-gold)" strokeWidth="2.6" />
+      <circle cx="50" cy="50" r="27" fill="none" stroke="url(#ep-gold)" strokeWidth="1.4" opacity="0.75" />
+
+      <text
+        x="50"
+        y="58"
+        textAnchor="middle"
+        fontSize="23"
+        fontWeight="800"
+        fill="url(#ep-gold)"
+        fontFamily="system-ui, -apple-system, sans-serif"
+        letterSpacing="0.5"
+      >
         {station.code}
       </text>
+
+      {/* Glaze: a hard gloss crescent, the giveaway of real enamel. */}
+      <path d="M50 17a33.5 33.5 0 0 0-33.5 33.5c0 4 .7 7.8 2 11.3C14 43 29 27 50 27Z" fill="url(#ep-gloss)" />
+      <circle cx="50" cy="50" r="41" fill="none" stroke="#fff" strokeWidth="0.8" opacity="0.35" />
+    </svg>
+  );
+}
+
+/** Smoked glass with the code lit from inside. */
+function GlassDisc({ station }: { station: (typeof STATIONS)[number] }) {
+  return (
+    <svg viewBox="0 0 100 100" className="size-[92px]" aria-hidden>
+      <defs>
+        <radialGradient id="gd-body" cx="0.38" cy="0.3" r="0.9">
+          <stop offset="0" stopColor="#4a5566" />
+          <stop offset="0.45" stopColor="#1b2330" />
+          <stop offset="1" stopColor="#070a10" />
+        </radialGradient>
+        <radialGradient id="gd-core" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stopColor={station.color} stopOpacity="0.95" />
+          <stop offset="0.6" stopColor={station.color} stopOpacity="0.18" />
+          <stop offset="1" stopColor={station.color} stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="gd-rim" x1="0.2" y1="0" x2="0.8" y2="1">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.8" />
+          <stop offset="0.35" stopColor="#ffffff" stopOpacity="0.06" />
+          <stop offset="0.75" stopColor="#ffffff" stopOpacity="0.02" />
+          <stop offset="1" stopColor="#ffffff" stopOpacity="0.45" />
+        </linearGradient>
+        <filter id="gd-soft" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="3.4" />
+        </filter>
+      </defs>
+
+      <ellipse cx="50" cy="91" rx="24" ry="3.6" fill="#000" opacity="0.32" />
+      <circle cx="50" cy="50" r="40" fill="url(#gd-body)" />
+      <circle cx="50" cy="50" r="26" fill="url(#gd-core)" filter="url(#gd-soft)" />
+      <circle cx="50" cy="50" r="27" fill="none" stroke={station.color} strokeWidth="1.6" opacity="0.65" />
+
+      <text
+        x="50"
+        y="58"
+        textAnchor="middle"
+        fontSize="23"
+        fontWeight="700"
+        fill="#ffffff"
+        fontFamily="system-ui, -apple-system, sans-serif"
+        letterSpacing="1.5"
+        opacity="0.96"
+      >
+        {station.code}
+      </text>
+
+      {/* Rim light, and the caustic where light leaves the far side. */}
+      <circle cx="50" cy="50" r="40" fill="none" stroke="url(#gd-rim)" strokeWidth="2.2" />
+      <path d="M22 66a40 40 0 0 0 46 20" stroke={station.color} strokeWidth="3" opacity="0.4" fill="none" filter="url(#gd-soft)" />
+      <path d="M31 25a40 40 0 0 1 22-11" stroke="#fff" strokeWidth="2.6" opacity="0.55" fill="none" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Burnished leather with a brass plate. */
+function LeatherFob({ station }: { station: (typeof STATIONS)[number] }) {
+  return (
+    <svg viewBox="0 0 100 100" className="size-[92px]" aria-hidden>
+      <defs>
+        <linearGradient id="lf-hide" x1="0.2" y1="0" x2="0.8" y2="1">
+          <stop offset="0" stopColor="#8a4a26" />
+          <stop offset="0.35" stopColor="#6d3618" />
+          <stop offset="0.75" stopColor="#4e2410" />
+          <stop offset="1" stopColor="#31160a" />
+        </linearGradient>
+        <linearGradient id="lf-brass" x1="0.1" y1="0" x2="0.9" y2="1">
+          <stop offset="0" stopColor="#fbeab4" />
+          <stop offset="0.3" stopColor="#d3ae5c" />
+          <stop offset="0.55" stopColor="#8f6c22" />
+          <stop offset="0.78" stopColor="#e8cf87" />
+          <stop offset="1" stopColor="#7c5c1c" />
+        </linearGradient>
+        <filter id="lf-grain" x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" result="n" />
+          <feColorMatrix in="n" type="saturate" values="0" />
+          <feComponentTransfer>
+            <feFuncA type="linear" slope="0.22" />
+          </feComponentTransfer>
+        </filter>
+        <clipPath id="lf-clip">
+          <rect x="20" y="12" width="60" height="78" rx="13" />
+        </clipPath>
+      </defs>
+
+      <rect x="20" y="15" width="60" height="78" rx="13" fill="#1a0c05" opacity="0.4" />
+      <rect x="20" y="12" width="60" height="78" rx="13" fill="url(#lf-hide)" />
+      <g clipPath="url(#lf-clip)">
+        <rect x="20" y="12" width="60" height="78" filter="url(#lf-grain)" />
+      </g>
+      {/* Burnished edge and saddle stitching. */}
+      <rect x="20" y="12" width="60" height="78" rx="13" fill="none" stroke="#241006" strokeWidth="2.4" />
+      <rect
+        x="25.5"
+        y="17.5"
+        width="49"
+        height="67"
+        rx="9"
+        fill="none"
+        stroke="#f0d9a8"
+        strokeWidth="1.5"
+        strokeDasharray="4 3.6"
+        opacity="0.75"
+      />
+
+      {/* Brass plate, sunk into the leather. */}
+      <rect x="29" y="40" width="42" height="27" rx="6" fill="#170a04" opacity="0.55" />
+      <rect x="29" y="38.5" width="42" height="27" rx="6" fill="url(#lf-brass)" />
+      <rect x="29" y="38.5" width="42" height="27" rx="6" fill="none" stroke="#5f440f" strokeWidth="0.9" opacity="0.8" />
+      <Engraved y={58} size={17} dark="#4a350c" light="#fff6d8" family="system-ui, sans-serif" spacing={0.8}>
+        {station.code}
+      </Engraved>
+
+      {/* Rivet at the hanging point. */}
+      <circle cx="50" cy="24" r="6" fill="url(#lf-brass)" stroke="#5f440f" strokeWidth="1" />
+      <circle cx="50" cy="24" r="2.2" fill="#3d2b08" opacity="0.6" />
     </svg>
   );
 }
@@ -351,10 +482,10 @@ function Prism({ station }: { station: (typeof STATIONS)[number] }) {
 // ---- the preview page ------------------------------------------------------
 
 const OPTIONS = [
-  { n: 1, name: 'Struck token', note: 'A milled brass token that flips end over end.', axis: 'y' as const, thread: '#a08a5e' },
-  { n: 2, name: 'Board roller', note: 'A station-board cylinder that rolls the code past.', axis: 'x' as const, thread: '#94a3b8' },
-  { n: 3, name: 'Compass', note: 'Brass compass, needle in the line colour.', axis: 'flat' as const, thread: '#6d5323' },
-  { n: 4, name: 'Line gem', note: 'A faceted gem that turns and glints.', axis: 'y' as const, thread: '#cbd5e1' },
+  { n: 1, name: 'Machined tag', note: 'Brushed anodised aluminium, laser-etched.', axis: 'y' as const, thread: '#9aa3af' },
+  { n: 2, name: 'Enamel pin', note: 'Hard enamel set in polished gold.', axis: 'y' as const, thread: '#c2913a' },
+  { n: 3, name: 'Smoked glass', note: 'Dark glass, lit from inside.', axis: 'y' as const, thread: '#64748b' },
+  { n: 4, name: 'Leather fob', note: 'Stitched hide with a sunk brass plate.', axis: 'flat' as const, thread: '#6d3618' },
 ];
 
 export function DanglePreview() {
@@ -372,10 +503,10 @@ export function DanglePreview() {
   }, [toast]);
 
   const charm = (n: number, station: (typeof STATIONS)[number]) => {
-    if (n === 1) return <Token station={station} />;
-    if (n === 2) return <Roller station={station} />;
-    if (n === 3) return <Compass station={station} />;
-    return <Prism station={station} />;
+    if (n === 1) return <MachinedTag station={station} />;
+    if (n === 2) return <EnamelPin station={station} />;
+    if (n === 3) return <GlassDisc station={station} />;
+    return <LeatherFob station={station} />;
   };
 
   return (
