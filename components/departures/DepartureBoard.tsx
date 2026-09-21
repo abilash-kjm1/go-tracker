@@ -159,7 +159,7 @@ export function DepartureBoard({
         </div>
       ) : null}
 
-      <div className="grid gap-x-4 gap-y-5 min-[680px]:grid-cols-2">
+      <div className={clsx('grid gap-x-4 gap-y-5', groups.length > 1 && 'min-[680px]:grid-cols-2')}>
         {groups.map((group) => {
           const colors = directionColors(group.tone);
           const active = group.key === resolvedKey;

@@ -132,7 +132,11 @@ export class GoTrackerTemporaryProvider implements TransitDataProvider {
 
     const route = row.CorridorCode ? await getRouteByCorridor(row.CorridorCode) : null;
     const scheduled = tripNumber ? await findTrip(tripNumber) : null;
-    const delaySeconds = toNumber(row.DelaySeconds);
+    // GO reports a train waiting at its terminus as hugely "early" (-1100 s and
+    // the like). A service never leaves before its timetabled time, so a
+    // negative delay means on time, not a departure 18 minutes ago.
+    const rawDelay = toNumber(row.DelaySeconds);
+    const delaySeconds = rawDelay != null ? Math.max(0, rawDelay) : undefined;
 
     const next = scheduled
       ? await this.projectNextStop(scheduled, delaySeconds ?? 0, row.InStationId)
@@ -293,13 +297,14 @@ export class GoTrackerTemporaryProvider implements TransitDataProvider {
       const official = platforms.get(entry.tripNumber);
       const boardRow = board.byTrip.get(entry.tripNumber);
 
-      const delaySeconds =
+      const rawBoardDelay =
         boardRow?.delaySeconds ??
         toNumber(stationRow?.DelaySeconds) ??
         (toNumber(stationRow?.DelayMinute) != null
           ? toNumber(stationRow?.DelayMinute)! * 60
           : undefined) ??
         vehicle?.delaySeconds;
+      const delaySeconds = rawBoardDelay != null ? Math.max(0, rawBoardDelay) : undefined;
 
       // The board's own expected time wins; otherwise apply the delay to schedule.
       const estimated = boardRow?.expectedTime
