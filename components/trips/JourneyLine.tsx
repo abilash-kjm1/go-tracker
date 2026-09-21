@@ -11,7 +11,18 @@ import type { TripDetail, TripStopTime } from '@/lib/transit/types';
  * stations as rings on it, and a train that travels along the line between them.
  * Above it, a "now" panel says which leg the train is on and when it arrives.
  */
-export function JourneyLine({ trip, now }: { trip: TripDetail; now: number }) {
+export function JourneyLine({
+  trip,
+  now,
+  armedStopIds,
+  onToggleAlert,
+}: {
+  trip: TripDetail;
+  now: number;
+  /** Stops with an arrival alert armed. */
+  armedStopIds?: Set<string>;
+  onToggleAlert?: (stopId: string, stopName: string) => void;
+}) {
   // GO's line colours are pure primaries (#ff0d00 red); softened towards slate they
   // stay recognisable without glaring on a light or dark page.
   // Dark mode lifts it toward white instead, so the line still glows on a dark page.
@@ -119,6 +130,8 @@ export function JourneyLine({ trip, now }: { trip: TripDetail; now: number }) {
                   color={color}
                   progress={index === fromIdx && hereIdx < 0 ? progress : null}
                   minutes={stop.status === 'next' ? minutes : null}
+                  armed={armedStopIds?.has(stop.stopId) ?? false}
+                  onToggleAlert={onToggleAlert}
                 />
               );
             })}
@@ -389,6 +402,8 @@ function StopRow({
   color,
   progress,
   minutes,
+  armed,
+  onToggleAlert,
 }: {
   stop: TripStopTime;
   index: number;
@@ -398,6 +413,8 @@ function StopRow({
   color: string;
   progress: number | null;
   minutes: number | null;
+  armed: boolean;
+  onToggleAlert?: (stopId: string, stopName: string) => void;
 }) {
   const passed = stop.status === 'departed';
   const here = stop.status === 'current';
@@ -518,7 +535,25 @@ function StopRow({
             ) : null}
           </div>
         </div>
-        <div className="shrink-0 text-right">
+        <div className="flex shrink-0 items-center gap-1.5">
+          {onToggleAlert && !passed && !here ? (
+            <button
+              type="button"
+              onClick={() => onToggleAlert(stop.stopId, stop.stopName)}
+              aria-pressed={armed}
+              aria-label={
+                armed ? `Stop alerting me at ${tidy(stop.stopName)}` : `Alert me when the train reaches ${tidy(stop.stopName)}`
+              }
+              className={clsx(
+                'grid size-9 shrink-0 place-items-center rounded-full border transition-colors',
+                armed ? 'border-transparent text-white' : 'border-[var(--border)] text-[var(--fg-faint)]',
+              )}
+              style={armed ? { background: color } : undefined}
+            >
+              <BellIcon ringing={armed} />
+            </button>
+          ) : null}
+        <div className="text-right">
           <p
             className={clsx(
               'tabular text-[14px]',
@@ -534,7 +569,24 @@ function StopRow({
             </p>
           ) : null}
         </div>
+        </div>
       </div>
     </li>
+  );
+}
+
+function BellIcon({ ringing }: { ringing: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" aria-hidden>
+      <path
+        d="M12 3a6 6 0 0 0-6 6v3.6L4.6 15.4A1 1 0 0 0 5.5 17h13a1 1 0 0 0 .9-1.6L18 12.6V9a6 6 0 0 0-6-6Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+        fill={ringing ? 'currentColor' : 'none'}
+        fillOpacity={ringing ? 0.22 : 0}
+      />
+      <path d="M10 20a2 2 0 0 0 4 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
   );
 }

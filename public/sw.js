@@ -91,3 +91,20 @@ async function cacheFirst(request) {
   }
   return response;
 }
+
+/* A stop alert opens the trip it came from. */
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = event.notification.data && event.notification.data.url;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if ('focus' in client) {
+          if (target && 'navigate' in client) client.navigate(target).catch(() => undefined);
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(target || '/');
+    }),
+  );
+});

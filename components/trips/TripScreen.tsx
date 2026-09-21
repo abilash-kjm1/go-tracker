@@ -16,6 +16,7 @@ import {
 import dynamic from 'next/dynamic';
 import { JourneyLine } from './JourneyLine';
 import { useFavorites } from '@/lib/client/favorites';
+import { useStopAlertWatcher, useStopAlerts } from '@/lib/client/stopAlerts';
 import { useTicker, useTransit } from '@/lib/client/useTransit';
 import { formatAge, formatClock } from '@/lib/transit/time';
 import type { TransitAlert, TripDetail } from '@/lib/transit/types';
@@ -37,6 +38,9 @@ export function TripScreen({ tripId }: { tripId: string }) {
 
   // Alerts are filtered to this trip's own route, so the page only shows
   // disruptions that actually affect this journey.
+  const stopAlerts = useStopAlerts(tripId);
+  useStopAlertWatcher(trip ?? null, stopAlerts.alerts, stopAlerts.markFired);
+
   const { data: alerts } = useTransit<TransitAlert[]>('/api/transit/alerts', {
     intervalMs: 60_000,
   });
@@ -166,11 +170,85 @@ export function TripScreen({ tripId }: { tripId: string }) {
         </div>
       ) : null}
 
-      <JourneyLine trip={trip} now={now} />
+      <StopAlertBar state={stopAlerts} />
+
+      <JourneyLine
+        trip={trip}
+        now={now}
+        armedStopIds={stopAlerts.armedStopIds}
+        onToggleAlert={stopAlerts.toggle}
+      />
 
       <TripAlerts trip={trip} alerts={alerts ?? []} />
 
       <div className="h-10" />
+    </div>
+  );
+}
+
+/**
+ * Explains the state of arrival alerts for this trip: how many are set, whether
+ * the browser will allow a notification, and what iOS needs before it will.
+ */
+function StopAlertBar({ state }: { state: ReturnType<typeof useStopAlerts> }) {
+  const { armedCount, permission, request, installed, clearTrip } = state;
+  if (armedCount === 0) {
+    return (
+      <p className="mt-3 rounded-2xl border px-4 py-3 text-[13px] text-muted hairline bg-[var(--bg-elevated)]">
+        Tap the bell beside a stop to be told when this train reaches it.
+      </p>
+    );
+  }
+
+  const needsPermission = permission === 'default';
+  const blocked = permission === 'denied';
+  const unsupported = permission === 'unsupported';
+
+  return (
+    <div className="mt-3 rounded-2xl border px-4 py-3 hairline bg-[var(--bg-elevated)]">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[13px] font-semibold">
+          {armedCount} stop alert{armedCount === 1 ? '' : 's'} set
+        </p>
+        <button
+          type="button"
+          onClick={clearTrip}
+          className="rounded-full bg-[var(--bg-sunken)] px-3 py-1 text-[12px] font-semibold text-muted"
+        >
+          Clear
+        </button>
+      </div>
+
+      {needsPermission ? (
+        <button
+          type="button"
+          onClick={() => void request()}
+          className="mt-2.5 flex min-h-11 w-full items-center justify-center rounded-xl bg-[var(--accent)] px-4 text-[13px] font-bold text-[var(--accent-fg)]"
+        >
+          Allow notifications
+        </button>
+      ) : null}
+
+      {blocked ? (
+        <p className="mt-2 text-[12px] text-[var(--color-warn-500)]">
+          Notifications are blocked for this site, so alerts can only appear on screen. Turn them
+          back on in your browser or iPhone settings.
+        </p>
+      ) : null}
+
+      {unsupported && !installed ? (
+        <p className="mt-2 text-[12px] text-muted">
+          On iPhone, add GO Tracker to your Home Screen first: tap Share, then{' '}
+          <strong>Add to Home Screen</strong>. Notifications only work from the installed app.
+        </p>
+      ) : null}
+
+      {permission === 'granted' ? (
+        <p className="mt-2 text-[12px] text-muted">
+          Keep GO Tracker open as you travel. iPhone pauses web apps once they leave the screen, so
+          an alert can only reach you while the app is showing.
+        </p>
+      ) : null}
     </div>
   );
 }
