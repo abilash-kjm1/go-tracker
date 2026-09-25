@@ -192,7 +192,7 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
           <p className="mt-3 text-[11px] text-faint">
             Tap a number or a line to see its trains.{' '}
             {buses === 0
-              ? 'GO publishes live positions for trains only; buses show timetable and platform info.'
+              ? 'No buses are reporting a position right now; their times still come from the timetable.'
               : `${buses} bus${buses === 1 ? '' : 'es'} reporting a position.`}
           </p>
         )}

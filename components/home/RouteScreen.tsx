@@ -80,7 +80,7 @@ export function RouteScreen({
         {live.length === 0 ? (
           <p className="rounded-2xl border border-dashed px-4 py-4 text-center text-[13px] text-muted hairline">
             {route.type === 'bus'
-              ? 'No live positions are published for GO buses, so nothing is tracked here.'
+              ? 'No buses on this route are reporting a position right now.'
               : 'Nothing is reporting a position on this line right now.'}
           </p>
         ) : (

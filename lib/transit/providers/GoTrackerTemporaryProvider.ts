@@ -30,6 +30,7 @@ import {
 } from '../gtfs';
 import { getPlatformsByTrip } from '../platformSource';
 import { getLiveBoard } from '../sources/goTrackerBoards';
+import { getLiveBuses } from '../sources/metrolinxBuses';
 import { currentServiceDate, zonedToInstant } from '../time';
 import type { DepartureQuery, TransitDataProvider } from '../provider';
 import type {
@@ -120,6 +121,57 @@ export class GoTrackerTemporaryProvider implements TransitDataProvider {
       const vehicle = await this.toLiveVehicle(row);
       if (vehicle) out.push(vehicle);
     }
+
+    // GO Tracker carries no buses at all. With an official Metrolinx key they
+    // come from there instead, so the map is the whole network rather than
+    // half of it. Without a key this adds nothing and never fails the trains.
+    try {
+      out.push(...(await this.loadLiveBuses()));
+    } catch {
+      // A bus outage must not take the trains down with it.
+    }
+    return out;
+  }
+
+  /** Official bus positions, joined to the timetable by trip number. */
+  private async loadLiveBuses(): Promise<LiveVehicle[]> {
+    const buses = await getLiveBuses();
+    const out: LiveVehicle[] = [];
+
+    for (const bus of buses) {
+      if (!bus.tripNumber) continue;
+      const scheduled = await findTrip(bus.tripNumber);
+      const route = scheduled ? await getRoute(scheduled.trip.r) : null;
+      const [next, at, origin] = await Promise.all([
+        bus.nextStopCode ? getStop(bus.nextStopCode) : null,
+        bus.atStopCode ? getStop(bus.atStopCode) : null,
+        bus.originStopCode ? getStop(bus.originStopCode) : null,
+      ]);
+
+      out.push({
+        id: `bus-${bus.tripNumber}`,
+        tripId: scheduled?.trip.i,
+        tripNumber: bus.tripNumber,
+        vehicleType: 'bus',
+        serviceId: bus.lineCode,
+        serviceName: route?.name,
+        routeId: route?.id,
+        routeName: route?.name ?? (bus.lineCode ? `Route ${bus.lineCode}` : undefined),
+        origin: origin?.name,
+        destination: bus.headsign,
+        latitude: bus.latitude ?? Number.NaN,
+        longitude: bus.longitude ?? Number.NaN,
+        delaySeconds: bus.delaySeconds,
+        isMoving: bus.isMoving,
+        nextStopId: next?.id,
+        nextStopName: next?.name,
+        atStopId: at?.id,
+        updatedAt: bus.updatedAt
+          ? parseUpstreamTimestamp(bus.updatedAt).toISOString()
+          : new Date().toISOString(),
+      });
+    }
+
     return out;
   }
 
