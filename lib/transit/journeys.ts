@@ -150,8 +150,11 @@ export async function planJourneys({
     combined.push(journey);
   }
 
+  // Chronological by departure, so services leaving together sit side by side
+  // and the faster of the two is an obvious choice rather than the only one.
   combined.sort(
     (a, b) =>
+      new Date(a.departureTime).getTime() - new Date(b.departureTime).getTime() ||
       new Date(a.arrivalTime).getTime() - new Date(b.arrivalTime).getTime() ||
       a.transfers - b.transfers,
   );
@@ -241,27 +244,85 @@ async function planWithChanges({
     if (seen.has(firstDepart)) continue;
     seen.add(firstDepart);
 
-    const legs = await Promise.all(
-      chain.legs.map((leg) =>
-        toLeg(
-          {
-            trip: leg.trip,
-            dateKey: leg.dateKey,
-            boardStopId: leg.boardStopId,
-            alightStopId: leg.alightStopId,
-            departSeconds: leg.boardSeconds,
-            arriveSeconds: leg.alightSeconds,
-            departAt: zonedToInstant(leg.dateKey, leg.boardSeconds).getTime(),
-            arriveAt: zonedToInstant(leg.dateKey, leg.alightSeconds).getTime(),
-          },
-          planningAhead,
+    // The last leg is where the real choice lies: at Burlington, route 12 and
+    // 12B leave together, the express arriving half an hour sooner. Optimising
+    // for arrival would only ever show the express, so every service that can
+    // be caught is offered and the rider decides.
+    for (const finalLeg of finalLegOptions(chain.legs)) {
+      const legs = await Promise.all(
+        [...chain.legs.slice(0, -1), finalLeg].map((leg) =>
+          toLeg(
+            {
+              trip: leg.trip,
+              dateKey: leg.dateKey,
+              boardStopId: leg.boardStopId,
+              alightStopId: leg.alightStopId,
+              departSeconds: leg.boardSeconds,
+              arriveSeconds: leg.alightSeconds,
+              departAt: zonedToInstant(leg.dateKey, leg.boardSeconds).getTime(),
+              arriveAt: zonedToInstant(leg.dateKey, leg.alightSeconds).getTime(),
+            },
+            planningAhead,
+          ),
         ),
-      ),
-    );
-    out.push(buildJourney(legs));
+      );
+      out.push(buildJourney(legs));
+      if (out.length >= limit * 2) break;
+    }
   }
 
   return out;
+
+  /**
+   * Every service that could carry the last leg, not just the quickest. The
+   * original is always included; the rest are the ones a rider could actually
+   * board after the same connection.
+   */
+  function finalLegOptions(legs: RawLeg[]): RawLeg[] {
+    const last = legs[legs.length - 1];
+    if (!last) return [];
+
+    const previous = legs[legs.length - 2];
+    const readyAt = previous
+      ? (dayStart.get(previous.dateKey) ?? 0) +
+        previous.alightSeconds * 1000 +
+        (previous.alightStopId === last.boardStopId ? MIN_CONNECTION : MIN_CONNECTION_ACROSS_SITE) *
+          60_000
+      : 0;
+
+    const boardIds = new Set([last.boardStopId]);
+    // Fixed to the original leg's own service day: computing it per day would
+    // let tomorrow's timetable through the window.
+    const originalAt = (dayStart.get(last.dateKey) ?? 0) + last.boardSeconds * 1000;
+    const options: Array<{ leg: RawLeg; departAt: number }> = [];
+
+    for (const { key, day } of schedules) {
+      const base = dayStart.get(key) ?? 0;
+      for (const trip of day.trips.values()) {
+        const match = findLeg(trip, key, boardIds, toIds);
+        if (!match) continue;
+        const departAt = base + match.departSeconds * 1000;
+        // Catchable after the connection, and within an hour of the original,
+        // so this stays a choice between services rather than a timetable dump.
+        if (departAt < readyAt || departAt > originalAt + 60 * 60_000) continue;
+        options.push({
+          departAt,
+          leg: {
+            trip,
+            dateKey: key,
+            boardStopId: match.boardStopId,
+            boardSeconds: match.departSeconds,
+            alightStopId: match.alightStopId,
+            alightSeconds: match.arriveSeconds,
+          },
+        });
+      }
+    }
+
+    if (!options.length) return [last];
+    options.sort((a, b) => a.departAt - b.departAt || a.leg.alightSeconds - b.leg.alightSeconds);
+    return options.slice(0, 4).map((o) => o.leg);
+  }
 
   function searchOnce(notBefore: number): { legs: RawLeg[] } | null {
     const labels = new Map<string, Label>();
