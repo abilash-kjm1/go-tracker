@@ -67,6 +67,9 @@ export async function planJourneys({
   const fromIds = new Set([fromStopId, ...fromRelated.map((s) => s.id)]);
   const toIds = new Set([toStopId, ...toRelated.map((s) => s.id)]);
 
+  // More than an hour out, live boards have nothing to say about these trips.
+  const planningAhead = now.getTime() > Date.now() + 60 * 60_000;
+
   const { dateKey, secondsOfDay } = currentServiceDate(now);
   const earliest = now.getTime() - 5 * 60_000;
   const latest = now.getTime() + 8 * 3600_000;
@@ -100,7 +103,7 @@ export async function planJourneys({
 
   const journeys: Journey[] = [];
   for (const match of direct.slice(0, limit)) {
-    const leg = await toLeg(match);
+    const leg = await toLeg(match, planningAhead);
     journeys.push(buildJourney([leg]));
   }
 
@@ -111,6 +114,7 @@ export async function planJourneys({
 
   const siteMap = await getSiteMap().catch(() => new Map<string, string>());
   const transferJourneys = await planWithOneChange({
+    planningAhead,
     schedules,
     siteMap,
     fromIds,
@@ -178,6 +182,7 @@ async function planWithOneChange({
   latest,
   beforeTime,
   limit,
+  planningAhead,
 }: {
   schedules: Array<{ key: string; day: DaySchedule }>;
   /** stopId -> canonical id of the site it belongs to. */
@@ -188,6 +193,7 @@ async function planWithOneChange({
   latest: number;
   beforeTime: number;
   limit: number;
+  planningAhead: boolean;
 }): Promise<Journey[]> {
   if (limit <= 0) return [];
 
@@ -243,7 +249,7 @@ async function planWithOneChange({
     if (seen.has(key)) continue;
     seen.add(key);
 
-    const [legA, legB] = await Promise.all([toLeg(candidate.first), toLeg(candidate.second)]);
+    const [legA, legB] = await Promise.all([toLeg(candidate.first, planningAhead), toLeg(candidate.second, planningAhead)]);
     out.push(buildJourney([legA, legB]));
     if (out.length >= limit) break;
   }
@@ -328,12 +334,13 @@ function collectTo(
 }
 
 /** Turns a schedule match into a rider-facing leg, with live data applied. */
-async function toLeg(match: LegMatch): Promise<Departure> {
+async function toLeg(match: LegMatch, planningAhead: boolean): Promise<Departure> {
   const [route, boardStop, alightStop, board] = await Promise.all([
     getRoute(match.trip.r),
     getStop(match.boardStopId),
     getStop(match.alightStopId),
-    getLiveBoard(match.boardStopId).catch(() => null),
+    // Live boards only describe the next few hours; planning ahead is schedule-only.
+    planningAhead ? null : getLiveBoard(match.boardStopId).catch(() => null),
   ]);
 
   const live = board?.byTrip.get(match.trip.n);

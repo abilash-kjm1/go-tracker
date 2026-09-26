@@ -26,6 +26,12 @@ export function useTripPlanner(stops: TransitStop[]) {
   const [from, setFrom] = useState<TransitStop | null>(null);
   const [to, setTo] = useState<TransitStop | null>(null);
   const [recent, setRecent] = useState<RecentJourney[]>([]);
+  /**
+   * When to travel, as a Toronto wall-clock string ("2026-09-27T09:30"), or
+   * null for "now". Sent as typed rather than as an instant, so the journey is
+   * the one the rider meant whatever their device's clock says.
+   */
+  const [at, setAt] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -52,8 +58,11 @@ export function useTripPlanner(stops: TransitStop[]) {
 
   const ready = Boolean(from && to && from.id !== to.id);
   const result = useTransit<Journey[]>(
-    ready ? `/api/transit/journeys?from=${from!.id}&to=${to!.id}&limit=8` : null,
-    { intervalMs: 60_000 },
+    ready
+      ? `/api/transit/journeys?from=${from!.id}&to=${to!.id}&limit=8${at ? `&at=${encodeURIComponent(at)}` : ''}`
+      : null,
+    // A future timetable does not change; only the live board needs polling.
+    { intervalMs: at ? 0 : 60_000 },
   );
 
   return {
@@ -66,6 +75,8 @@ export function useTripPlanner(stops: TransitStop[]) {
       setTo(from);
     },
     ready,
+    at,
+    setAt,
     recent,
     pick: (journey: RecentJourney) => {
       setFrom(stops.find((s) => s.id === journey.from) ?? null);
@@ -87,7 +98,7 @@ export function PlannerForm({
   stops: TransitStop[];
   loadingStops?: boolean;
 }) {
-  const { from, to, setFrom, setTo, swap, ready, recent, pick } = planner;
+  const { from, to, setFrom, setTo, swap, ready, at, setAt, recent, pick } = planner;
   return (
     <div>
       <div className="relative">
@@ -131,6 +142,8 @@ export function PlannerForm({
         </button>
       </div>
 
+      <WhenPicker value={at} onChange={setAt} />
+
       {!ready && recent.length > 0 ? (
         <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-0.5">
           {recent.map((journey) => (
@@ -151,7 +164,7 @@ export function PlannerForm({
 
 /** Journey cards for the chosen pair. Renders nothing until both ends are set. */
 export function PlannerResults({ planner }: { planner: TripPlannerState }) {
-  const { from, to, ready, data, meta, error, loading, freshness } = planner;
+  const { from, to, ready, at, data, meta, error, loading, freshness } = planner;
   const { trip: active, start } = useActiveTrip();
   if (!ready) return null;
 
@@ -161,7 +174,11 @@ export function PlannerResults({ planner }: { planner: TripPlannerState }) {
         <h2 className="text-[12px] font-bold tracking-[0.12em] text-faint uppercase">
           {from!.name.replace(/\s+GO$/i, '')} → {to!.name.replace(/\s+GO$/i, '')}
         </h2>
-        <LiveIndicator freshness={freshness} updatedAt={meta?.updatedAt ?? null} compact />
+        {at ? (
+          <span className="shrink-0 text-[12px] font-semibold text-muted">{describeWhen(at)}</span>
+        ) : (
+          <LiveIndicator freshness={freshness} updatedAt={meta?.updatedAt ?? null} compact />
+        )}
       </div>
 
       {loading && !data ? (
@@ -303,5 +320,137 @@ function StopPicker({
         </ul>
       ) : null}
     </div>
+  );
+}
+
+/** "2026-09-27T09:30" as a rider would say it. */
+function describeWhen(value: string): string {
+  const parts = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
+  if (!parts) return value;
+  const [, y, m, d, hh, mm] = parts;
+  // Built as a local date purely for formatting the day and month name.
+  const date = new Date(Number(y), Number(m) - 1, Number(d), Number(hh), Number(mm));
+  const day = date.toLocaleDateString('en-CA', { weekday: 'short', day: 'numeric', month: 'short' });
+  const time = date.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' });
+  return `${day}, ${time}`;
+}
+
+/** "2026-10-04" as a rider would say the day. */
+function describeDay(value: string): string {
+  const [y, m, d] = value.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-CA', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+}
+
+/** Today in Toronto, as the value a date input expects. */
+function torontoToday(): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Toronto',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '01';
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
+
+/** "20260927" -> "2026-09-27". */
+const toInputDate = (key: string) => `${key.slice(0, 4)}-${key.slice(4, 6)}-${key.slice(6, 8)}`;
+
+/**
+ * Leave now, or pick a day and time. The timetable is bundled at build time and
+ * covers a fixed run of days, so the picker offers exactly those and no more.
+ */
+function WhenPicker({ value, onChange }: { value: string | null; onChange: (v: string | null) => void }) {
+  const [open, setOpen] = useState(false);
+  const { data: calendar } = useTransit<{ dates: string[] }>('/api/transit/calendar');
+
+  const today = torontoToday();
+  const dates = calendar?.dates ?? [];
+  const min = dates.length ? toInputDate(dates[0]) : today;
+  const max = dates.length ? toInputDate(dates[dates.length - 1]) : undefined;
+
+  const date = value ? value.slice(0, 10) : today;
+  const time = value ? value.slice(11, 16) : '09:00';
+
+  const set = (nextDate: string, nextTime: string) => {
+    if (!nextDate || !nextTime) return;
+    onChange(`${nextDate}T${nextTime}`);
+  };
+
+  return (
+    <div className="mt-2.5">
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            onChange(null);
+            setOpen(false);
+          }}
+          aria-pressed={!value}
+          className={`rounded-full px-3 py-1.5 text-[12px] font-bold shadow-sm ring-1 backdrop-blur ${
+            value
+              ? 'bg-[var(--bg-elevated)]/70 text-[var(--fg)] ring-black/10'
+              : 'bg-[var(--bg-elevated)] text-[var(--fg)] ring-black/10'
+          }`}
+          style={!value ? { boxShadow: 'inset 0 0 0 2px var(--accent)' } : undefined}
+        >
+          Leave now
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="flex items-center gap-1.5 rounded-full bg-[var(--bg-elevated)]/85 px-3 py-1.5 text-[12px] font-bold text-[var(--fg)] shadow-sm ring-1 ring-black/10 backdrop-blur"
+          style={value ? { boxShadow: 'inset 0 0 0 2px var(--accent)' } : undefined}
+        >
+          <CalendarGlyph />
+          {value ? describeWhen(value) : 'Pick a day'}
+        </button>
+      </div>
+
+      {open ? (
+        <div className="mt-2 flex flex-wrap items-end gap-2 rounded-2xl p-3 text-[var(--fg)] surface">
+          <label className="min-w-0 flex-1">
+            <span className="block text-[10.5px] font-bold tracking-wide text-faint uppercase">Day</span>
+            <input
+              type="date"
+              value={date}
+              min={min}
+              max={max}
+              onChange={(e) => set(e.target.value, time)}
+              className="mt-1 min-h-11 w-full rounded-xl border px-3 text-[14px] outline-none hairline bg-[var(--bg-elevated)]"
+            />
+          </label>
+          <label className="w-[124px]">
+            <span className="block text-[10.5px] font-bold tracking-wide text-faint uppercase">Time</span>
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => set(date, e.target.value)}
+              className="mt-1 min-h-11 w-full rounded-xl border px-3 text-[14px] outline-none hairline bg-[var(--bg-elevated)]"
+            />
+          </label>
+          {max ? (
+            <p className="w-full text-[11px] text-faint">
+              Timetable loaded through {describeDay(max)}.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function CalendarGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-3.5" fill="none" aria-hidden>
+      <rect x="3.5" y="5" width="17" height="15.5" rx="3" stroke="currentColor" strokeWidth="1.9" />
+      <path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+    </svg>
   );
 }
