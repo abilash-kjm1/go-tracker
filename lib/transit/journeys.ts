@@ -126,13 +126,245 @@ export async function planJourneys({
     limit: limit - journeys.length,
   });
 
-  const combined = [...journeys, ...transferJourneys].sort(
+  // Scarborough to Niagara Falls needs three legs: a train to Union, another to
+  // Burlington, then a bus. Nothing above can see a journey like that, and the
+  // one change it does find — waiting hours for the through train — is far
+  // worse. So the full search always runs here, and the best arrival wins.
+  const deepJourneys = await planWithChanges({
+    planningAhead,
+    schedules,
+    siteMap,
+    fromIds,
+    toIds,
+    earliest,
+    latest,
+    limit,
+  });
+
+  const combined: Journey[] = [];
+  const seenJourneys = new Set<string>();
+  for (const journey of [...journeys, ...transferJourneys, ...deepJourneys]) {
+    const key = `${journey.departureTime}:${journey.arrivalTime}:${journey.transfers}`;
+    if (seenJourneys.has(key)) continue;
+    seenJourneys.add(key);
+    combined.push(journey);
+  }
+
+  combined.sort(
     (a, b) =>
       new Date(a.arrivalTime).getTime() - new Date(b.arrivalTime).getTime() ||
       a.transfers - b.transfers,
   );
 
   return combined.slice(0, limit);
+}
+
+/** How we reached a stop: by riding a leg, or by walking within one site. */
+interface RawLeg {
+  trip: RawScheduleTrip;
+  dateKey: string;
+  boardStopId: string;
+  boardSeconds: number;
+  alightStopId: string;
+  alightSeconds: number;
+}
+
+interface Label {
+  arriveAt: number;
+  leg?: RawLeg;
+  walkFrom?: string;
+}
+
+/** Most changes a rider will accept before the journey stops being worth it. */
+const MAX_CHANGES = 2;
+
+/**
+ * A time-expanded search over the whole timetable, one round per leg, so a
+ * journey needing two changes is found the same way as one needing none.
+ *
+ * Each round rides every trip that can be boarded from somewhere reached in the
+ * round before, keeping only the earliest arrival at each stop. Walking between
+ * the stops of one site (a station and its bus loop) is a round of its own.
+ *
+ * Search times are computed from each service day's midnight rather than
+ * converted stop by stop, which is far cheaper over hundreds of thousands of
+ * stop times. The legs that come back are rebuilt with the exact conversion, so
+ * what a rider is shown is never the approximation.
+ */
+async function planWithChanges({
+  planningAhead,
+  schedules,
+  siteMap,
+  fromIds,
+  toIds,
+  earliest,
+  latest,
+  limit,
+}: {
+  planningAhead: boolean;
+  schedules: Array<{ key: string; day: DaySchedule }>;
+  siteMap: Map<string, string>;
+  fromIds: Set<string>;
+  toIds: Set<string>;
+  earliest: number;
+  latest: number;
+  limit: number;
+}): Promise<Journey[]> {
+  const dayStart = new Map<string, number>();
+  for (const { key } of schedules) dayStart.set(key, zonedToInstant(key, 0).getTime());
+
+  // Which stops share a site, so a change can cross from platform to bus loop.
+  const siblings = new Map<string, string[]>();
+  const bySite = new Map<string, string[]>();
+  for (const [stopId, site] of siteMap) {
+    const list = bySite.get(site) ?? [];
+    list.push(stopId);
+    bySite.set(site, list);
+  }
+  for (const [stopId, site] of siteMap) {
+    siblings.set(stopId, (bySite.get(site) ?? []).filter((id) => id !== stopId));
+  }
+
+  const out: Journey[] = [];
+  const seen = new Set<number>();
+  let from = earliest;
+
+  // Each pass finds the earliest arrival; the next starts a minute later, which
+  // walks forward through the day's departures rather than repeating one answer.
+  for (let pass = 0; pass < limit && out.length < limit; pass++) {
+    const chain = searchOnce(from);
+    if (!chain || !chain.legs.length) break;
+
+    const firstDepart =
+      (dayStart.get(chain.legs[0].dateKey) ?? 0) + chain.legs[0].boardSeconds * 1000;
+    from = firstDepart + 60_000;
+    if (seen.has(firstDepart)) continue;
+    seen.add(firstDepart);
+
+    const legs = await Promise.all(
+      chain.legs.map((leg) =>
+        toLeg(
+          {
+            trip: leg.trip,
+            dateKey: leg.dateKey,
+            boardStopId: leg.boardStopId,
+            alightStopId: leg.alightStopId,
+            departSeconds: leg.boardSeconds,
+            arriveSeconds: leg.alightSeconds,
+            departAt: zonedToInstant(leg.dateKey, leg.boardSeconds).getTime(),
+            arriveAt: zonedToInstant(leg.dateKey, leg.alightSeconds).getTime(),
+          },
+          planningAhead,
+        ),
+      ),
+    );
+    out.push(buildJourney(legs));
+  }
+
+  return out;
+
+  function searchOnce(notBefore: number): { legs: RawLeg[] } | null {
+    const labels = new Map<string, Label>();
+    for (const id of fromIds) labels.set(id, { arriveAt: notBefore });
+    let marked = new Set<string>(fromIds);
+
+    for (let round = 0; round <= MAX_CHANGES && marked.size; round++) {
+      const improved = new Set<string>();
+
+      for (const { key, day } of schedules) {
+        const base = dayStart.get(key) ?? 0;
+        for (const trip of day.trips.values()) {
+          let boardStopId: string | null = null;
+          let boardSeconds = 0;
+          let boardAt = Infinity;
+
+          for (let i = 0; i < trip.s.length; i++) {
+            const [stopId, arrivalSeconds, departureSeconds] = trip.s[i];
+            const arriveSec = arrivalSeconds ?? departureSeconds;
+            const departSec = departureSeconds ?? arrivalSeconds;
+
+            // Already aboard: can we do better by getting off here?
+            if (boardStopId && arriveSec != null) {
+              const arriveAt = base + arriveSec * 1000;
+              if (arriveAt <= latest && arriveAt < (labels.get(stopId)?.arriveAt ?? Infinity)) {
+                labels.set(stopId, {
+                  arriveAt,
+                  leg: {
+                    trip,
+                    dateKey: key,
+                    boardStopId,
+                    boardSeconds,
+                    alightStopId: stopId,
+                    alightSeconds: arriveSec,
+                  },
+                });
+                improved.add(stopId);
+              }
+            }
+
+            // Or board here, if we were already standing at this stop in time.
+            if (departSec != null && marked.has(stopId)) {
+              const ready =
+                (labels.get(stopId)?.arriveAt ?? Infinity) +
+                (round === 0 ? 0 : MIN_CONNECTION * 60_000);
+              const departAt = base + departSec * 1000;
+              if (departAt >= ready && departAt <= latest && departAt < boardAt) {
+                boardStopId = stopId;
+                boardSeconds = departSec;
+                boardAt = departAt;
+              }
+            }
+          }
+        }
+      }
+
+      // Walking to the other stops of the same site counts as reaching them.
+      for (const stopId of [...improved]) {
+        const arriveAt = labels.get(stopId)?.arriveAt;
+        if (arriveAt == null) continue;
+        for (const sibling of siblings.get(stopId) ?? []) {
+          const walked = arriveAt + MIN_CONNECTION_ACROSS_SITE * 60_000;
+          if (walked < (labels.get(sibling)?.arriveAt ?? Infinity)) {
+            labels.set(sibling, { arriveAt: walked, walkFrom: stopId });
+            improved.add(sibling);
+          }
+        }
+      }
+
+      marked = improved;
+    }
+
+    // The best arrival among the destination's stops.
+    let bestStop: string | null = null;
+    let bestAt = Infinity;
+    for (const id of toIds) {
+      const at = labels.get(id)?.arriveAt;
+      if (at != null && at < bestAt) {
+        bestAt = at;
+        bestStop = id;
+      }
+    }
+    if (!bestStop) return null;
+
+    const legs: RawLeg[] = [];
+    let cursor: string | null = bestStop;
+    for (let guard = 0; guard < 12 && cursor; guard++) {
+      const label: Label | undefined = labels.get(cursor);
+      if (!label) break;
+      if (label.leg) {
+        legs.push(label.leg);
+        cursor = label.leg.boardStopId;
+        continue;
+      }
+      if (label.walkFrom) {
+        cursor = label.walkFrom;
+        continue;
+      }
+      break;
+    }
+    legs.reverse();
+    return legs.length ? { legs } : null;
+  }
 }
 
 /** First boarding at `fromIds` and the first later alighting at `toIds`. */
