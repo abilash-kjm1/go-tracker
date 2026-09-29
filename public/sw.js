@@ -108,3 +108,24 @@ self.addEventListener('notificationclick', (event) => {
     }),
   );
 });
+
+/* A platform alert, pushed from the server while the app is closed. */
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (err) {
+    data = { title: 'GO Tracker', body: event.data ? event.data.text() : '' };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'GO Tracker', {
+      body: data.body || '',
+      tag: data.tag || 'gotracker',
+      renotify: true,
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      vibrate: [220, 120, 220],
+      data: { url: data.url || '/' },
+    }),
+  );
+});

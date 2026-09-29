@@ -1,6 +1,7 @@
 'use client';
 
 import clsx from 'clsx';
+import { PlatformAlertButton } from './PlatformAlertButton';
 import Link from 'next/link';
 import { ModeIcon } from '@/components/ui/primitives';
 import { formatClockParts, formatCountdown } from '@/lib/transit/time';
@@ -234,6 +235,18 @@ export function DepartureCard({
             <span className="text-[20px] leading-none font-bold text-faint">&mdash;</span>
             {platformNote ? (
               <span className="text-center text-[8px] leading-tight text-faint">soon</span>
+            ) : null}
+            {/* No platform yet is exactly when a rider wants telling. */}
+            {!cancelled && !departed && departure.tripNumber ? (
+              <PlatformAlertButton
+                target={{
+                  stopId: departure.stopId,
+                  stopName: departure.stopName,
+                  tripId: departure.tripId,
+                  tripNumber: departure.tripNumber,
+                  departsAt: departure.estimatedTime ?? departure.scheduledTime,
+                }}
+              />
             ) : null}
           </>
         )}
