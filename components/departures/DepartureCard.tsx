@@ -216,7 +216,7 @@ export function DepartureCard({
           className="text-[8px] font-bold tracking-[0.12em] uppercase"
           style={{ color: platformValue && dir ? dir.fg : 'var(--fg-faint)', opacity: platformValue ? 0.85 : 1 }}
         >
-          Platform
+          {expectedPlatform && !platformValue ? 'Expected' : 'Platform'}
         </span>
 
         {platformValue ? (
@@ -235,10 +235,17 @@ export function DepartureCard({
           <>
             {expectedPlatform ? (
               <>
-                <span className="tabular text-[17px] leading-none font-bold text-faint">
+                {/* Dashed and unfilled: a provisional number, deliberately
+                    unlike the solid one GO has actually committed to. */}
+                <span
+                  className="tabular rounded-md border-[1.5px] border-dashed px-1.5 py-0.5 text-[15px] leading-none font-semibold @max-[340px]:text-[13px]"
+                  style={{ borderColor: 'var(--border-strong)', color: 'var(--fg-muted)' }}
+                >
                   {expectedPlatform.replace(/^platforms?\s*/i, '')}
                 </span>
-                <span className="text-center text-[8px] leading-tight text-faint">expected</span>
+                <span className="text-center text-[7.5px] leading-tight tracking-wide text-faint uppercase">
+                  not confirmed
+                </span>
               </>
             ) : (
               <>
