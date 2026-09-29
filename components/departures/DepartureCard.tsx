@@ -46,6 +46,7 @@ export function DepartureCard({
     cancelled,
     vehicleType,
     platform,
+    expectedPlatform,
     platformNote,
     routeCode,
     serviceCode,
@@ -232,10 +233,21 @@ export function DepartureCard({
           </span>
         ) : (
           <>
-            <span className="text-[20px] leading-none font-bold text-faint">&mdash;</span>
-            {platformNote ? (
-              <span className="text-center text-[8px] leading-tight text-faint">soon</span>
-            ) : null}
+            {expectedPlatform ? (
+              <>
+                <span className="tabular text-[17px] leading-none font-bold text-faint">
+                  {expectedPlatform.replace(/^platforms?\s*/i, '')}
+                </span>
+                <span className="text-center text-[8px] leading-tight text-faint">expected</span>
+              </>
+            ) : (
+              <>
+                <span className="text-[20px] leading-none font-bold text-faint">&mdash;</span>
+                {platformNote ? (
+                  <span className="text-center text-[8px] leading-tight text-faint">soon</span>
+                ) : null}
+              </>
+            )}
             {/* No platform yet is exactly when a rider wants telling. */}
             {!cancelled && !departed && departure.tripNumber ? (
               <PlatformAlertButton
@@ -275,7 +287,9 @@ export function DepartureCard({
 
   const label = `${depart.time} ${depart.suffix} ${serviceCode ?? routeCode ?? ''} ${
     heading ? `${heading}bound ` : ''
-  }to ${arrivalStopName ?? destination ?? ''}, ${statusLabel}${platform ? `, ${platform}` : ''}`;
+  }to ${arrivalStopName ?? destination ?? ''}, ${statusLabel}${
+    platform ? `, ${platform}` : expectedPlatform ? `, ${expectedPlatform} expected` : ''
+  }`;
 
   if (!departure.tripId) {
     return (

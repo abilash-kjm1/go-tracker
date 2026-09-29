@@ -391,6 +391,9 @@ export class GoTrackerTemporaryProvider implements TransitDataProvider {
           ? new Date(scheduledAt.getTime() + delaySeconds * 1000)
           : undefined;
 
+      const assignedPlatform =
+        official?.platform ?? boardRow?.platform ?? boardingLocation(stationRow);
+
       const [originStop, destinationStop] = await Promise.all([
         getStop(entry.originStopId),
         getStop(entry.destinationStopId),
@@ -436,7 +439,10 @@ export class GoTrackerTemporaryProvider implements TransitDataProvider {
           : undefined,
         delaySeconds,
         // Platform only when a source actually reports one.
-        platform: official?.platform ?? boardRow?.platform ?? boardingLocation(stationRow),
+        platform: assignedPlatform,
+        // Carried only while nothing has actually been assigned, so a plan can
+        // never be mistaken for the real thing further down the line.
+        expectedPlatform: assignedPlatform ? undefined : official?.expectedPlatform,
         platformNote: boardRow?.platform ? undefined : boardRow?.note,
         cancelled: isCancelled(stationRow) || official?.cancelled === true || boardRow?.cancelled === true,
         // The live board knows which runs skip stops; failing that, GO names

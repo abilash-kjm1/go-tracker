@@ -17,8 +17,14 @@ import { config } from './config';
  */
 
 export interface PlatformInfo {
-  /** Already rider-facing: "Platform 4", "Bay 3". */
+  /** The assignment GO has actually made. Already rider-facing: "Platform 4". */
   platform?: string;
+  /**
+   * The platform GO plans to use, published in advance and not yet confirmed.
+   * Kept apart from `platform` because presenting a plan as a decision is how a
+   * rider ends up on the wrong side of a station.
+   */
+  expectedPlatform?: string;
   status?: string;
   cancelled?: boolean;
 }
@@ -81,12 +87,16 @@ export async function getPlatformsByTrip(stopId: string): Promise<Map<string, Pl
     for (const line of result.value) {
       const trip = String(line.TripNumber ?? '').trim();
       if (!trip) continue;
+      const actual = normalizeBoarding(line, line.ActualPlatform || line.Platform || line.Track);
+      const scheduled = normalizeBoarding(line, line.ScheduledPlatform);
       const info: PlatformInfo = {
-        platform: normalizeBoarding(line),
+        platform: actual,
+        // Only worth carrying while nothing firmer exists.
+        expectedPlatform: actual ? undefined : scheduled,
         status: line.Status?.trim() || undefined,
         cancelled: /cancel/i.test(line.Status ?? ''),
       };
-      if (info.platform || info.status) out.set(trip, info);
+      if (info.platform || info.expectedPlatform || info.status) out.set(trip, info);
     }
     return out;
   } catch {
@@ -99,11 +109,11 @@ export async function getPlatformsByTrip(stopId: string): Promise<Map<string, Pl
  * Riders read "Platform", never "Track" — but a bus bay keeps its own wording,
  * and anything non-numeric is passed through as published.
  */
-function normalizeBoarding(line: NextServiceLine): string | undefined {
+function normalizeBoarding(line: NextServiceLine, value?: string): string | undefined {
   const bay = line.Bay?.trim();
   if (bay) return /^\d+[A-Za-z]?$/.test(bay) ? `Bay ${bay}` : bay;
 
-  const raw = (line.ActualPlatform || line.ScheduledPlatform || line.Platform || line.Track)?.trim();
+  const raw = value?.trim();
   if (!raw) return undefined;
 
   const isBus = (line.ServiceType ?? '').toUpperCase().startsWith('B');

@@ -122,6 +122,13 @@ export interface Departure {
    */
   platform?: string;
 
+  /**
+   * Where GO plans to put it, published in advance and not yet confirmed. Kept
+   * apart from `platform` because presenting a plan as a decision is how a
+   * rider ends up on the wrong side of a station.
+   */
+  expectedPlatform?: string;
+
   cancelled: boolean;
 
   /** Runs express — skips stops the all-stops service calls at. */
