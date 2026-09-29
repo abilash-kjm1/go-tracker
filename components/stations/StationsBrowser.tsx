@@ -95,11 +95,19 @@ export function StationsBrowser({
           <h2 className="px-1 pb-2 text-[11px] font-semibold tracking-wide text-faint uppercase">
             Pinned
           </h2>
-          <ul className="overflow-hidden rounded-2xl border hairline bg-[var(--bg-elevated)]">
-            {pinned.map((stop) => (
+          <ul
+            className="overflow-hidden rounded-2xl border hairline"
+            style={{
+              background:
+                'linear-gradient(180deg, color-mix(in srgb, var(--accent) 7%, var(--bg-elevated)), var(--bg-elevated))',
+              borderColor: 'color-mix(in srgb, var(--accent) 22%, transparent)',
+            }}
+          >
+            {pinned.map((stop, index) => (
               <StopRow
                 key={stop.id}
                 stop={stop}
+                index={index}
                 distanceKm={nearestById.get(stop.id)}
                 routeHint={duplicateNames.has(stop.name)}
                 routeLookup={routeLookup}
@@ -117,10 +125,11 @@ export function StationsBrowser({
             Nearby
           </h2>
           <ul className="overflow-hidden rounded-2xl border hairline bg-[var(--bg-elevated)]">
-            {nearby.stops.slice(0, 4).map((stop) => (
+            {nearby.stops.slice(0, 4).map((stop, index) => (
               <StopRow
                 key={stop.id}
                 stop={stop}
+                index={index}
                 distanceKm={stop.distanceKm}
                 routeHint={duplicateNames.has(stop.name)}
                 routeLookup={routeLookup}
@@ -143,13 +152,15 @@ export function StationsBrowser({
       ) : null}
 
       <ul className="overflow-hidden rounded-2xl border pb-0 hairline bg-[var(--bg-elevated)]">
-        {filtered.slice(0, 250).map((stop) => (
+        {filtered.slice(0, 250).map((stop, index) => (
           <StopRow
             key={stop.id}
             stop={stop}
+            index={index}
             distanceKm={nearestById.get(stop.id)}
             routeHint={duplicateNames.has(stop.name)}
             routeLookup={routeLookup}
+            match={query.trim()}
             pinned={isFavorite('stop', stop.id)}
             onPin={() => toggle({ kind: 'stop', id: stop.id, name: stop.name })}
           />
@@ -169,18 +180,46 @@ export function StationsBrowser({
   );
 }
 
+/** Tints the part of a name the rider typed, so the hit is visible at a glance. */
+function Marked({ text, match }: { text: string; match: string }) {
+  const at = match ? text.toLowerCase().indexOf(match.toLowerCase()) : -1;
+  if (at < 0) return <>{text}</>;
+
+  return (
+    <>
+      {text.slice(0, at)}
+      <mark
+        className="rounded-[3px] px-[1px]"
+        style={{
+          background: 'color-mix(in srgb, var(--accent) 22%, transparent)',
+          color: 'inherit',
+        }}
+      >
+        {text.slice(at, at + match.length)}
+      </mark>
+      {text.slice(at + match.length)}
+    </>
+  );
+}
+
 function StopRow({
   stop,
+  index = 0,
   distanceKm,
   routeHint = false,
   routeLookup,
+  match = '',
   pinned = false,
   onPin,
 }: {
   stop: TransitStop;
+  /** Position in its list, used to stagger the entrance. */
+  index?: number;
   distanceKm?: number;
   routeHint?: boolean;
   routeLookup?: Map<string, string>;
+  /** What the rider typed, marked inside the name so the hit is obvious. */
+  match?: string;
   pinned?: boolean;
   onPin?: () => void;
 }) {
@@ -195,18 +234,32 @@ function StopRow({
   const isStation = stop.modes.includes('train');
 
   return (
-    <li className="flex items-center border-b last:border-b-0 hairline">
+    <li
+      className="animate-rise flex items-center border-b last:border-b-0 hairline"
+      // Only the first dozen are staggered: past that the delay would be a wait.
+      style={{ animationDelay: `${Math.min(index, 12) * 22}ms` }}
+    >
       <Link
         href={`/stations/${encodeURIComponent(stop.id)}`}
-        className="flex min-h-[58px] min-w-0 flex-1 items-center gap-3 px-3 transition-colors hover:bg-[var(--bg-sunken)]"
+        className="flex min-h-[58px] min-w-0 flex-1 items-center gap-3 px-3 transition-colors hover:bg-[var(--bg-sunken)] active:bg-[var(--bg-sunken)]"
       >
         {/* A station and a roadside stop are not the same thing, and the icon
             should say so before the name is read. */}
         <span
-          className={
+          className="grid size-9 shrink-0 place-items-center rounded-xl transition-transform"
+          style={
             isStation
-              ? 'grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--accent)]/12 text-[var(--accent)]'
-              : 'grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--bg-sunken)] text-[var(--fg-faint)]'
+              ? {
+                  background:
+                    'linear-gradient(145deg, color-mix(in srgb, var(--accent) 20%, transparent), color-mix(in srgb, var(--accent) 8%, transparent))',
+                  color: 'var(--accent)',
+                  boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent)',
+                }
+              : {
+                  background: 'var(--bg-sunken)',
+                  color: 'var(--fg-faint)',
+                  boxShadow: 'inset 0 0 0 1px var(--border)',
+                }
           }
         >
           <ModeIcon type={stop.modes[0] ?? 'unknown'} className="size-5" />
@@ -214,7 +267,7 @@ function StopRow({
 
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[15px] font-semibold">
-            {stop.name.replace(/\s+GO(\s+Bus)?$/i, '')}
+            <Marked text={stop.name.replace(/\s+GO(\s+Bus)?$/i, '')} match={match} />
           </span>
           <span className="block truncate text-[12.5px] text-muted">
             {routes
@@ -233,7 +286,7 @@ function StopRow({
       </Link>
 
       {onPin ? (
-        <span className="shrink-0 pr-2 pl-1">
+        <span key={pinned ? 'on' : 'off'} className={`shrink-0 pr-2 pl-1 ${pinned ? 'st-pop' : ''}`}>
           <StarButton
             active={pinned}
             label={pinned ? `Unpin ${stop.name}` : `Pin ${stop.name}`}
