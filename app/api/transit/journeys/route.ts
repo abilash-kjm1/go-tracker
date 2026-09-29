@@ -32,6 +32,9 @@ export async function GET(request: Request) {
         )
       : null;
     const planned = requested && requested.getTime() > Date.now() ? requested : null;
+    // Asking for a time that has already gone is easy to do by accident, and
+    // silently answering for "now" looks like the planner got it wrong.
+    const timePassed = Boolean(requested && !planned);
 
     const [fromStop, toStop] = await Promise.all([getStop(from), getStop(to)]);
     if (!fromStop || !toStop) return fail('Stop not found', 404);
@@ -53,7 +56,9 @@ export async function GET(request: Request) {
       envelope(journeys, {
         updatedAt: realtime.length ? new Date() : null,
         freshness: realtime.length ? 'live' : 'scheduled',
-        degraded: journeys.length
+        degraded: timePassed
+          ? 'That time has already passed, so these leave now.'
+          : journeys.length
           ? anyDirect
             ? undefined
             : 'No direct service — these journeys need a change.'

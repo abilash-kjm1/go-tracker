@@ -143,9 +143,15 @@ export async function planJourneys({
 
   const combined: Journey[] = [];
   const seenJourneys = new Set<string>();
+  // Two options from one departure is a choice; four is the same train over and
+  // over, crowding out the later services a rider might actually prefer.
+  const perDeparture = new Map<string, number>();
   for (const journey of [...journeys, ...transferJourneys, ...deepJourneys]) {
     const key = `${journey.departureTime}:${journey.arrivalTime}:${journey.transfers}`;
     if (seenJourneys.has(key)) continue;
+    const used = perDeparture.get(journey.departureTime) ?? 0;
+    if (used >= 2) continue;
+    perDeparture.set(journey.departureTime, used + 1);
     seenJourneys.add(key);
     combined.push(journey);
   }
