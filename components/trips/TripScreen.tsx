@@ -245,8 +245,8 @@ function StopAlertBar({ state }: { state: ReturnType<typeof useStopAlerts> }) {
 
       {permission === 'granted' ? (
         <p className="mt-2 text-[12px] text-muted">
-          Keep GO Tracker open as you travel. iPhone pauses web apps once they leave the screen, so
-          an alert can only reach you while the app is showing.
+          These arrive even with the app closed and the phone locked. Add GO Tracker to your Home
+          Screen if you have not already — on iPhone that is what allows notifications at all.
         </p>
       ) : null}
     </div>

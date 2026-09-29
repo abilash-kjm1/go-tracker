@@ -21,7 +21,11 @@ export function JourneyLine({
   now: number;
   /** Stops with an arrival alert armed. */
   armedStopIds?: Set<string>;
-  onToggleAlert?: (stopId: string, stopName: string) => void;
+  onToggleAlert?: (
+    stopId: string,
+    stopName: string,
+    service?: { tripNumber?: string; departsAt?: string },
+  ) => void;
 }) {
   // GO's line colours are pure primaries (#ff0d00 red); softened towards slate they
   // stay recognisable without glaring on a light or dark page.
@@ -132,6 +136,7 @@ export function JourneyLine({
                   minutes={stop.status === 'next' ? minutes : null}
                   armed={armedStopIds?.has(stop.stopId) ?? false}
                   onToggleAlert={onToggleAlert}
+                  tripNumber={trip.tripNumber}
                 />
               );
             })}
@@ -404,6 +409,7 @@ function StopRow({
   minutes,
   armed,
   onToggleAlert,
+  tripNumber,
 }: {
   stop: TripStopTime;
   index: number;
@@ -414,7 +420,12 @@ function StopRow({
   progress: number | null;
   minutes: number | null;
   armed: boolean;
-  onToggleAlert?: (stopId: string, stopName: string) => void;
+  onToggleAlert?: (
+    stopId: string,
+    stopName: string,
+    service?: { tripNumber?: string; departsAt?: string },
+  ) => void;
+  tripNumber?: string;
 }) {
   const passed = stop.status === 'departed';
   const here = stop.status === 'current';
@@ -539,7 +550,13 @@ function StopRow({
           {onToggleAlert && !passed && !here ? (
             <button
               type="button"
-              onClick={() => onToggleAlert(stop.stopId, stop.stopName)}
+              onClick={() =>
+                onToggleAlert(stop.stopId, stop.stopName, {
+                  tripNumber,
+                  departsAt:
+                    stop.estimatedDeparture ?? stop.scheduledDeparture ?? stop.scheduledArrival,
+                })
+              }
               aria-pressed={armed}
               aria-label={
                 armed ? `Stop alerting me at ${tidy(stop.stopName)}` : `Alert me when the train reaches ${tidy(stop.stopName)}`

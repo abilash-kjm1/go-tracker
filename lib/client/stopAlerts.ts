@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { registerWatch, unregisterWatch } from './pushWatch';
 import type { TripDetail } from '@/lib/transit/types';
 
 /**
@@ -81,16 +82,34 @@ export function useStopAlerts(tripId: string | undefined) {
   );
 
   const toggle = useCallback(
-    (stopId: string, stopName: string) => {
+    (stopId: string, stopName: string, service?: { tripNumber?: string; departsAt?: string }) => {
       if (!tripId) return;
+      let armed = false;
       setAlerts((current) => {
         const exists = current.some((a) => alertKey(a.tripId, a.stopId) === alertKey(tripId, stopId));
+        armed = !exists;
         const next = exists
           ? current.filter((a) => alertKey(a.tripId, a.stopId) !== alertKey(tripId, stopId))
           : [...current, { tripId, stopId, stopName }];
         write(next);
         return next;
       });
+
+      // The page watches while it is open; the server watches when it is not.
+      // Without a trip number there is nothing the server could match on, so
+      // the alert simply stays in-page.
+      if (!service?.tripNumber || !service.departsAt) return;
+      if (armed) {
+        void registerWatch('arrival', {
+          stopId,
+          stopName,
+          tripId,
+          tripNumber: service.tripNumber,
+          departsAt: service.departsAt,
+        });
+      } else {
+        void unregisterWatch('arrival', service.tripNumber, stopId);
+      }
     },
     [tripId],
   );

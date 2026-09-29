@@ -175,8 +175,8 @@ export function MyTripScreen() {
       ) : null}
       {stopAlerts.permission === 'granted' ? (
         <p className="mt-3 rounded-2xl border px-4 py-3 text-[12px] text-muted hairline bg-[var(--bg-elevated)]">
-          {stopAlerts.armedCount} alert{stopAlerts.armedCount === 1 ? '' : 's'} set on this leg. Keep GO
-          Tracker on screen — iPhone pauses web apps in the background.
+          {stopAlerts.armedCount} alert{stopAlerts.armedCount === 1 ? '' : 's'} set on this leg. These
+          reach you with the phone locked, so you can put it away.
         </p>
       ) : null}
 

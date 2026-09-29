@@ -2,19 +2,25 @@ import 'server-only';
 
 import webpush from 'web-push';
 import { getStop } from './gtfs';
+import { getProvider } from './provider';
 import { getLiveBoard } from './sources/goTrackerBoards';
+import type { TripDetail } from './types';
 import { durable, list, put, remove } from '../server/store';
 
 /**
- * "Tell me when my platform is posted."
+ * Watches that outlive the page: the two things a rider wants to be told while
+ * the phone is in a pocket.
  *
- * GO holds a platform back until a few minutes before departure, which is
- * exactly when a rider is least able to watch a screen. A watch records one
- * phone's interest in one trip at one stop; a tick from an outside scheduler
- * checks the boards and pushes the moment a real platform appears.
+ * `platform` — GO holds a platform back until a few minutes before departure,
+ * which is exactly when nobody is watching a screen.
  *
- * Nothing is ever guessed: the notification only fires on a platform the
- * operator has actually published.
+ * `arrival` — a stop marked on a journey, so the train reaching it reaches you
+ * too. It fires on approach where possible, because a notification as the doors
+ * open is too late to be any use.
+ *
+ * A watch records one phone's interest in one trip at one stop; a tick from an
+ * outside scheduler does the checking. Nothing is ever guessed: each fires only
+ * on something the live data actually reports.
  */
 
 const SET = 'platform-watch';
@@ -24,20 +30,23 @@ export interface PushSubscriptionRecord {
   keys: { p256dh: string; auth: string };
 }
 
+export type WatchKind = 'platform' | 'arrival';
+
 export interface PlatformWatch {
+  kind?: WatchKind;
   subscription: PushSubscriptionRecord;
   stopId: string;
   stopName: string;
   tripId?: string;
   tripNumber: string;
-  /** Scheduled departure, so a watch cleans itself up after the train has gone. */
+  /** Scheduled time here, so a watch cleans itself up after the train has gone. */
   departsAt: string;
   createdAt: number;
 }
 
-/** One watch per phone, trip and stop. */
-const watchKey = (endpoint: string, tripNumber: string, stopId: string) =>
-  Buffer.from(`${endpoint}|${tripNumber}|${stopId}`).toString('base64url').slice(0, 96);
+/** One watch per phone, kind, trip and stop. */
+const watchKey = (endpoint: string, tripNumber: string, stopId: string, kind: WatchKind) =>
+  Buffer.from(`${endpoint}|${kind}|${tripNumber}|${stopId}`).toString('base64url').slice(0, 96);
 
 export function pushConfigured(): boolean {
   return Boolean(process.env.VAPID_PRIVATE_KEY && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY);
@@ -57,15 +66,20 @@ function configureWebPush() {
 }
 
 export async function addWatch(watch: PlatformWatch): Promise<void> {
-  await put(SET, watchKey(watch.subscription.endpoint, watch.tripNumber, watch.stopId), watch);
+  const kind = watch.kind ?? 'platform';
+  await put(SET, watchKey(watch.subscription.endpoint, watch.tripNumber, watch.stopId, kind), {
+    ...watch,
+    kind,
+  });
 }
 
 export async function dropWatch(
   endpoint: string,
   tripNumber: string,
   stopId: string,
+  kind: WatchKind = 'platform',
 ): Promise<void> {
-  await remove(SET, watchKey(endpoint, tripNumber, stopId));
+  await remove(SET, watchKey(endpoint, tripNumber, stopId, kind));
 }
 
 export async function listWatches(): Promise<Array<{ key: string; value: PlatformWatch }>> {
@@ -102,8 +116,11 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
   }
   if (!live.length) return result;
 
+  const platformWatches = live.filter((entry) => (entry.value.kind ?? 'platform') === 'platform');
+  const arrivalWatches = live.filter((entry) => entry.value.kind === 'arrival');
+
   // One board fetch per stop, however many phones are waiting on it.
-  const stopIds = [...new Set(live.map((entry) => entry.value.stopId))];
+  const stopIds = [...new Set(platformWatches.map((entry) => entry.value.stopId))];
   result.stops = stopIds.length;
   const boards = new Map<string, Awaited<ReturnType<typeof getLiveBoard>>>();
   for (const stopId of stopIds) {
@@ -114,15 +131,23 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
     }
   }
 
+  // One trip lookup per trip, however many stops are marked on it.
+  const trips = new Map<string, TripDetail | null>();
+  if (arrivalWatches.length) {
+    const provider = await getProvider();
+    for (const tripId of new Set(arrivalWatches.map((e) => e.value.tripId).filter(Boolean))) {
+      trips.set(tripId!, await provider.getTrip(tripId!).catch(() => null));
+    }
+  }
+
   if (pushConfigured()) configureWebPush();
 
-  for (const entry of live) {
+  for (const entry of platformWatches) {
     const { value: watch } = entry;
     const platform = boards.get(watch.stopId)?.byTrip.get(watch.tripNumber)?.platform;
     if (!platform) continue;
 
-    const stop = await getStop(watch.stopId).catch(() => null);
-    const where = (stop?.name ?? watch.stopName).replace(/\s+GO(\s+Bus)?$/i, '');
+    const where = await stopLabel(watch);
     const sent = await sendPush(watch.subscription, {
       title: `${platform} at ${where}`,
       body: `Train ${watch.tripNumber} has been given ${platform.toLowerCase()}.`,
@@ -135,7 +160,39 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
     if (sent) result.notified += 1;
   }
 
+  for (const entry of arrivalWatches) {
+    const { value: watch } = entry;
+    const stop = watch.tripId
+      ? trips.get(watch.tripId)?.stops.find((s) => s.stopId === watch.stopId)
+      : undefined;
+    // `next` is the train approaching; `current` is it standing there. Either
+    // is worth telling someone about, and `departed` means we were too slow.
+    if (!stop || (stop.status !== 'next' && stop.status !== 'current' && stop.status !== 'departed')) {
+      continue;
+    }
+
+    const where = await stopLabel(watch);
+    const approaching = stop.status === 'next';
+    const sent = await sendPush(watch.subscription, {
+      title: approaching ? `${where} is next` : `Arriving at ${where}`,
+      body: approaching
+        ? `Train ${watch.tripNumber} is on its way into ${where}.`
+        : `Train ${watch.tripNumber} is at ${where} now.`,
+      url: watch.tripId ? `/my-trip` : `/stations/${watch.stopId}`,
+      tag: `arrival-${watch.tripNumber}-${watch.stopId}`,
+    });
+
+    await remove(SET, entry.key);
+    if (sent) result.notified += 1;
+  }
+
   return result;
+}
+
+/** The stop's own name where we have it, falling back to what was saved. */
+async function stopLabel(watch: PlatformWatch): Promise<string> {
+  const stop = await getStop(watch.stopId).catch(() => null);
+  return (stop?.name ?? watch.stopName).replace(/\s+GO(\s+Bus)?$/i, '');
 }
 
 async function sendPush(
