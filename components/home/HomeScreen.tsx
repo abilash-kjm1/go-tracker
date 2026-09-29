@@ -3,8 +3,6 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { SearchIcon, SearchOverlay } from '@/components/search/SearchOverlay';
-import { HeroCard } from './HeroCard';
-import { usePhase } from './phase';
 import { PlannerForm, PlannerResults, useTripPlanner } from '@/components/plan/TripPlanner';
 import { StationSummaryCard } from '@/components/stations/StationSummaryCard';
 import { LiveIndicator } from '@/components/ui/LiveIndicator';
@@ -35,7 +33,6 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
     '/api/transit/stations?limit=1000',
   );
   const planner = useTripPlanner(allStops ?? []);
-  const phase = usePhase();
 
   const trains = vehicles?.filter((v) => v.vehicleType === 'train').length ?? 0;
   const buses = vehicles?.filter((v) => v.vehicleType === 'bus').length ?? 0;
@@ -79,141 +76,61 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-safe">
-      {/* Hero: a warm card with a train mascot, the headline and the planner. */}
-      <HeroCard
-        phase={phase}
-        greeting={greeting()}
-        trainsLive={vehicles ? trains : null}
-        late={lateTotal}
-        onSearch={() => setSearchOpen(true)}
-      >
-        <PlannerForm planner={planner} stops={allStops ?? []} loadingStops={stopsLoading && !allStops} />
-      </HeroCard>
+      {/*
+        Content first. The planner is the reason the app is open, so it sits at
+        the top at full strength; everything else is quieter and in the order a
+        rider needs it. No poster, no mascot, no second copy of the same numbers.
+      */}
+      {/* Right padding leaves the corner free for the hanging signal. */}
+      <header className="flex items-end justify-between gap-3 pt-6 pr-16 pb-4 md:pr-0">
+        <div className="min-w-0">
+          <p className="text-[12.5px] font-medium text-muted">{greeting()}</p>
+          <h1 className="mt-0.5 text-[26px] leading-none font-bold tracking-tight">Where to?</h1>
+        </div>
+        <button
+          type="button"
+          onClick={() => setSearchOpen(true)}
+          aria-label="Search stations, lines or buses"
+          className="grid size-11 shrink-0 place-items-center rounded-2xl border text-[var(--fg-muted)] transition-colors hairline bg-[var(--bg-elevated)] hover:bg-[var(--bg-sunken)]"
+        >
+          <SearchIcon className="size-5" />
+        </button>
+      </header>
 
-      {/* Straight under the form, so choosing two stops answers itself in place. */}
+      <PlannerForm planner={planner} stops={allStops ?? []} loadingStops={stopsLoading && !allStops} />
       <PlannerResults planner={planner} />
 
-      {/* Shortcuts. */}
-      <nav aria-label="Shortcuts" className="mt-4 grid grid-cols-4 gap-2.5">
-        <Shortcut href="/map" hue="green" label="Live map" icon={<MapGlyph />} />
-        <Shortcut href="/stations" hue="blue" label="Stations" icon={<StationGlyph />} />
-        <Shortcut href="/routes" hue="violet" label="Lines" icon={<LinesGlyph />} />
+      {alerts && alerts.length > 0 ? (
+        <Link
+          href="/alerts"
+          className="mt-4 flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5 text-[13px] font-semibold"
+          style={{ background: 'var(--tile-amber-bg)', color: 'var(--tile-amber-fg)' }}
+        >
+          <span aria-hidden>⚠</span>
+          <span className="min-w-0 flex-1 truncate">
+            {alerts.length === 1
+              ? `${alerts[0].title} — ${alerts[0].body}`
+              : `${alerts.length} services are reporting delays`}
+          </span>
+          <span aria-hidden className="shrink-0 opacity-70">
+            ›
+          </span>
+        </Link>
+      ) : null}
+
+      <nav aria-label="Shortcuts" className="mt-4 grid grid-cols-4 gap-2">
+        <Shortcut href="/map" label="Map" icon={<MapGlyph />} />
+        <Shortcut href="/stations" label="Stations" icon={<StationGlyph />} />
+        <Shortcut href="/routes" label="Lines" icon={<LinesGlyph />} />
         <Shortcut
           href="/alerts"
-          hue="amber"
           label="Alerts"
           icon={<AlertGlyph />}
           badge={alerts && alerts.length > 0 ? alerts.length : undefined}
         />
       </nav>
 
-      {/* Live network: what is out there right now. Every number opens its trains. */}
-      <section className="mt-4 rounded-3xl border px-4 py-4 hairline bg-[var(--bg-elevated)] shadow-[var(--shadow-card)]">
-        <div className="flex items-center justify-between gap-3">
-          <LiveIndicator freshness={freshness} updatedAt={meta?.updatedAt ?? null} />
-          <Link href="/map" className="text-[13px] font-bold text-[var(--accent)]">
-            Open live map →
-          </Link>
-        </div>
-
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          <StatButton
-            hue="green"
-            label="Trains now"
-            value={vehicles ? trains : null}
-            active={liveView?.kind === 'all'}
-            onClick={() => toggleView({ kind: 'all' })}
-          />
-          <StatButton
-            hue={lateTotal > 0 ? 'amber' : 'teal'}
-            label={lateTotal > 0 ? 'Running late' : 'On time'}
-            value={vehicles ? (lateTotal > 0 ? lateTotal : trains) : null}
-            active={liveView?.kind === (lateTotal > 0 ? 'late' : 'all')}
-            onClick={() => toggleView(lateTotal > 0 ? { kind: 'late' } : { kind: 'all' })}
-          />
-          <StatButton
-            hue="violet"
-            label="Lines out"
-            value={vehicles && routes ? lines.length : null}
-            active={liveView?.kind === 'lines'}
-            onClick={() => toggleView({ kind: 'lines' })}
-          />
-        </div>
-
-        {lines.length > 0 ? (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {lines.map(({ route, count, late }) => {
-              const active = liveView?.kind === 'line' && liveView.routeId === route.id;
-              return (
-                <button
-                  key={route.id}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => toggleView({ kind: 'line', routeId: route.id })}
-                  className="flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-1 text-[12px] font-semibold transition-transform active:scale-[0.97]"
-                  style={
-                    active
-                      ? {
-                          background: 'var(--tile-violet-bg)',
-                          color: 'var(--tile-violet-fg)',
-                          boxShadow: `inset 0 0 0 1.5px ${route.color ?? '#64748b'}`,
-                        }
-                      : { boxShadow: 'inset 0 0 0 1px var(--border-strong)' }
-                  }
-                >
-                  <span
-                    className="grid h-5 min-w-7 place-items-center rounded-full px-1.5 text-[10px] font-extrabold text-white"
-                    style={{ background: route.color ?? '#64748b' }}
-                  >
-                    {route.code}
-                  </span>
-                  <span className="tabular">{count}</span>
-                  {late > 0 ? <span className="text-[var(--tile-amber-fg)]">· {late} late</span> : null}
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
-
-        {liveView ? (
-          <LiveList
-            view={liveView}
-            trains={trainList}
-            lines={lines}
-            onPickLine={(routeId) => setLiveView({ kind: 'line', routeId })}
-            onClose={() => setLiveView(null)}
-            routeName={
-              liveView.kind === 'line'
-                ? lines.find((l) => l.route.id === liveView.routeId)?.route.name
-                : undefined
-            }
-          />
-        ) : (
-          <p className="mt-3 text-[11px] text-faint">
-            Tap a number or a line to see its trains.{' '}
-            {buses === 0
-              ? 'No buses are reporting a position right now; their times still come from the timetable.'
-              : `${buses} bus${buses === 1 ? '' : 'es'} reporting a position.`}
-          </p>
-        )}
-      </section>
-
-      {alerts && alerts.length > 0 ? (
-        <Link
-          href="/alerts"
-          className="mt-3 flex items-start gap-3 rounded-2xl px-4 py-3 text-[13px] font-semibold"
-          style={{ background: 'var(--tile-amber-bg)', color: 'var(--tile-amber-fg)' }}
-        >
-          <span aria-hidden className="mt-px text-[15px]">⚠</span>
-          <span className="min-w-0">
-            {alerts.length === 1
-              ? `${alerts[0].title} — ${alerts[0].body}`
-              : `${alerts.length} services are reporting delays`}
-            <span className="ml-1 font-bold underline underline-offset-2">Details</span>
-          </span>
-        </Link>
-      ) : null}
-
+      {/* Departures a rider actually has a stake in, before any network summary. */}
       {ready && favoriteStops.length > 0 ? (
         <Section title="Favourites">
           {favoriteStops.map((fav) => (
@@ -235,26 +152,6 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
         </Section>
       ) : null}
 
-      {nearby.status === 'idle' && favoriteStops.length === 0 ? (
-        <button
-          type="button"
-          onClick={nearby.request}
-          className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-semibold hairline"
-        >
-          Use my location to sort by distance
-        </button>
-      ) : null}
-
-      {nearby.status === 'denied' ? (
-        <p className="mt-4 rounded-xl bg-[var(--bg-sunken)] px-3 py-2 text-[13px] text-muted">
-          Location is blocked, so nearby stops are unavailable.{' '}
-          <Link href="/stations" className="font-medium text-[var(--accent)]">
-            Browse stations instead
-          </Link>
-          .
-        </p>
-      ) : null}
-
       {ready && favoriteStops.length === 0 && recent.length > 0 ? (
         <Section title="Recently viewed">
           {recent.slice(0, 3).map((stop) => (
@@ -268,14 +165,129 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
           {featured.slice(0, 3).map((stop) => (
             <StationSummaryCard key={stop.id} stopId={stop.id} name={stop.name} />
           ))}
-          <Link
-            href="/stations"
-            className="flex min-h-12 items-center justify-center rounded-2xl border px-4 text-sm font-semibold hairline"
-          >
-            Browse all stations &amp; stops
-          </Link>
         </Section>
       ) : null}
+
+      {nearby.status === 'idle' && favoriteStops.length === 0 ? (
+        <button
+          type="button"
+          onClick={nearby.request}
+          className="mt-3 flex min-h-11 w-full items-center justify-center rounded-2xl border px-4 text-[13px] font-semibold text-muted hairline"
+        >
+          Use my location to show the nearest stops
+        </button>
+      ) : null}
+
+      {nearby.status === 'denied' ? (
+        <p className="mt-3 text-[12px] text-faint">
+          Location is blocked, so nearby stops are unavailable.{' '}
+          <Link href="/stations" className="font-medium text-[var(--accent)]">
+            Browse stations
+          </Link>
+          .
+        </p>
+      ) : null}
+
+      {/* The network, as one quiet line that opens when asked. */}
+      <section className="mt-6">
+        <button
+          type="button"
+          onClick={() => toggleView({ kind: 'all' })}
+          aria-expanded={Boolean(liveView)}
+          className="flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors hairline bg-[var(--bg-elevated)] hover:bg-[var(--bg-sunken)]"
+        >
+          <span className="live-dot size-2 shrink-0 rounded-full bg-signal-500" aria-hidden />
+          <span className="min-w-0 flex-1 text-[13px]">
+            {vehicles ? (
+              <>
+                <span className="tabular font-bold">{trains}</span> trains running
+                {lateTotal > 0 ? (
+                  <>
+                    <span className="text-faint"> · </span>
+                    <span className="font-bold" style={{ color: 'var(--color-warn-500)' }}>
+                      {lateTotal} late
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-muted"> · all on time</span>
+                )}
+                {buses > 0 ? <span className="text-muted"> · {buses} buses</span> : null}
+              </>
+            ) : (
+              <span className="text-muted">Checking live services…</span>
+            )}
+          </span>
+          <span aria-hidden className={`shrink-0 text-faint ${liveView ? 'rotate-180' : ''}`}>
+            ▾
+          </span>
+        </button>
+
+        {liveView ? (
+          <div className="mt-2 rounded-2xl border px-4 py-3 hairline bg-[var(--bg-elevated)]">
+            {lines.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                <FilterPill active={liveView.kind === 'all'} onClick={() => toggleView({ kind: 'all' })}>
+                  All
+                </FilterPill>
+                {lateTotal > 0 ? (
+                  <FilterPill
+                    active={liveView.kind === 'late'}
+                    onClick={() => toggleView({ kind: 'late' })}
+                  >
+                    Late ({lateTotal})
+                  </FilterPill>
+                ) : null}
+                {lines.map(({ route, count, late }) => (
+                  <button
+                    key={route.id}
+                    type="button"
+                    aria-pressed={liveView.kind === 'line' && liveView.routeId === route.id}
+                    onClick={() => toggleView({ kind: 'line', routeId: route.id })}
+                    className="flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-1 text-[12px] font-semibold"
+                    style={{
+                      boxShadow:
+                        liveView.kind === 'line' && liveView.routeId === route.id
+                          ? `inset 0 0 0 2px ${route.color ?? '#64748b'}`
+                          : 'inset 0 0 0 1px var(--border-strong)',
+                    }}
+                  >
+                    <span
+                      className="grid h-5 min-w-7 place-items-center rounded-full px-1.5 text-[10px] font-extrabold text-white"
+                      style={{ background: route.color ?? '#64748b' }}
+                    >
+                      {route.code}
+                    </span>
+                    <span className="tabular">{count}</span>
+                    {late > 0 ? (
+                      <span style={{ color: 'var(--color-warn-500)' }}>· {late}</span>
+                    ) : null}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+
+            <LiveList
+              view={liveView}
+              trains={trainList}
+              lines={lines}
+              onPickLine={(routeId) => setLiveView({ kind: 'line', routeId })}
+              onClose={() => setLiveView(null)}
+              routeName={
+                liveView.kind === 'line'
+                  ? lines.find((l) => l.route.id === liveView.routeId)?.route.name
+                  : undefined
+              }
+            />
+          </div>
+        ) : null}
+
+        <Link
+          href="/map"
+          className="mt-2 flex min-h-11 items-center justify-center rounded-2xl border text-[13px] font-semibold text-[var(--accent)] hairline"
+        >
+          Open the live map
+        </Link>
+      </section>
 
       <p className="mt-8 pb-4 text-center text-[11px] leading-relaxed text-faint">
         Independent app. Not operated by or affiliated with Metrolinx or GO Transit.
@@ -283,6 +295,31 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
 
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
+  );
+}
+
+function FilterPill({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`rounded-full px-3 py-1 text-[12px] font-semibold ${
+        active
+          ? 'bg-[var(--accent)] text-[var(--accent-fg)]'
+          : 'text-[var(--fg-muted)] ring-1 ring-[var(--border-strong)] ring-inset'
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -301,13 +338,11 @@ type Hue = 'blue' | 'violet' | 'amber' | 'teal' | 'rose' | 'green';
 
 function Shortcut({
   href,
-  hue,
   label,
   icon,
   badge,
 }: {
   href: string;
-  hue: Hue;
   label: string;
   icon: React.ReactNode;
   badge?: number;
@@ -315,36 +350,16 @@ function Shortcut({
   return (
     <Link
       href={href}
-      className="relative flex flex-col items-center gap-1.5 rounded-2xl px-1 py-3 text-center text-[12px] font-bold transition-transform active:scale-[0.97]"
-      style={{ background: `var(--tile-${hue}-bg)`, color: `var(--tile-${hue}-fg)` }}
+      className="relative flex flex-col items-center gap-1 rounded-2xl border py-2.5 text-[11.5px] font-semibold text-[var(--fg-muted)] transition-colors hairline bg-[var(--bg-elevated)] hover:bg-[var(--bg-sunken)]"
     >
-      <span className="grid size-9 place-items-center">{icon}</span>
+      <span className="grid size-5 place-items-center">{icon}</span>
       {label}
       {badge ? (
-        <span className="tabular absolute top-1.5 right-2 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-[var(--color-alert-500)] px-1 text-[10px] font-extrabold text-white">
+        <span className="tabular absolute top-1 right-2 grid h-[17px] min-w-[17px] place-items-center rounded-full bg-[var(--color-alert-500)] px-1 text-[10px] font-extrabold text-white">
           {badge}
         </span>
       ) : null}
     </Link>
-  );
-}
-
-/** Decorative track lines behind the hero. */
-function Rails() {
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 400 220"
-      className="pointer-events-none absolute inset-0 size-full opacity-[0.16]"
-      preserveAspectRatio="xMaxYMid slice"
-      fill="none"
-      stroke="white"
-    >
-      <path d="M-20 190 C 90 190, 120 90, 220 90 S 340 30, 430 30" strokeWidth="6" strokeLinecap="round" />
-      <path d="M-20 215 C 110 215, 150 130, 250 130 S 350 80, 430 80" strokeWidth="3" strokeLinecap="round" strokeDasharray="2 9" />
-      <circle cx="220" cy="90" r="9" fill="white" stroke="none" />
-      <circle cx="340" cy="52" r="6" fill="white" stroke="none" />
-    </svg>
   );
 }
 

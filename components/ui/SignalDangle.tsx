@@ -17,10 +17,10 @@ import { useFavorites } from '@/lib/client/favorites';
  * how you choose what it points at.
  */
 
-const REST_LENGTH = 148;
+const REST_LENGTH = 44;
 const MAX_STRETCH = 150;
 const HOLD_MS = 520;
-const ANCHOR_RIGHT = 38;
+const ANCHOR_RIGHT = 32;
 
 /** Where the lamp points when nothing is starred yet. */
 const FALLBACK = [{ id: 'UN', name: 'Union Station GO' }];
@@ -67,7 +67,7 @@ export function SignalDangle() {
   useEffect(() => {
     setReduced(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     const narrow = window.matchMedia('(max-width: 767px)');
-    const applySize = () => setSize(narrow.matches ? 76 : 56);
+    const applySize = () => setSize(narrow.matches ? 62 : 52);
     applySize();
     narrow.addEventListener('change', applySize);
     return () => narrow.removeEventListener('change', applySize);
@@ -194,7 +194,7 @@ export function SignalDangle() {
 
   return (
     <div
-      className="pointer-events-none fixed top-0 right-0 z-30 h-[360px] w-[170px] pt-safe"
+      className="pointer-events-none fixed top-0 right-0 z-30 h-[300px] w-[170px] pt-safe"
       aria-hidden={false}
     >
       {/* The anchor the cord hangs from. */}
