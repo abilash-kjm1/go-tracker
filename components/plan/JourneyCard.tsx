@@ -44,9 +44,30 @@ export function JourneyCard({ journey, tone }: { journey: Journey; tone?: Direct
               {arrive.suffix.replace(/\./g, '')}
             </span>
           </p>
+          {/* Two journeys often leave on the same train and differ only in the
+              connecting service, so the services are named up here rather than
+              left to be discovered three rows down. */}
+          <p className="mt-2 flex flex-wrap items-center gap-1">
+            {journey.legs.map((leg, index) => (
+              <span key={leg.id} className="flex items-center gap-1">
+                {index > 0 ? (
+                  <span aria-hidden className="text-[11px] text-faint">
+                    →
+                  </span>
+                ) : null}
+                <RouteBadge
+                  code={leg.serviceCode ?? leg.routeCode ?? '?'}
+                  color={leg.routeColor}
+                  type={leg.vehicleType}
+                />
+              </span>
+            ))}
+          </p>
           <p className="mt-1.5 text-[12px] text-muted">
-            {formatDuration(journey.durationMinutes)} ·{' '}
-            {journey.transfers === 1 ? '1 change' : `${journey.transfers} changes`}
+            <span className="font-semibold text-[var(--fg)]">
+              {formatDuration(journey.durationMinutes)}
+            </span>{' '}
+            · {journey.transfers === 1 ? '1 change' : `${journey.transfers} changes`}
             {countdown ? ` · departs in ${countdown.toLowerCase()}` : ''}
           </p>
         </div>
