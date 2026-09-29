@@ -9,6 +9,7 @@ import { basemapBackground, basemapStyleUrl, GTHA_BOUNDS, GTHA_CENTER } from './
 import { VehicleSheet } from '@/components/vehicles/VehicleSheet';
 import { LiveIndicator } from '@/components/ui/LiveIndicator';
 import { ModeIcon } from '@/components/ui/primitives';
+import { useActiveTrip } from '@/lib/client/activeTrip';
 import { useTheme } from '@/lib/client/theme';
 import { useTransit } from '@/lib/client/useTransit';
 import { formatClockParts } from '@/lib/transit/time';
@@ -65,6 +66,14 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
   // ?trip=<gtfs trip id> arrives from a trip page's "Follow on the live map".
   const params = useSearchParams();
   const followTripId = params.get('trip');
+  // The journey in progress, so its vehicle stands out without being asked for.
+  const { trip: activeTrip } = useActiveTrip();
+  const myTripIds = useMemo(
+    () => new Set((activeTrip?.legs ?? []).map((leg) => leg.tripId)),
+    [activeTrip],
+  );
+  const myTripIdsRef = useRef(myTripIds);
+  myTripIdsRef.current = myTripIds;
   const [following, setFollowing] = useState<string | null>(followTripId);
   const hasCentredRef = useRef(false);
   // While locked, the camera rides with the followed train every frame.
@@ -110,7 +119,7 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
   );
 
   // The trip being watched (followed, or tapped): its route and stops are drawn.
-  const focusTripId = following ?? selected?.tripId ?? null;
+  const focusTripId = following ?? selected?.tripId ?? activeTrip?.legs[0]?.tripId ?? null;
   const { data: focusTrip } = useTransit<TripDetail>(
     focusTripId ? `/api/transit/trips/${encodeURIComponent(focusTripId)}` : null,
     { intervalMs: 20_000, enabled: Boolean(focusTripId) },
@@ -441,18 +450,31 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
           existing.startedAt = now;
           existing.updatedAt = now;
           existing.vehicle = vehicle;
-          updateMarkerEl(existing.el, vehicle, heading, routeColorRef.current.get(vehicle.routeId ?? ''));
+          updateMarkerEl(
+            existing.el,
+            vehicle,
+            heading,
+            routeColorRef.current.get(vehicle.routeId ?? ''),
+            Boolean(vehicle.tripId && myTripIdsRef.current.has(vehicle.tripId)),
+          );
           // Without the tween loop the marker would otherwise never move at all.
           if (prefersReducedMotion()) existing.marker.setLngLat(target);
         } else {
           existing.vehicle = vehicle;
-          updateMarkerEl(existing.el, vehicle, null, routeColorRef.current.get(vehicle.routeId ?? ''));
+          updateMarkerEl(
+            existing.el,
+            vehicle,
+            null,
+            routeColorRef.current.get(vehicle.routeId ?? ''),
+            Boolean(vehicle.tripId && myTripIdsRef.current.has(vehicle.tripId)),
+          );
         }
       } else {
         const el = createMarkerEl(
           vehicle,
           map.getZoom() < 10,
           routeColorRef.current.get(vehicle.routeId ?? ''),
+          Boolean(vehicle.tripId && myTripIdsRef.current.has(vehicle.tripId)),
         );
         el.addEventListener('click', (event) => {
           event.stopPropagation();
@@ -783,14 +805,19 @@ const TRAIN_PATH =
 const BUS_PATH =
   '<path d="M4.5 4.5h11a1.5 1.5 0 0 1 1.5 1.5v7.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1.5 1.5 0 0 1 1.5-1.5Z" stroke="currentColor" stroke-width="1.4"/><path d="M3 8.5h14" stroke="currentColor" stroke-width="1.4"/><circle cx="6.5" cy="12" r="1" fill="currentColor"/><circle cx="13.5" cy="12" r="1" fill="currentColor"/>';
 
-function createMarkerEl(vehicle: LiveVehicle, compact: boolean, lineColor?: string): HTMLElement {
+function createMarkerEl(
+  vehicle: LiveVehicle,
+  compact: boolean,
+  lineColor?: string,
+  mine = false,
+): HTMLElement {
   const el = document.createElement('button');
   el.type = 'button';
   el.className = 'gt-marker';
   el.dataset.compact = compact ? 'true' : 'false';
   el.style.cssText =
     'display:flex;align-items:center;gap:6px;padding:3px 8px 3px 4px;border-radius:999px;border:1px solid var(--border-strong);background:var(--bg-elevated);box-shadow:var(--shadow-card);font:600 11px/1 var(--font-sans);color:var(--fg);cursor:pointer;transition:transform .15s ease;white-space:nowrap';
-  updateMarkerEl(el, vehicle, undefined, lineColor);
+  updateMarkerEl(el, vehicle, undefined, lineColor, mine);
   return el;
 }
 
@@ -809,6 +836,8 @@ function updateMarkerEl(
   vehicle: LiveVehicle,
   heading?: number | null,
   lineColor?: string,
+  /** The vehicle carrying the rider's own journey. */
+  mine = false,
 ) {
   const delayMin = vehicle.delaySeconds != null ? Math.round(vehicle.delaySeconds / 60) : 0;
   const late = delayMin >= 1;
@@ -816,6 +845,11 @@ function updateMarkerEl(
   // Each line keeps its own colour so trains are told apart at a glance; lateness
   // is a separate amber tag, never a change of the line colour.
   const tint = lineColor ?? 'var(--color-signal-500)';
+
+  // The rider's own vehicle keeps its line colour — that is still how you know
+  // which service it is — but gains a bright ring and a label, so it is findable
+  // among a hundred others without hunting.
+  el.dataset.mine = mine ? 'true' : 'false';
 
   // A train covers about a pixel per poll at regional zoom, so movement needs
   // to be stated, not just animated: an arrow points the way it is heading.
@@ -834,7 +868,13 @@ function updateMarkerEl(
       ${arrow}
     </span>
     <span class="gt-marker-label" style="display:flex;flex-direction:column;gap:1px;align-items:flex-start">
-      <span>${escapeHtml(vehicle.routeName ?? vehicle.serviceName ?? 'GO')}</span>
+      <span>${
+        mine
+          ? `<span style="color:#0a7a45;font-weight:800">YOUR TRIP</span> · ${escapeHtml(
+              vehicle.routeName ?? vehicle.serviceName ?? 'GO',
+            )}`
+          : escapeHtml(vehicle.routeName ?? vehicle.serviceName ?? 'GO')
+      }</span>
       <span style="font-weight:500;color:var(--fg-muted)">${escapeHtml(
         vehicle.destination ?? '',
       )}</span>

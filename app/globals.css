@@ -442,3 +442,16 @@ body {
   .sd-breathe, .sd-glint { animation: none; }
   .sd-glint { display: none; }
 }
+
+/* The vehicle carrying the rider's own journey. */
+.gt-marker[data-mine='true'] {
+  outline: 3px solid #7dfab8;
+  outline-offset: 1px;
+  box-shadow:
+    0 0 0 6px rgb(125 250 184 / 0.35),
+    var(--shadow-card) !important;
+  z-index: 4;
+}
+.gt-marker[data-mine='true'][data-compact='true'] .gt-marker-label {
+  display: flex !important;
+}

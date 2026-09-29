@@ -111,31 +111,15 @@ export function DepartureCard({
 
   const body = (
     <>
-      {/* Spine: direction (or, without one, the service's colour). */}
-      <span
-        aria-hidden
-        className="relative flex w-[46px] shrink-0 flex-col items-center justify-center gap-2 rounded-l-[15px] text-white @max-[340px]:w-[40px]"
-        style={{
-          background: `${
-            // Stripes mark a bus even where a colour-blind rider can't tell hues apart.
-            isBus
-              ? 'repeating-linear-gradient(135deg, rgb(255 255 255 / 0.14) 0 5px, transparent 5px 10px), '
-              : ''
-          }linear-gradient(170deg, ${spine}, color-mix(in oklab, ${spine} 74%, #000))`,
-        }}
-      >
-        {heading && directional ? <Arrow heading={heading} /> : null}
-        <ModeIcon
-          type={vehicleType}
-          className={clsx('opacity-90', heading && directional ? 'size-4' : 'size-6')}
-        />
-        {/* A hairline of light along the fold, so the spine reads as raised. */}
-        <span className="absolute inset-y-0 right-0 w-px bg-white/25" />
-      </span>
+      {/* Spine: a slim bar in the direction's colour. A wide striped block read
+          as hazard tape and took a sixth of the card from the words that matter. */}
+      <span aria-hidden className="w-[6px] shrink-0 rounded-l-[15px]" style={{ background: spine }} />
 
       {/* Body: which service, when it leaves, where it goes. */}
       <span className="min-w-0 flex-1 px-3.5 py-3 @max-[340px]:px-2.5">
         <span className="flex items-center gap-1.5">
+          {heading && directional ? <Arrow heading={heading} /> : null}
+          <ModeIcon type={vehicleType} className="size-4 shrink-0 text-[var(--fg-faint)]" />
           <span
             className="inline-flex h-[18px] shrink-0 items-center rounded px-1.5 text-[11px] leading-none font-bold whitespace-nowrap text-white"
             style={{ background: cancelled ? 'var(--color-ink-500)' : (routeColor ?? 'var(--color-ink-600)') }}
@@ -191,26 +175,12 @@ export function DepartureCard({
         </span>
       </span>
 
-      {/* Perforation: punched through the card edges, not just a dashed rule. */}
-      <span
-        aria-hidden
-        className="relative w-0 border-l border-dashed"
-        style={{ borderColor: 'var(--border-strong)' }}
-      >
-        <span
-          className="absolute -top-[7px] -left-[6px] size-3 rounded-full border"
-          style={{ background: 'var(--bg)', borderColor: 'var(--border)' }}
-        />
-        <span
-          className="absolute -bottom-[7px] -left-[6px] size-3 rounded-full border"
-          style={{ background: 'var(--bg)', borderColor: 'var(--border)' }}
-        />
-      </span>
+      {/* A hairline is enough to separate the platform from the service. */}
+      <span aria-hidden className="w-0 border-l" style={{ borderColor: 'var(--border)' }} />
 
       {/* Stub: the platform, torn off. */}
       <span
         className="flex w-[72px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-r-[15px] px-1.5 py-3 @max-[340px]:w-[56px]"
-        style={dir ? { background: `color-mix(in oklab, ${dir.fg} 12%, transparent)` } : undefined}
       >
         <span
           className="text-[8px] font-bold tracking-[0.12em] uppercase"
