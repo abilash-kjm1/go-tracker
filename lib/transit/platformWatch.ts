@@ -1,7 +1,7 @@
 import 'server-only';
 
 import webpush from 'web-push';
-import { getStop } from './gtfs';
+import { findTrip, getRoute, getStop } from './gtfs';
 import { getProvider } from './provider';
 import { getLiveBoard } from './sources/goTrackerBoards';
 import type { TripDetail } from './types';
@@ -154,7 +154,7 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
     const shouted = platform.replace(/^platforms?\s*/i, 'PLATFORM ').toUpperCase();
     const sent = await sendPush(watch.subscription, {
       title: `🟢 ${shouted}`,
-      body: `${where} · train ${watch.tripNumber} at ${clockAt(watch.departsAt)}`,
+      body: `${where} · ${await serviceLabel(watch.tripNumber)} at ${clockAt(watch.departsAt)}`,
       url: watch.tripId ? `/trips/${encodeURIComponent(watch.tripId)}` : `/stations/${watch.stopId}`,
       tag: `platform-${watch.tripNumber}-${watch.stopId}`,
     });
@@ -180,8 +180,8 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
     const sent = await sendPush(watch.subscription, {
       title: approaching ? `🔔 ${where.toUpperCase()} IS NEXT` : `🚉 ARRIVING AT ${where.toUpperCase()}`,
       body: approaching
-        ? `Train ${watch.tripNumber} is on its way in.`
-        : `Train ${watch.tripNumber} is at ${where} now.`,
+        ? `${await serviceLabel(watch.tripNumber)} is on its way in.`
+        : `${await serviceLabel(watch.tripNumber)} is at ${where} now.`,
       url: watch.tripId ? `/my-trip` : `/stations/${watch.stopId}`,
       tag: `arrival-${watch.tripNumber}-${watch.stopId}`,
     });
@@ -191,6 +191,21 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
   }
 
   return result;
+}
+
+/**
+ * How a rider names the service: the line code and the trip number, "LW 1639".
+ * Falls back to the number alone when the timetable cannot place the trip.
+ */
+async function serviceLabel(tripNumber: string): Promise<string> {
+  try {
+    const found = await findTrip(tripNumber);
+    const route = found ? await getRoute(found.trip.r) : null;
+    if (route?.code) return `${route.code} ${tripNumber}`;
+  } catch {
+    // The number on its own is still enough to identify the train.
+  }
+  return `train ${tripNumber}`;
 }
 
 /** Departure time as a rider reads it, in Toronto. */
