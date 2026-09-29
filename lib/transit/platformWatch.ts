@@ -148,9 +148,13 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
     if (!platform) continue;
 
     const where = await stopLabel(watch);
+    // A notification is plain system text on iOS: no colour, no fonts. The only
+    // emphasis available is the bold title line, capitals, and an emoji to
+    // carry colour — so the platform gets all three and nothing else competes.
+    const shouted = platform.replace(/^platforms?\s*/i, 'PLATFORM ').toUpperCase();
     const sent = await sendPush(watch.subscription, {
-      title: `${platform} at ${where}`,
-      body: `Train ${watch.tripNumber} has been given ${platform.toLowerCase()}.`,
+      title: `🟢 ${shouted}`,
+      body: `${where} · train ${watch.tripNumber} at ${clockAt(watch.departsAt)}`,
       url: watch.tripId ? `/trips/${encodeURIComponent(watch.tripId)}` : `/stations/${watch.stopId}`,
       tag: `platform-${watch.tripNumber}-${watch.stopId}`,
     });
@@ -174,9 +178,9 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
     const where = await stopLabel(watch);
     const approaching = stop.status === 'next';
     const sent = await sendPush(watch.subscription, {
-      title: approaching ? `${where} is next` : `Arriving at ${where}`,
+      title: approaching ? `🔔 ${where.toUpperCase()} IS NEXT` : `🚉 ARRIVING AT ${where.toUpperCase()}`,
       body: approaching
-        ? `Train ${watch.tripNumber} is on its way into ${where}.`
+        ? `Train ${watch.tripNumber} is on its way in.`
         : `Train ${watch.tripNumber} is at ${where} now.`,
       url: watch.tripId ? `/my-trip` : `/stations/${watch.stopId}`,
       tag: `arrival-${watch.tripNumber}-${watch.stopId}`,
@@ -187,6 +191,17 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
   }
 
   return result;
+}
+
+/** Departure time as a rider reads it, in Toronto. */
+function clockAt(iso: string): string {
+  const at = Date.parse(iso);
+  if (!Number.isFinite(at)) return 'its scheduled time';
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Toronto',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(at));
 }
 
 /** The stop's own name where we have it, falling back to what was saved. */
