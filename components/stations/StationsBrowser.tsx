@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { SearchIcon } from '@/components/search/SearchOverlay';
-import { ModeIcon, Segmented } from '@/components/ui/primitives';
+import { ModeIcon, Segmented, StarButton } from '@/components/ui/primitives';
+import { useFavorites } from '@/lib/client/favorites';
 import { formatDistance } from '@/lib/transit/geo';
 import { useNearby } from '@/lib/client/useNearby';
 import type { TransitRoute, TransitStop, VehicleType } from '@/lib/transit/types';
@@ -25,6 +26,14 @@ export function StationsBrowser({
   // Buses outnumber trains here; defaulting to one mode hides most of the network.
   const [mode, setMode] = useState<ModeFilter>('all');
   const nearby = useNearby(6);
+  const { favorites, isFavorite, toggle } = useFavorites();
+
+  // Pinned stops are the handful a rider uses daily, so they come first and are
+  // never buried under eight hundred others.
+  const pinned = useMemo(() => {
+    const ids = new Set(favorites.filter((f) => f.kind === 'stop').map((f) => f.id));
+    return stops.filter((s) => ids.has(s.id));
+  }, [favorites, stops]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -81,12 +90,33 @@ export function StationsBrowser({
         />
       </div>
 
+      {pinned.length > 0 && !query ? (
+        <section className="mb-5">
+          <h2 className="px-1 pb-2 text-[11px] font-semibold tracking-wide text-faint uppercase">
+            Pinned
+          </h2>
+          <ul className="overflow-hidden rounded-2xl border hairline bg-[var(--bg-elevated)]">
+            {pinned.map((stop) => (
+              <StopRow
+                key={stop.id}
+                stop={stop}
+                distanceKm={nearestById.get(stop.id)}
+                routeHint={duplicateNames.has(stop.name)}
+                routeLookup={routeLookup}
+                pinned
+                onPin={() => toggle({ kind: 'stop', id: stop.id, name: stop.name })}
+              />
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       {nearby.status === 'granted' && nearby.stops.length > 0 && !query ? (
         <section className="mb-5">
           <h2 className="px-1 pb-2 text-[11px] font-semibold tracking-wide text-faint uppercase">
             Nearby
           </h2>
-          <ul className="space-y-1">
+          <ul className="overflow-hidden rounded-2xl border hairline bg-[var(--bg-elevated)]">
             {nearby.stops.slice(0, 4).map((stop) => (
               <StopRow
                 key={stop.id}
@@ -94,6 +124,8 @@ export function StationsBrowser({
                 distanceKm={stop.distanceKm}
                 routeHint={duplicateNames.has(stop.name)}
                 routeLookup={routeLookup}
+                pinned={isFavorite('stop', stop.id)}
+                onPin={() => toggle({ kind: 'stop', id: stop.id, name: stop.name })}
               />
             ))}
           </ul>
@@ -110,7 +142,7 @@ export function StationsBrowser({
         </button>
       ) : null}
 
-      <ul className="space-y-1 pb-6">
+      <ul className="overflow-hidden rounded-2xl border pb-0 hairline bg-[var(--bg-elevated)]">
         {filtered.slice(0, 250).map((stop) => (
           <StopRow
             key={stop.id}
@@ -118,6 +150,8 @@ export function StationsBrowser({
             distanceKm={nearestById.get(stop.id)}
             routeHint={duplicateNames.has(stop.name)}
             routeLookup={routeLookup}
+            pinned={isFavorite('stop', stop.id)}
+            onPin={() => toggle({ kind: 'stop', id: stop.id, name: stop.name })}
           />
         ))}
       </ul>
@@ -140,11 +174,15 @@ function StopRow({
   distanceKm,
   routeHint = false,
   routeLookup,
+  pinned = false,
+  onPin,
 }: {
   stop: TransitStop;
   distanceKm?: number;
   routeHint?: boolean;
   routeLookup?: Map<string, string>;
+  pinned?: boolean;
+  onPin?: () => void;
 }) {
   const routes = routeHint
     ? stop.routeIds
@@ -154,22 +192,31 @@ function StopRow({
         .join(', ')
     : '';
 
+  const isStation = stop.modes.includes('train');
+
   return (
-    <li>
+    <li className="flex items-center border-b last:border-b-0 hairline">
       <Link
         href={`/stations/${encodeURIComponent(stop.id)}`}
-        className="flex min-h-14 items-center gap-3 rounded-xl px-3 transition-colors hover:bg-[var(--bg-sunken)]"
+        className="flex min-h-[58px] min-w-0 flex-1 items-center gap-3 px-3 transition-colors hover:bg-[var(--bg-sunken)]"
       >
-        <span className="flex gap-1 text-[var(--fg-muted)]">
-          {stop.modes.length ? (
-            stop.modes.map((m) => <ModeIcon key={m} type={m} className="size-5" />)
-          ) : (
-            <ModeIcon type="unknown" className="size-5" />
-          )}
+        {/* A station and a roadside stop are not the same thing, and the icon
+            should say so before the name is read. */}
+        <span
+          className={
+            isStation
+              ? 'grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--accent)]/12 text-[var(--accent)]'
+              : 'grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--bg-sunken)] text-[var(--fg-faint)]'
+          }
+        >
+          <ModeIcon type={stop.modes[0] ?? 'unknown'} className="size-5" />
         </span>
+
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium">{stop.name}</span>
-          <span className="block truncate text-[13px] text-muted">
+          <span className="block truncate text-[15px] font-semibold">
+            {stop.name.replace(/\s+GO(\s+Bus)?$/i, '')}
+          </span>
+          <span className="block truncate text-[12.5px] text-muted">
             {routes
               ? `Routes ${routes}`
               : stop.modes.length
@@ -177,10 +224,23 @@ function StopRow({
                 : 'No scheduled service in this window'}
           </span>
         </span>
+
         {distanceKm != null ? (
-          <span className="tabular text-xs text-faint">{formatDistance(distanceKm)}</span>
+          <span className="tabular shrink-0 text-[12px] text-faint">
+            {formatDistance(distanceKm)}
+          </span>
         ) : null}
       </Link>
+
+      {onPin ? (
+        <span className="shrink-0 pr-2 pl-1">
+          <StarButton
+            active={pinned}
+            label={pinned ? `Unpin ${stop.name}` : `Pin ${stop.name}`}
+            onClick={onPin}
+          />
+        </span>
+      ) : null}
     </li>
   );
 }
