@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
-import { listWatches, pushConfigured, watchesSurvive } from '@/lib/transit/platformWatch';
+import {
+  lastTickAt,
+  listWatches,
+  pushConfigured,
+  watchesSurvive,
+} from '@/lib/transit/platformWatch';
 import { getLiveBoard } from '@/lib/transit/sources/goTrackerBoards';
 import { getProvider } from '@/lib/transit/provider';
 
@@ -18,6 +23,7 @@ export async function GET(request: Request) {
   }
 
   const watches = await listWatches();
+  const ticked = await lastTickAt();
   const out = [];
 
   for (const { value } of watches) {
@@ -62,6 +68,8 @@ export async function GET(request: Request) {
     // at the list below will say why.
     pushConfigured: pushConfigured(),
     watchesSurvive: watchesSurvive(),
+    lastTickAt: ticked ? new Date(ticked).toISOString() : null,
+    minutesSinceTick: ticked ? Math.round((Date.now() - ticked) / 60000) : null,
     count: out.length,
     watches: out,
   }, {

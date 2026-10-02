@@ -24,6 +24,8 @@ import { durable, list, put, remove } from '../server/store';
  */
 
 const SET = 'platform-watch';
+/** One record, overwritten each tick, holding when the scheduler last called. */
+const HEARTBEAT = 'platform-watch-tick';
 
 export interface PushSubscriptionRecord {
   endpoint: string;
@@ -86,6 +88,12 @@ export async function listWatches(): Promise<Array<{ key: string; value: Platfor
   return list<PlatformWatch>(SET);
 }
 
+/** When the outside scheduler last called the tick, or null if it never has. */
+export async function lastTickAt(): Promise<number | null> {
+  const rows = await list<{ at: number }>(HEARTBEAT).catch(() => []);
+  return rows[0]?.value?.at ?? null;
+}
+
 export interface TickResult {
   checked: number;
   notified: number;
@@ -98,6 +106,10 @@ export interface TickResult {
  * an outside scheduler, because a serverless app cannot wake itself up.
  */
 export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
+  // Written before any work, so a tick that fails still proves the scheduler
+  // reached us. An alert that never arrives is usually a cron that stopped.
+  await put(HEARTBEAT, 'last', { at: now }).catch(() => {});
+
   const watches = await listWatches();
   const result: TickResult = { checked: watches.length, notified: 0, expired: 0, stops: 0 };
   if (!watches.length) return result;
