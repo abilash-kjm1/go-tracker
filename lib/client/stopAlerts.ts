@@ -22,9 +22,25 @@ export interface StopAlert {
   tripId: string;
   stopId: string;
   stopName: string;
+  /**
+   * What the server needs to watch this stop while the phone is away. Without
+   * both of these an alert can only ever fire with the app open, so they are
+   * carried on the record rather than looked up again later.
+   */
+  tripNumber?: string;
+  departsAt?: string;
   /** Set once the notification has been delivered, so it never repeats. */
   firedAt?: number;
 }
+
+/**
+ * How long after a stop was due that an in-page alert is still worth showing.
+ *
+ * Reopening the app after a while away used to replay every alert the trip had
+ * passed, all at once. A notification for a stop half an hour behind you is
+ * noise, so it is marked delivered in silence instead.
+ */
+const STALE_MS = 10 * 60_000;
 
 const alertKey = (tripId: string, stopId: string) => `${tripId}::${stopId}`;
 
@@ -208,6 +224,16 @@ export function useStopAlertWatcher(
       // brief dwell between two polls is never missed.
       if (!stop || (stop.status !== 'current' && stop.status !== 'departed')) continue;
 
+      // Opening the app long after the event should not announce it. The stop
+      // is still marked done, so it stays out of the way from here on.
+      const due = Date.parse(
+        stop.estimatedDeparture ?? stop.scheduledDeparture ?? stop.scheduledArrival ?? '',
+      );
+      if (Number.isFinite(due) && Date.now() - due > STALE_MS) {
+        markFired(alert.tripId, alert.stopId);
+        continue;
+      }
+
       const name = alert.stopName.replace(/\s+GO(\s+Bus)?$/i, '');
       const service = trip.routeName ?? 'Your train';
       void deliverAlert(
@@ -215,7 +241,9 @@ export function useStopAlertWatcher(
         stop.status === 'current'
           ? `${service} ${trip.tripNumber ?? ''} is at ${name} now.`.replace('  ', ' ')
           : `${service} ${trip.tripNumber ?? ''} has reached ${name}.`.replace('  ', ' '),
-        `stop-alert-${alert.tripId}-${alert.stopId}`,
+        // The tag the server pushes under, so a rider watching the screen when
+        // the push lands sees one notification replaced, never two.
+        `arrival-${trip.tripNumber ?? alert.tripId}-${alert.stopId}`,
         `/trips/${encodeURIComponent(trip.id)}`,
       );
       markFired(alert.tripId, alert.stopId);
@@ -223,17 +251,42 @@ export function useStopAlertWatcher(
   }, [trip, alerts, markFired]);
 }
 
-/** Adds alerts from outside React (the planner arms a trip's alerts on start). */
+/**
+ * Adds alerts from outside React (starting a trip arms its own), and registers
+ * each one with the server so it fires with the app closed. The page watch is
+ * only a fallback for the minutes the rider is actually looking at the screen.
+ */
 export function armAlerts(newAlerts: StopAlert[]) {
   const existing = read();
   const seen = new Set(existing.map((a) => alertKey(a.tripId, a.stopId)));
-  const merged = [...existing, ...newAlerts.filter((a) => !seen.has(alertKey(a.tripId, a.stopId)))];
+  const added = newAlerts.filter((a) => !seen.has(alertKey(a.tripId, a.stopId)));
+  const merged = [...existing, ...added];
   write(merged);
+
+  for (const alert of added) {
+    if (!alert.tripNumber || !alert.departsAt) continue;
+    void registerWatch('arrival', {
+      stopId: alert.stopId,
+      stopName: alert.stopName,
+      tripId: alert.tripId,
+      tripNumber: alert.tripNumber,
+      departsAt: alert.departsAt,
+    });
+  }
+
   return merged;
 }
 
 /** Drops every alert belonging to these trips — used when a journey ends. */
 export function clearAlertsForTrips(tripIds: string[]) {
   const ids = new Set(tripIds);
-  write(read().filter((a) => !ids.has(a.tripId)));
+  const all = read();
+  write(all.filter((a) => !ids.has(a.tripId)));
+  // The server drops these ten minutes after the service was due anyway, but a
+  // rider who ends a trip early has said they are done being told about it.
+  for (const alert of all) {
+    if (ids.has(alert.tripId) && alert.tripNumber) {
+      void unregisterWatch('arrival', alert.tripNumber, alert.stopId);
+    }
+  }
 }

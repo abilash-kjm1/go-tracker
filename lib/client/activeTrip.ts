@@ -91,7 +91,18 @@ export function autoAlertsForLeg(trip: TripDetail, leg: TripLeg, isFinalLeg: boo
   const wanted = isFinalLeg ? [index - 2, index - 1, index] : [index - 1, index];
   return wanted
     .filter((i) => i >= 0 && i < trip.stops.length)
-    .map((i) => ({ tripId: leg.tripId, stopId: trip.stops[i].stopId, stopName: trip.stops[i].stopName }));
+    .map((i) => {
+      const stop = trip.stops[i];
+      return {
+        tripId: leg.tripId,
+        stopId: stop.stopId,
+        stopName: stop.stopName,
+        // Carried so the server can watch this stop while the phone is in a
+        // pocket; an alert without them could only ever fire with the app open.
+        tripNumber: trip.tripNumber,
+        departsAt: stop.estimatedDeparture ?? stop.scheduledArrival ?? stop.scheduledDeparture,
+      };
+    });
 }
 
 /** Arms the default alerts for every leg, fetching each leg's stop list. */

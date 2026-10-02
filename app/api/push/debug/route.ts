@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { listWatches } from '@/lib/transit/platformWatch';
+import { listWatches, pushConfigured, watchesSurvive } from '@/lib/transit/platformWatch';
 import { getLiveBoard } from '@/lib/transit/sources/goTrackerBoards';
 import { getProvider } from '@/lib/transit/provider';
 
@@ -57,7 +57,14 @@ export async function GET(request: Request) {
     });
   }
 
-  return NextResponse.json({ count: out.length, watches: out }, {
+  return NextResponse.json({
+    // Without these two a watch cannot possibly fire, and no amount of staring
+    // at the list below will say why.
+    pushConfigured: pushConfigured(),
+    watchesSurvive: watchesSurvive(),
+    count: out.length,
+    watches: out,
+  }, {
     headers: { 'Cache-Control': 'no-store' },
   });
 }
