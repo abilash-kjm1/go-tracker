@@ -45,6 +45,8 @@ export interface RawBus {
   isMoving?: boolean;
   delaySeconds?: number;
   originStopCode?: string;
+  /** The last stop the bus is known to have served. Lags, but never leads. */
+  prevStopCode?: string;
   nextStopCode?: string;
   atStopCode?: string;
   updatedAt?: string;
@@ -104,6 +106,7 @@ export async function getLiveBuses(): Promise<RawBus[]> {
           // A bus reported as early is on time; only lateness is useful here.
           delaySeconds: trip.DelaySeconds != null ? Math.max(0, trip.DelaySeconds) : undefined,
           originStopCode: stopCode(trip.FirstStopCode),
+          prevStopCode: stopCode(trip.PrevStopCode),
           nextStopCode: stopCode(trip.NextStopCode),
           atStopCode: stopCode(trip.AtStationCode),
           updatedAt: trip.ModifiedDate ?? undefined,

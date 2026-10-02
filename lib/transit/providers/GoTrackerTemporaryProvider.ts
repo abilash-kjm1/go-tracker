@@ -1,4 +1,4 @@
-import { distanceToSegmentKm } from '../geo';
+import { distanceKm, distanceToSegmentKm } from '../geo';
 import 'server-only';
 
 import { cached, peek, upstreamStats } from '../cache';
@@ -45,6 +45,9 @@ import type {
   TripStopTime,
   VehicleType,
 } from '../types';
+
+/** A bus within this distance of a stop, with its engine stopped, is at it. */
+const AT_STOP_KM = 0.25;
 
 const LIVE_KEY = 'gotracker:vehicles';
 
@@ -142,10 +145,20 @@ export class GoTrackerTemporaryProvider implements TransitDataProvider {
       if (!bus.tripNumber) continue;
       const scheduled = await findTrip(bus.tripNumber);
       const route = scheduled ? await getRoute(scheduled.trip.r) : null;
-      const [next, at, origin] = await Promise.all([
-        bus.nextStopCode ? getStop(bus.nextStopCode) : null,
-        bus.atStopCode ? getStop(bus.atStopCode) : null,
-        bus.originStopCode ? getStop(bus.originStopCode) : null,
+      const origin = bus.originStopCode ? await getStop(bus.originStopCode) : null;
+
+      // Where the bus is, from where it says it is. The feed's own stop fields
+      // cannot answer this: measured against 54 live buses, AtStationCode was
+      // the stop *one ahead* in every single case it was populated, and
+      // NextStopCode ran a stop ahead about two thirds of the time. Believing
+      // them puts the rider at the next stop the moment they reach this one,
+      // and snaps them back when the bus pulls away.
+      const placed = scheduled
+        ? await this.locateOnTrip(scheduled.trip.s, bus.latitude, bus.longitude, bus.isMoving, bus.prevStopCode)
+        : null;
+      const [next, at] = await Promise.all([
+        placed?.nextStopId ? getStop(placed.nextStopId) : null,
+        placed?.atStopId ? getStop(placed.atStopId) : null,
       ]);
 
       out.push({
@@ -227,6 +240,65 @@ export class GoTrackerTemporaryProvider implements TransitDataProvider {
    * at. Nothing is invented: if there is no matching scheduled trip we return
    * no next stop at all.
    */
+  /**
+   * Place a bus on its own schedule from its GPS fix.
+   *
+   * Standing within `AT_STOP_KM` of a stop and not in motion means it is at
+   * that stop; anything else means it is running the leg whose line it is
+   * closest to, and the far end of that leg is what comes next. `prevStopCode`
+   * is used only as a floor — it lags by a stop or two, so it can say where the
+   * bus has definitely been, never where it is.
+   */
+  private async locateOnTrip(
+    stops: Array<[string, number | null, number | null]>,
+    lat?: number,
+    lon?: number,
+    isMoving?: boolean,
+    prevStopCode?: string,
+  ): Promise<{ atStopId?: string; nextStopId?: string } | null> {
+    if (lat == null || lon == null || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+
+    const located = await Promise.all(stops.map(([id]) => getStop(id)));
+    // Never report a stop the bus has already been seen to leave: that is the
+    // backwards jump the rider notices most.
+    const floor = prevStopCode ? located.findIndex((stop) => stop?.id === prevStopCode) : -1;
+    const from = Math.max(floor, 0);
+
+    if (isMoving !== true) {
+      let bestStop = -1;
+      let bestKm = Infinity;
+      for (let i = from; i < located.length; i++) {
+        const stop = located[i];
+        if (!stop) continue;
+        const km = distanceKm(lat, lon, stop.lat, stop.lon);
+        if (km < bestKm) {
+          bestKm = km;
+          bestStop = i;
+        }
+      }
+      if (bestStop >= 0 && bestKm <= AT_STOP_KM) {
+        return { atStopId: located[bestStop]!.id, nextStopId: located[bestStop + 1]?.id };
+      }
+    }
+
+    let bestLeg = -1;
+    let bestKm = Infinity;
+    for (let i = from; i < located.length - 1; i++) {
+      const a = located[i];
+      const b = located[i + 1];
+      if (!a || !b) continue;
+      const km = distanceToSegmentKm(lat, lon, a, b);
+      if (km < bestKm) {
+        bestKm = km;
+        bestLeg = i;
+      }
+    }
+    // Off its line by more than a few km: a stale or bogus fix, so say nothing
+    // rather than guess.
+    if (bestLeg < 0 || bestKm > 3) return null;
+    return { nextStopId: located[bestLeg + 1]?.id };
+  }
+
   private async projectNextStop(
     scheduled: { trip: { s: Array<[string, number | null, number | null]> }; dateKey: string },
     delaySeconds: number,
