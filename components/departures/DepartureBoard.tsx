@@ -4,6 +4,7 @@ import clsx from 'clsx';
 
 import { useEffect, useMemo, useState } from 'react';
 import { DepartureCard } from './DepartureCard';
+import { LeaveBy } from './LeaveBy';
 import { directionColors, groupByDirection } from './directions';
 import { LiveIndicator } from '@/components/ui/LiveIndicator';
 import { EmptyState, ModeIcon, Segmented, Skeleton } from '@/components/ui/primitives';
@@ -17,11 +18,14 @@ export function DepartureBoard({
   stationId,
   availableModes,
   homeStopId,
+  origin,
 }: {
   stationId: string;
   availableModes: VehicleType[];
   /** Rows from a different stop at the same site are labelled with it. */
   homeStopId?: string;
+  /** Where this stop is, so the board can say when to set off for it. */
+  origin?: { lat: number; lon: number } | null;
 }) {
   const [kind, setKind] = useState<BoardKind>('departures');
   const [mode, setMode] = useState<ModeFilter>('all');
@@ -84,6 +88,8 @@ export function DepartureBoard({
           ]}
         />
       ) : null}
+
+      {kind === 'departures' ? <LeaveBy origin={origin} departures={rows} /> : null}
 
       {meta?.degraded ? (
         <p className="rounded-xl bg-[var(--bg-sunken)] px-3 py-2 text-[12px] text-muted">

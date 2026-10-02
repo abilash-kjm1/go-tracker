@@ -80,7 +80,12 @@ export function StationScreen({
         </p>
       </header>
 
-      <DepartureBoard stationId={stop.id} availableModes={stop.modes} homeStopId={stop.id} />
+      <DepartureBoard
+        stationId={stop.id}
+        availableModes={stop.modes}
+        homeStopId={stop.id}
+        origin={{ lat: stop.lat, lon: stop.lon }}
+      />
 
       <div className="h-8" />
     </div>
