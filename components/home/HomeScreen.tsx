@@ -82,7 +82,7 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
         rider needs it. No poster, no mascot, no second copy of the same numbers.
       */}
       {/* Right padding leaves the corner free for the hanging signal. */}
-      <header className="flex items-end justify-between gap-3 pt-6 pr-16 pb-4 md:pr-0">
+      <header className="pr-dangle flex items-end justify-between gap-3 pt-6 pb-4">
         <div className="min-w-0">
           <p className="text-tiny font-medium text-muted">{greeting()}</p>
           <h1 className="mt-0.5 text-[26px] leading-none font-bold tracking-tight">Where to?</h1>
@@ -103,7 +103,7 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
       {alerts && alerts.length > 0 ? (
         <Link
           href="/alerts"
-          className="mt-4 flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5 text-small font-semibold"
+          className="mt-4 flex min-h-11 items-center gap-2.5 rounded-2xl px-3.5 py-2.5 text-small font-semibold"
           style={{ background: 'var(--tile-amber-bg)', color: 'var(--tile-amber-fg)' }}
         >
           <span aria-hidden>⚠</span>

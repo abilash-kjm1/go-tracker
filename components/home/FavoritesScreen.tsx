@@ -14,7 +14,7 @@ export function FavoritesScreen() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-safe">
-      <header className="pt-6 pb-4">
+      <header className="pr-dangle pt-6 pb-4">
         <h1 className="text-[28px] leading-tight font-semibold tracking-tight">Favourites</h1>
         <p className="mt-1 text-small text-muted">Saved on this device. No account needed.</p>
       </header>

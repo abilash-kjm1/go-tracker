@@ -31,7 +31,7 @@ export function StationScreen({
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 pt-safe">
-      <div className="flex items-center justify-between gap-2 pt-3">
+      <div className="pr-dangle flex items-center justify-between gap-2 pt-3">
         <Link
           href="/stations"
           className="-ml-2 flex min-h-10 items-center gap-1 rounded-xl px-2 text-small font-medium text-muted"
@@ -64,7 +64,7 @@ export function StationScreen({
         </div>
       </div>
 
-      <header className="pb-4">
+      <header className="pr-dangle pb-4">
         <h1 className="text-[26px] leading-tight font-semibold tracking-tight">{stop.name}</h1>
         <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-tiny text-muted">
           {stop.modes.map((m) => (
@@ -75,7 +75,7 @@ export function StationScreen({
           ))}
           {stop.wheelchair ? <span>· Accessible</span> : null}
           {related.length ? (
-            <span>· incl. {related.map((s) => s.name).join(', ')}</span>
+            <span className="w-full">incl. {related.map((s) => s.name).join(', ')}</span>
           ) : null}
         </p>
       </header>

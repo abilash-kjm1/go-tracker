@@ -454,3 +454,27 @@ body {
 @utility text-small { font-size: 13px; }
 @utility text-ui    { font-size: 14px; }
 @utility text-body  { font-size: 15px; }
+
+/* ---- Signal dangle clearance ---------------------------------------------
+   The lamp hangs fixed in the top-right corner, about 63px wide and 110px
+   tall. Page headers ran straight under it: the About heading lost the end of
+   "Transit", the planner subtitle lost "through", and the line page hid its
+   own favourite button behind the lamp.
+
+   So pages reserve a gutter for it. Only on narrow screens — above 768px the
+   centred content column no longer reaches the right edge, and the lamp sits
+   harmlessly beside it — and only while the lamp is actually switched on,
+   which AppShell reports on the wrapper. */
+:root {
+  --dangle-gutter: 0px;
+}
+
+@media (max-width: 767px) {
+  [data-dangle='on'] {
+    --dangle-gutter: 68px;
+  }
+}
+
+@utility pr-dangle {
+  padding-right: var(--dangle-gutter);
+}

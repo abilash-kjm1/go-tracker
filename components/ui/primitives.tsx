@@ -168,7 +168,7 @@ export function Segmented<T extends string>({
             aria-pressed={active}
             onClick={() => onChange(opt.value)}
             className={clsx(
-              'flex min-h-9 items-center gap-1.5 rounded-full px-3.5 transition-colors',
+              'flex min-h-11 items-center gap-1.5 rounded-full px-3.5 transition-colors',
               optionClassName,
               active
                 ? 'bg-[var(--bg-elevated)] text-[var(--fg)] shadow-sm'

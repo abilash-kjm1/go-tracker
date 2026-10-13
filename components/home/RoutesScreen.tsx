@@ -34,7 +34,7 @@ export function RoutesScreen({ routes }: { routes: TransitRoute[] }) {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-safe">
-      <header className="pt-6 pb-3">
+      <header className="pr-dangle pt-6 pb-3">
         <h1 className="text-[28px] leading-tight font-semibold tracking-tight">Routes</h1>
         <p className="mt-1 text-small text-muted">
           {routes.filter((r) => r.type === 'train').length} train lines ·{' '}
@@ -54,17 +54,22 @@ export function RoutesScreen({ routes }: { routes: TransitRoute[] }) {
         ]}
       />
 
-      <ul className="space-y-1 pb-10">
+      <ul className="mb-10 overflow-hidden rounded-2xl border hairline bg-[var(--bg-elevated)]">
         {filtered.map((route) => {
           const live = liveByRoute.get(route.id) ?? 0;
           const starred = isFavorite('route', route.id);
           return (
-            <li key={route.id} className="flex min-h-14 items-center gap-1 rounded-xl pr-1 transition-colors hover:bg-[var(--bg-sunken)]">
+            <li key={route.id} className="flex min-h-14 items-center gap-1 border-b pr-1 transition-colors last:border-b-0 hairline hover:bg-[var(--bg-sunken)] active:bg-[var(--bg-sunken)]">
               <Link
                 href={`/routes/${encodeURIComponent(route.id)}`}
                 className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2"
               >
-                <RouteBadge code={route.code} color={route.color} type={route.type} />
+                <RouteBadge
+                  code={route.code}
+                  color={route.color}
+                  type={route.type}
+                  className="w-9 shrink-0"
+                />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{route.name}</span>
                   <span className="block text-small text-muted">

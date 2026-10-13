@@ -42,7 +42,7 @@ export function RouteScreen({
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-safe">
-      <div className="flex items-center justify-between gap-2 pt-3">
+      <div className="pr-dangle flex items-center justify-between gap-2 pt-3">
         <Link
           href="/routes"
           className="-ml-2 flex min-h-10 items-center gap-1 rounded-xl px-2 text-small font-medium text-muted"
@@ -58,7 +58,7 @@ export function RouteScreen({
         />
       </div>
 
-      <header className="pb-4">
+      <header className="pr-dangle pb-4">
         <div className="flex items-center gap-2">
           <RouteBadge code={route.code} color={route.color} type={route.type} />
           <span className="flex items-center gap-1.5 text-sm font-medium text-muted">

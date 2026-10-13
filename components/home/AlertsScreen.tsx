@@ -19,7 +19,7 @@ export function AlertsScreen() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-safe">
-      <header className="flex items-end justify-between gap-3 pt-6 pb-4">
+      <header className="pr-dangle flex items-end justify-between gap-3 pt-6 pb-4">
         <div>
           <h1 className="text-[28px] leading-tight font-semibold tracking-tight">Alerts</h1>
           <p className="mt-1 text-small text-muted">Delays reported by vehicles in service.</p>

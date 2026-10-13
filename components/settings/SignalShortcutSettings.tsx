@@ -47,7 +47,7 @@ export function SignalShortcutSettings() {
           role="switch"
           aria-checked={!hidden}
           onClick={() => setHidden(!hidden)}
-          className="relative h-7 w-12 shrink-0 rounded-full transition-colors"
+          className="relative h-7 w-12 shrink-0 rounded-full transition-colors after:absolute after:-inset-y-2 after:inset-x-0 after:content-['']"
           style={{ background: hidden ? 'var(--border-strong)' : 'var(--accent)' }}
         >
           <span
@@ -88,7 +88,7 @@ export function SignalShortcutSettings() {
                     type="button"
                     onClick={() => remove(stop.id)}
                     aria-label={`Remove ${tidy(stop.name)}`}
-                    className="shrink-0 rounded-full px-2.5 py-1 text-tiny font-semibold text-muted hover:bg-[var(--bg-elevated)]"
+                    className="flex min-h-11 shrink-0 items-center rounded-full px-3 text-tiny font-semibold text-muted hover:bg-[var(--bg-elevated)]"
                   >
                     Remove
                   </button>

@@ -12,7 +12,7 @@ export default async function AboutPage() {
     <div className="mx-auto w-full max-w-2xl px-4 pt-safe">
       <header className="pt-8 pb-5">
         <Wordmark />
-        <h1 className="mt-4 text-[28px] leading-tight font-semibold tracking-tight">
+        <h1 className="pr-dangle mt-4 text-[28px] leading-tight font-semibold tracking-tight">
           An independent GO Transit tracking application.
         </h1>
       </header>

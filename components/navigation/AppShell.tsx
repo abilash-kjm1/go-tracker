@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { useDangleStops } from '@/lib/client/dangleStops';
 import { useOnline } from '@/lib/client/useTransit';
 import { ActiveTripBar } from '@/components/trips/ActiveTripBar';
 import { SignalDangle } from '@/components/ui/SignalDangle';
@@ -25,8 +26,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   // The map owns its own full-bleed layout.
   const fullBleed = pathname.startsWith('/map');
 
+  // Page headers reserve room for the hanging lamp through --dangle-gutter,
+  // which is only worth anything while the lamp is actually on screen.
+  const { hidden: dangleHidden, ready: dangleReady } = useDangleStops();
+  const dangleShowing = dangleReady && !dangleHidden && !pathname.startsWith('/map');
+
   return (
-    <div className="min-h-dvh md:flex">
+    <div className="min-h-dvh md:flex" data-dangle={dangleShowing ? 'on' : 'off'}>
       <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-1 border-r px-3 py-5 hairline md:flex">
         <Link href="/" className="mb-5 flex items-center gap-2 px-2">
           <Wordmark />

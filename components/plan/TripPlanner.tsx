@@ -128,7 +128,7 @@ export function PlannerForm({
           onClick={swap}
           disabled={!from && !to}
           aria-label="Swap origin and destination"
-          className="absolute top-1/2 right-3 z-10 grid size-9 -translate-y-1/2 place-items-center rounded-full border text-[var(--fg-muted)] shadow-sm hairline bg-[var(--bg-elevated)] transition-transform active:rotate-180 disabled:opacity-40"
+          className="absolute top-1/2 right-2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full border text-[var(--fg-muted)] shadow-sm hairline bg-[var(--bg-elevated)] transition-transform active:rotate-180 disabled:opacity-40"
         >
           <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden>
             <path
@@ -391,7 +391,7 @@ function WhenPicker({ value, onChange }: { value: string | null; onChange: (v: s
             setOpen(false);
           }}
           aria-pressed={!value}
-          className={`rounded-full px-3 py-1.5 text-tiny font-bold shadow-sm ring-1 backdrop-blur ${
+          className={`flex min-h-11 items-center rounded-full px-4 text-tiny font-bold shadow-sm ring-1 backdrop-blur ${
             value
               ? 'bg-[var(--bg-elevated)]/70 text-[var(--fg)] ring-black/10'
               : 'bg-[var(--bg-elevated)] text-[var(--fg)] ring-black/10'
@@ -405,7 +405,7 @@ function WhenPicker({ value, onChange }: { value: string | null; onChange: (v: s
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="flex items-center gap-1.5 rounded-full bg-[var(--bg-elevated)]/85 px-3 py-1.5 text-tiny font-bold text-[var(--fg)] shadow-sm ring-1 ring-black/10 backdrop-blur"
+          className="flex min-h-11 items-center gap-1.5 rounded-full bg-[var(--bg-elevated)]/85 px-4 text-tiny font-bold text-[var(--fg)] shadow-sm ring-1 ring-black/10 backdrop-blur"
           style={value ? { boxShadow: 'inset 0 0 0 2px var(--accent)' } : undefined}
         >
           <CalendarGlyph />

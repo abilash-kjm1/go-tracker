@@ -17,11 +17,11 @@ export default function MorePage() {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-safe">
       <header className="pt-6 pb-4">
-        <h1 className="text-[28px] leading-tight font-semibold tracking-tight">More</h1>
+        <h1 className="pr-dangle text-[28px] leading-tight font-semibold tracking-tight">More</h1>
       </header>
 
       <section className="mb-6">
-        <h2 className="px-1 pb-2 text-mini font-semibold tracking-wide text-faint uppercase">
+        <h2 className="pr-dangle px-1 pb-2 text-mini font-semibold tracking-wide text-faint uppercase">
           Appearance
         </h2>
         <div className="rounded-2xl border px-4 py-4 hairline bg-[var(--bg-elevated)]">

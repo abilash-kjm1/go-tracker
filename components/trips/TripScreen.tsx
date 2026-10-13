@@ -80,7 +80,7 @@ export function TripScreen({ tripId }: { tripId: string }) {
         <span aria-hidden>←</span> Back
       </button>
 
-      <header className="flex items-start gap-3 pt-1 pb-4">
+      <header className="pr-dangle flex items-start gap-3 pt-1 pb-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 text-sm font-medium text-muted">
             <ModeIcon type={trip.vehicleType} className="size-5" />
