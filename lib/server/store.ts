@@ -82,3 +82,35 @@ export async function list<T>(set: string): Promise<Array<{ key: string; value: 
   }
   return out;
 }
+
+/**
+ * A single value, with no set bookkeeping around it.
+ *
+ * `put`/`list` keep a Redis set alongside each value so a group can be
+ * enumerated, which costs a second command on every write. For something there
+ * is exactly one of — the tick's own status record, written every minute —
+ * that bookkeeping is pure waste, and on a metered free tier waste is the
+ * thing that eventually breaks.
+ */
+export async function readOne<T>(key: string): Promise<T | null> {
+  if (!durable) {
+    const raw = memory.get(key);
+    return raw ? (JSON.parse(raw) as T) : null;
+  }
+  const raw = (await command('get', key)) as string | null;
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+export async function writeOne(key: string, value: unknown): Promise<void> {
+  const payload = JSON.stringify(value);
+  if (!durable) {
+    memory.set(key, payload);
+    return;
+  }
+  await command('set', key, payload);
+}

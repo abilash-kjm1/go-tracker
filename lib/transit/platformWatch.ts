@@ -5,7 +5,7 @@ import { findTrip, getRoute, getStop } from './gtfs';
 import { getProvider } from './provider';
 import { getLiveBoard } from './sources/goTrackerBoards';
 import type { TripDetail } from './types';
-import { durable, list, put, remove } from '../server/store';
+import { durable, list, put, readOne, remove, writeOne } from '../server/store';
 
 /**
  * Watches that outlive the page: the two things a rider wants to be told while
@@ -24,8 +24,63 @@ import { durable, list, put, remove } from '../server/store';
  */
 
 const SET = 'platform-watch';
-/** One record, overwritten each tick, holding when the scheduler last called. */
-const HEARTBEAT = 'platform-watch-tick';
+/** One record, overwritten each tick, holding how the last few runs went. */
+const STATUS_KEY = 'platform-watch-status';
+/** How many runs to keep. Enough to tell a blip from something that is broken. */
+const HISTORY = 20;
+/**
+ * A tick must finish well inside the scheduler's timeout, so past this it stops
+ * starting new work and reports what it managed. A run that is cut short is far
+ * better than one the scheduler records as a failure.
+ */
+const BUDGET_MS = 18_000;
+
+export interface TickRun {
+  at: number;
+  ok: boolean;
+  ms: number;
+  checked: number;
+  notified: number;
+  /** Why it failed, when it did. */
+  error?: string;
+  /** True when the time budget stopped it early. */
+  cutShort?: boolean;
+}
+
+export interface TickStatus {
+  lastAt: number;
+  lastOk: boolean;
+  /** Consecutive failures ending with the most recent run. */
+  failingStreak: number;
+  recent: TickRun[];
+}
+
+export async function readTickStatus(): Promise<TickStatus | null> {
+  return readOne<TickStatus>(STATUS_KEY).catch(() => null);
+}
+
+/** Appends one run to the record. One read and one write, whatever happened. */
+export async function recordTick(run: TickRun): Promise<TickStatus | null> {
+  const previous = await readTickStatus();
+  const recent = [run, ...(previous?.recent ?? [])].slice(0, HISTORY);
+  let failingStreak = 0;
+  for (const entry of recent) {
+    if (entry.ok) break;
+    failingStreak += 1;
+  }
+  const status: TickStatus = { lastAt: run.at, lastOk: run.ok, failingStreak, recent };
+
+  // Null means the record did not survive, which the caller must be able to
+  // tell apart from a clean run: a streak counted from a history that was never
+  // written would reset to one every single time, and a store outage would look
+  // like an unbroken series of first failures.
+  try {
+    await writeOne(STATUS_KEY, status);
+  } catch {
+    return null;
+  }
+  return status;
+}
 
 export interface PushSubscriptionRecord {
   endpoint: string;
@@ -90,8 +145,7 @@ export async function listWatches(): Promise<Array<{ key: string; value: Platfor
 
 /** When the outside scheduler last called the tick, or null if it never has. */
 export async function lastTickAt(): Promise<number | null> {
-  const rows = await list<{ at: number }>(HEARTBEAT).catch(() => []);
-  return rows[0]?.value?.at ?? null;
+  return (await readTickStatus())?.lastAt ?? null;
 }
 
 export interface TickResult {
@@ -99,6 +153,8 @@ export interface TickResult {
   notified: number;
   expired: number;
   stops: number;
+  /** Set when the time budget stopped the run before it finished. */
+  cutShort?: boolean;
 }
 
 /**
@@ -106,9 +162,8 @@ export interface TickResult {
  * an outside scheduler, because a serverless app cannot wake itself up.
  */
 export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
-  // Written before any work, so a tick that fails still proves the scheduler
-  // reached us. An alert that never arrives is usually a cron that stopped.
-  await put(HEARTBEAT, 'last', { at: now }).catch(() => {});
+  const deadline = now + BUDGET_MS;
+  const outOfTime = () => Date.now() > deadline;
 
   const watches = await listWatches();
   const result: TickResult = { checked: watches.length, notified: 0, expired: 0, stops: 0 };
@@ -136,6 +191,10 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
   result.stops = stopIds.length;
   const boards = new Map<string, Awaited<ReturnType<typeof getLiveBoard>>>();
   for (const stopId of stopIds) {
+    if (outOfTime()) {
+      result.cutShort = true;
+      break;
+    }
     try {
       boards.set(stopId, await getLiveBoard(stopId));
     } catch {
@@ -148,6 +207,10 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
   if (arrivalWatches.length) {
     const provider = await getProvider();
     for (const tripId of new Set(arrivalWatches.map((e) => e.value.tripId).filter(Boolean))) {
+      if (outOfTime()) {
+        result.cutShort = true;
+        break;
+      }
       trips.set(tripId!, await provider.getTrip(tripId!).catch(() => null));
     }
   }

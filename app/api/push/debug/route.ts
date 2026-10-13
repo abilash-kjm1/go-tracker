@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import {
-  lastTickAt,
   listWatches,
   pushConfigured,
+  readTickStatus,
   watchesSurvive,
 } from '@/lib/transit/platformWatch';
 import { getLiveBoard } from '@/lib/transit/sources/goTrackerBoards';
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
   }
 
   const watches = await listWatches();
-  const ticked = await lastTickAt();
+  const status = await readTickStatus();
   const out = [];
 
   for (const { value } of watches) {
@@ -68,8 +68,20 @@ export async function GET(request: Request) {
     // at the list below will say why.
     pushConfigured: pushConfigured(),
     watchesSurvive: watchesSurvive(),
-    lastTickAt: ticked ? new Date(ticked).toISOString() : null,
-    minutesSinceTick: ticked ? Math.round((Date.now() - ticked) / 60000) : null,
+    lastTickAt: status ? new Date(status.lastAt).toISOString() : null,
+    minutesSinceTick: status ? Math.round((Date.now() - status.lastAt) / 60000) : null,
+    failingStreak: status?.failingStreak ?? 0,
+    // The last twenty runs, newest first: what actually happened the night an
+    // alert did not arrive, instead of having to guess at it afterwards.
+    recentTicks: (status?.recent ?? []).map((run) => ({
+      at: new Date(run.at).toISOString(),
+      ok: run.ok,
+      ms: run.ms,
+      checked: run.checked,
+      notified: run.notified,
+      ...(run.cutShort ? { cutShort: true } : {}),
+      ...(run.error ? { error: run.error } : {}),
+    })),
     count: out.length,
     watches: out,
   }, {
