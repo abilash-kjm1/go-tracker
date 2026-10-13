@@ -9,29 +9,27 @@ export function ModeIcon({ type, className }: { type: VehicleType; className?: s
   const label = type === 'train' ? 'GO Train' : type === 'bus' ? 'GO Bus' : 'GO service';
   return (
     <span className={clsx('inline-flex shrink-0 items-center', className)} role="img" aria-label={label}>
+      {/* Bus and train separate on silhouette, not on detail: a bus carries two
+          wheels below its body, a train has none and rides a rail. Anything
+          finer than that is lost by the time these are drawn at 14px on a
+          departure card, which is where the old pair became the same blob. */}
       {type === 'train' ? (
         <svg viewBox="0 0 20 20" className="size-full" fill="none" aria-hidden>
           <path
-            d="M6 2.5h8a2.5 2.5 0 0 1 2.5 2.5v7A2.5 2.5 0 0 1 14 14.5H6A2.5 2.5 0 0 1 3.5 12V5A2.5 2.5 0 0 1 6 2.5Z"
-            stroke="currentColor"
-            strokeWidth="1.4"
+            d="M10 2.2c3 0 4.9 1.6 4.9 4.1v5.6c0 1-.8 1.8-1.8 1.8H6.9c-1 0-1.8-.8-1.8-1.8V6.3c0-2.5 1.9-4.1 4.9-4.1Z"
+            fill="currentColor"
           />
-          <path d="M4 7.5h12" stroke="currentColor" strokeWidth="1.4" />
-          <circle cx="7" cy="11.5" r="1" fill="currentColor" />
-          <circle cx="13" cy="11.5" r="1" fill="currentColor" />
-          <path d="M7.5 14.5 5.5 18M12.5 14.5 14.5 18" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          <rect x="7" y="5" width="6" height="3.1" rx="0.9" fill="#fff" fillOpacity="0.9" />
+          <circle cx="7.5" cy="11" r="0.95" fill="#fff" fillOpacity="0.9" />
+          <circle cx="12.5" cy="11" r="0.95" fill="#fff" fillOpacity="0.9" />
+          <path d="M4.3 16.6h11.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
         </svg>
       ) : type === 'bus' ? (
         <svg viewBox="0 0 20 20" className="size-full" fill="none" aria-hidden>
-          <path
-            d="M4.5 4.5h11a1.5 1.5 0 0 1 1.5 1.5v7.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1.5 1.5 0 0 1 1.5-1.5Z"
-            stroke="currentColor"
-            strokeWidth="1.4"
-          />
-          <path d="M3 8.5h14" stroke="currentColor" strokeWidth="1.4" />
-          <circle cx="6.5" cy="12" r="1" fill="currentColor" />
-          <circle cx="13.5" cy="12" r="1" fill="currentColor" />
-          <path d="M5.5 14.5V17M14.5 14.5V17" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          <rect x="2.6" y="4.4" width="14.8" height="8.6" rx="2.1" fill="currentColor" />
+          <rect x="4.2" y="6" width="11.6" height="3.2" rx="0.9" fill="#fff" fillOpacity="0.9" />
+          <circle cx="6.4" cy="15.1" r="2" fill="currentColor" />
+          <circle cx="13.6" cy="15.1" r="2" fill="currentColor" />
         </svg>
       ) : (
         <svg viewBox="0 0 20 20" className="size-full" fill="none" aria-hidden>

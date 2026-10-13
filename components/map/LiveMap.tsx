@@ -812,9 +812,16 @@ function FilterChip({
 // ---- marker DOM ----------------------------------------------------------
 
 const TRAIN_PATH =
-  '<path d="M6 2.5h8a2.5 2.5 0 0 1 2.5 2.5v7A2.5 2.5 0 0 1 14 14.5H6A2.5 2.5 0 0 1 3.5 12V5A2.5 2.5 0 0 1 6 2.5Z" stroke="currentColor" stroke-width="1.4"/><path d="M4 7.5h12" stroke="currentColor" stroke-width="1.4"/><circle cx="7" cy="11.5" r="1" fill="currentColor"/><circle cx="13" cy="11.5" r="1" fill="currentColor"/>';
+  '<path d="M10 2.2c3 0 4.9 1.6 4.9 4.1v5.6c0 1-.8 1.8-1.8 1.8H6.9c-1 0-1.8-.8-1.8-1.8V6.3c0-2.5 1.9-4.1 4.9-4.1Z" fill="currentColor"/>' +
+  '<rect x="7" y="5" width="6" height="3.1" rx="0.9" fill="#000" fill-opacity="0.34"/>' +
+  '<circle cx="7.5" cy="11" r="0.95" fill="#000" fill-opacity="0.34"/>' +
+  '<circle cx="12.5" cy="11" r="0.95" fill="#000" fill-opacity="0.34"/>' +
+  '<path d="M4.3 16.6h11.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>';
 const BUS_PATH =
-  '<path d="M4.5 4.5h11a1.5 1.5 0 0 1 1.5 1.5v7.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1.5 1.5 0 0 1 1.5-1.5Z" stroke="currentColor" stroke-width="1.4"/><path d="M3 8.5h14" stroke="currentColor" stroke-width="1.4"/><circle cx="6.5" cy="12" r="1" fill="currentColor"/><circle cx="13.5" cy="12" r="1" fill="currentColor"/>';
+  '<rect x="2.6" y="4.4" width="14.8" height="8.6" rx="2.1" fill="currentColor"/>' +
+  '<rect x="4.2" y="6" width="11.6" height="3.2" rx="0.9" fill="#000" fill-opacity="0.34"/>' +
+  '<circle cx="6.4" cy="15.1" r="2" fill="currentColor"/>' +
+  '<circle cx="13.6" cy="15.1" r="2" fill="currentColor"/>';
 
 /**
  * A key for the map, folded away by default.
@@ -939,14 +946,16 @@ function updateMarkerEl(
   const arrowDeg = el.dataset.heading;
   const arrow =
     arrowDeg && vehicle.isMoving
-      ? `<span style="position:absolute;top:-5px;left:5px;width:10px;height:10px;transform:rotate(${arrowDeg}deg);color:${tint}">
-           <svg viewBox="0 0 10 10" width="10" height="10" aria-hidden><path d="M5 0 L9 9 L5 6.8 L1 9 Z" fill="currentColor"/></svg>
+      ? `<span class="gt-marker-arrow" style="--gt-deg:${arrowDeg}deg">
+           <svg viewBox="0 0 12 10" width="12" height="10" aria-hidden>
+             <path d="M6 0 11.4 9.4 6 7 0.6 9.4Z" fill="${tint}" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/>
+           </svg>
          </span>`
       : '';
 
   el.innerHTML = `
     <span class="gt-marker-icon" style="position:relative;display:grid;place-items:center;width:20px;height:20px;border-radius:999px;background:${tint};color:#fff;flex:none">
-      <svg viewBox="0 0 20 20" width="13" height="13" fill="none" aria-hidden>${icon}</svg>
+      <svg class="gt-marker-glyph" viewBox="0 0 20 20" width="13" height="13" fill="none" aria-hidden>${icon}</svg>
       ${arrow}
     </span>
     <span class="gt-marker-label" style="display:flex;flex-direction:column;gap:1px;align-items:flex-start">

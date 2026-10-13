@@ -594,7 +594,7 @@ body {
   width: 11px !important;
   height: 11px !important;
 }
-.gt-marker[data-compact='true'][data-mode='bus'] .gt-marker-icon svg {
+.gt-marker[data-compact='true'][data-mode='bus'] .gt-marker-glyph {
   display: none;
 }
 
@@ -611,11 +611,38 @@ body {
   width: 20px !important;
   height: 20px !important;
 }
-.gt-marker[data-mine='true'][data-mode] .gt-marker-icon svg {
+.gt-marker[data-mine='true'][data-mode] .gt-marker-glyph {
   display: block !important;
 }
 .gt-marker[data-mine='true'][data-mode] {
   padding: 3px !important;
   opacity: 1 !important;
   z-index: 4;
+}
+
+/* ---- Direction of travel -------------------------------------------------
+   The arrow rides around the rim of the marker rather than turning inside it.
+   A zero-size wrapper sits on the icon's centre and carries the rotation; the
+   arrow itself is offset upward from that centre, so rotating the wrapper
+   sweeps it round the edge and it always points the way the vehicle is going.
+   The previous version was pinned to the top-left corner and only spun on the
+   spot, which put a southbound arrow above the marker pointing down. */
+.gt-marker-arrow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform: rotate(var(--gt-deg, 0deg));
+  pointer-events: none;
+}
+.gt-marker-arrow svg {
+  position: absolute;
+  left: -6px;
+  top: calc(-1 * var(--gt-arrow-orbit, 16px));
+}
+
+/* A bus shrunk to a dot keeps its arrow, drawn in closer to match. */
+.gt-marker[data-compact='true'][data-mode='bus'] {
+  --gt-arrow-orbit: 11px;
 }
