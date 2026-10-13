@@ -11,6 +11,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "gtfs:build": "node scripts/build-gtfs.mjs",
     "vercel-build": "node scripts/build-gtfs.mjs && next build"
   },
@@ -34,6 +36,7 @@
     "adm-zip": "^0.5.16",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.13",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.7"
   }
 }

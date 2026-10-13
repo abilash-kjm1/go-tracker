@@ -79,10 +79,45 @@ export function zonedToInstant(dateKey: string, seconds: number): Date {
   const month = Number(dateKey.slice(4, 6));
   const day = Number(dateKey.slice(6, 8));
   const naiveUtc = Date.UTC(year, month - 1, day) + seconds * 1000;
-  // Two passes settle the DST boundary cases.
-  let instant = naiveUtc - offsetMsAt(naiveUtc);
-  instant = naiveUtc - offsetMsAt(instant);
-  return new Date(instant);
+
+  // Guess using the offset in force at the naive time, then again using the
+  // offset in force at that guess. Away from a transition the two agree and
+  // either is right.
+  const first = naiveUtc - offsetMsAt(naiveUtc);
+  const second = naiveUtc - offsetMsAt(first);
+
+  // A guess is only real if the zone agrees it maps back to the local time we
+  // asked for. Within an hour of a transition one or both can fail to.
+  const real = (instant: number) => naiveUtc - offsetMsAt(instant) === instant;
+  const candidates = [first, second].filter(real);
+
+  // Autumn: the same local time happens twice. Take the first, which is what a
+  // timetable means by it.
+  if (candidates.length > 0) return new Date(Math.min(...candidates));
+
+  // Spring: the local time never happens at all — 02:30 on the second Sunday
+  // in March. Every time inside the gap collapses onto the instant the clock
+  // jumps, found by bisecting between the two guesses.
+  //
+  // The obvious alternatives are both wrong. Taking the earlier guess lands
+  // before 01:30, so a board prints 02:30 above 01:30 and shows it departed.
+  // Shifting the gap forward by an hour puts 02:30 after 03:00. Only the
+  // transition instant keeps the whole day non-decreasing, which is the one
+  // property a departure board cannot do without.
+  // Bisect over whole seconds. `offsetMsAt` reads the zone through
+  // formatToParts, which truncates to the second, so asking it about an instant
+  // carrying milliseconds returns the offset minus that remainder — and the
+  // search then converges on a meaningless value a few seconds off the hour.
+  // Transitions fall on exact minutes, so seconds are precise enough anyway.
+  let lo = Math.floor(Math.min(first, second) / 1000);
+  let hi = Math.ceil(Math.max(first, second) / 1000);
+  const offsetBelow = offsetMsAt(lo * 1000);
+  while (hi - lo > 1) {
+    const mid = lo + Math.floor((hi - lo) / 2);
+    if (offsetMsAt(mid * 1000) === offsetBelow) lo = mid;
+    else hi = mid;
+  }
+  return new Date(hi * 1000);
 }
 
 /** The GTFS service date currently in effect (service after midnight still belongs to the previous day). */
