@@ -9,6 +9,7 @@ import { directionColors, groupByDirection } from './directions';
 import { LiveIndicator } from '@/components/ui/LiveIndicator';
 import { EmptyState, ModeIcon, Segmented, Skeleton } from '@/components/ui/primitives';
 import { useTransit } from '@/lib/client/useTransit';
+import { formatClock } from '@/lib/transit/time';
 import type { Departure, VehicleType } from '@/lib/transit/types';
 
 type ModeFilter = 'all' | VehicleType;
@@ -49,8 +50,25 @@ export function DepartureBoard({
     if (activeKey !== resolvedKey) setActiveKey(resolvedKey);
   }, [activeKey, resolvedKey]);
 
+  // A screen reader otherwise gets no hint that the times just changed under
+  // it. Polite, and only the summary line — announcing forty rows every fifteen
+  // seconds would make the page unusable.
+  const announcement =
+    rows.length > 0
+      ? // `kind` is already plural, and `platform` already reads "Platform 4" or
+        // "Platforms 7 & 8" — GO's own wording — so neither gets a word added.
+        // formatClock ends in "p.m.", so the closing period is collapsed rather
+        // than read out as "p m dot dot".
+        `${rows.length} ${kind} listed. Next: ${rows[0].destination ?? 'service'} at ${formatClock(
+          rows[0].estimatedTime ?? rows[0].scheduledTime,
+        )}${rows[0].platform ? `, ${rows[0].platform}` : ''}.`.replace(/\.\.$/, '.')
+      : '';
+
   return (
     <section className="space-y-3">
+      <p className="sr-only" role="status" aria-live="polite">
+        {announcement}
+      </p>
       {/* Row 1: which board, and whether it is live. */}
       <div className="flex items-center justify-between gap-3">
         <Segmented<BoardKind>

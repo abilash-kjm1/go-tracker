@@ -418,3 +418,21 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .st-pop { animation: none; }
 }
+
+/* ---- Focus ---------------------------------------------------------------
+   There was no focus style beyond the skip link, so anyone navigating by
+   keyboard or switch control got the browser default on top of a custom
+   design — often a thin ring invisible against a dark card. One rule, using
+   the accent so it reads in both themes, and :focus-visible so a mouse click
+   never draws it. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* A dark map canvas needs the ring lifted off the tiles to stay visible. */
+.maplibregl-canvas:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
