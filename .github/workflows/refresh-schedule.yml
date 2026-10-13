@@ -1,13 +1,19 @@
 name: Refresh GO schedule
 
 # The timetable is baked into each deployment (see `vercel-build`), so it only
-# stays current if the site is redeployed. This asks Vercel to rebuild every day
-# at 08:30 UTC (about 4:30am Toronto, after service ends and before the morning
-# peak), which re-downloads the GO GTFS feed and rolls the 14-day window forward.
+# stays current if the site is redeployed. This asks Vercel to rebuild once a
+# day, which re-downloads the GO GTFS feed and rolls the 14-day window forward.
+#
+# Because that window is a fortnight wide, a refresh that does not happen today
+# costs nothing — there are about thirteen days of timetable still in hand. That
+# is why a failed trigger is retried rather than reported, and only becomes an
+# error once the window is genuinely running down.
 #
 # Setup: in Vercel, Project Settings -> Git -> Deploy Hooks, create one named
 # "daily-refresh" on your production branch, then add its URL as a repository
-# secret called VERCEL_DEPLOY_HOOK.
+# secret called VERCEL_DEPLOY_HOOK. Optionally set a repository variable
+# PRODUCTION_URL (e.g. https://your-app.vercel.app) so a failed trigger can
+# check how much timetable is left before deciding whether to raise an error.
 
 on:
   schedule:
@@ -19,12 +25,71 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Vercel rebuild
+        id: trigger
         env:
           HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
         run: |
-          if [ -z "$HOOK" ]; then
-            echo "VERCEL_DEPLOY_HOOK is not set - skipping. See the comment at the top of this file."
+          set -u
+          if [ -z "${HOOK:-}" ]; then
+            echo "::error::VERCEL_DEPLOY_HOOK is not set. See the comment at the top of this file."
             exit 1
           fi
-          curl --fail --silent --show-error -X POST "$HOOK"
-          echo "Rebuild requested."
+
+          # Deploy hooks are rate limited, and GitHub fires every repository's
+          # scheduled jobs at the same moment, so a 429 here is ordinary and
+          # clears on its own. Waiting is the whole fix.
+          for attempt in 1 2 3 4 5; do
+            code=$(curl --silent --output /dev/null --write-out '%{http_code}' \
+                        --max-time 30 -X POST "$HOOK" || echo 000)
+            if [ "$code" -ge 200 ] && [ "$code" -lt 300 ]; then
+              echo "Rebuild requested on attempt $attempt (HTTP $code)."
+              echo "triggered=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "Attempt $attempt failed: HTTP $code"
+            # Written as an if, not `[ ] && sleep`: under `bash -e` a bare
+            # test that fails is a trap worth not setting for yourself.
+            if [ "$attempt" -lt 5 ]; then sleep $((attempt * 30)); fi
+          done
+
+          echo "triggered=false" >> "$GITHUB_OUTPUT"
+          echo "::warning::Could not trigger a rebuild after 5 attempts (last HTTP $code)."
+
+      - name: Decide whether that matters
+        if: steps.trigger.outputs.triggered == 'false'
+        env:
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+        run: |
+          set -u
+          # A missed rebuild only matters once the deployed timetable is close to
+          # running out. With no URL to ask, assume the worst and say so.
+          if [ -z "${PRODUCTION_URL:-}" ]; then
+            echo "::error::Rebuild could not be triggered, and PRODUCTION_URL is not set, so the remaining timetable cannot be checked."
+            exit 1
+          fi
+
+          days=$(curl --silent --max-time 30 "${PRODUCTION_URL%/}/api/transit/health" \
+                 | node -e '
+                     let s = "";
+                     process.stdin.on("data", (d) => (s += d)).on("end", () => {
+                       try {
+                         const dates = JSON.parse(s).data.staticData.datesAvailable ?? [];
+                         const today = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+                         console.log(dates.filter((d) => d >= today).length);
+                       } catch {
+                         console.log(-1);
+                       }
+                     });')
+
+          days=${days:--1}
+          case "$days" in (*[!0-9-]*|"") days=-1 ;; esac
+          echo "Service days still deployed: $days"
+          if [ "$days" -lt 0 ]; then
+            echo "::error::Rebuild failed and the deployed timetable could not be read."
+            exit 1
+          elif [ "$days" -lt 4 ]; then
+            echo "::error::Rebuild failed and only $days service days of timetable remain."
+            exit 1
+          else
+            echo "::warning::Rebuild was not triggered, but $days service days remain. Tomorrow's run will pick it up."
+          fi
