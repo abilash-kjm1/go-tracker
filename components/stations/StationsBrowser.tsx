@@ -74,7 +74,7 @@ export function StationsBrowser({
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Filter by name"
             aria-label="Filter stations"
-            className="min-w-0 flex-1 bg-transparent text-body outline-none placeholder:text-[var(--fg-faint)]"
+            className="min-w-0 flex-1 bg-transparent text-field outline-none placeholder:text-[var(--fg-faint)]"
           />
         </label>
 

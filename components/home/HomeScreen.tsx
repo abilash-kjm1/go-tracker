@@ -81,20 +81,13 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
         the top at full strength; everything else is quieter and in the order a
         rider needs it. No poster, no mascot, no second copy of the same numbers.
       */}
-      {/* Right padding leaves the corner free for the hanging signal. */}
-      <header className="pr-dangle flex items-end justify-between gap-3 pt-6 pb-4">
-        <div className="min-w-0">
-          <p className="text-tiny font-medium text-muted">{greeting()}</p>
-          <h1 className="mt-0.5 text-[26px] leading-none font-bold tracking-tight">Where to?</h1>
-        </div>
-        <button
-          type="button"
-          onClick={() => setSearchOpen(true)}
-          aria-label="Search stations, lines or buses"
-          className="grid size-11 shrink-0 place-items-center rounded-2xl border text-[var(--fg-muted)] transition-colors hairline bg-[var(--bg-elevated)] hover:bg-[var(--bg-sunken)]"
-        >
-          <SearchIcon className="size-5" />
-        </button>
+      {/* The hanging signal owns the top-right corner, so the title keeps clear
+          of it and search moved below, where it can line up with everything
+          else. A 44px button squeezed in beside the lamp could only ever sit
+          68px short of the right edge every other card reaches. */}
+      <header className="pr-dangle pt-6 pb-4">
+        <p className="text-tiny font-medium text-muted">{greeting()}</p>
+        <h1 className="mt-0.5 text-[26px] leading-none font-bold tracking-tight">Where to?</h1>
       </header>
 
       <PlannerForm planner={planner} stops={allStops ?? []} loadingStops={stopsLoading && !allStops} />
@@ -129,6 +122,15 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
           badge={alerts && alerts.length > 0 ? alerts.length : undefined}
         />
       </nav>
+
+      <button
+        type="button"
+        onClick={() => setSearchOpen(true)}
+        className="mt-2 flex min-h-11 w-full items-center gap-2.5 rounded-2xl border px-3.5 text-small text-muted transition-colors hairline bg-[var(--bg-elevated)] hover:bg-[var(--bg-sunken)]"
+      >
+        <SearchIcon className="size-[18px] shrink-0 text-[var(--fg-faint)]" />
+        Search stations, lines or buses
+      </button>
 
       {/* Departures a rider actually has a stake in, before any network summary. */}
       {ready && favoriteStops.length > 0 ? (

@@ -52,7 +52,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             placeholder="Search stations, routes or trips"
             aria-label="Search GO Transit"
             enterKeyHint="search"
-            className="min-h-11 flex-1 bg-transparent text-body outline-none placeholder:text-[var(--fg-faint)]"
+            className="min-h-11 flex-1 bg-transparent text-field outline-none placeholder:text-[var(--fg-faint)]"
           />
           <button
             type="button"

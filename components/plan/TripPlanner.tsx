@@ -290,7 +290,7 @@ function StopPicker({
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           placeholder={loading ? 'Loading stations…' : label === 'From' ? 'From: station or stop' : 'To: station or stop'}
           aria-label={`${label} stop`}
-          className="min-w-0 flex-1 bg-transparent py-3 pr-12 text-body font-semibold outline-none placeholder:font-medium placeholder:text-[var(--fg-faint)]"
+          className="min-w-0 flex-1 bg-transparent py-3 pr-12 text-field font-semibold outline-none placeholder:font-medium placeholder:text-[var(--fg-faint)]"
         />
       </label>
 
@@ -423,7 +423,7 @@ function WhenPicker({ value, onChange }: { value: string | null; onChange: (v: s
               min={min}
               max={max}
               onChange={(e) => set(e.target.value, time)}
-              className="mt-1 min-h-11 w-full rounded-xl border px-3 text-ui outline-none hairline bg-[var(--bg-elevated)]"
+              className="mt-1 min-h-11 w-full rounded-xl border px-2 text-field outline-none hairline bg-[var(--bg-elevated)]"
             />
           </label>
           <label className="w-[124px]">
@@ -432,7 +432,7 @@ function WhenPicker({ value, onChange }: { value: string | null; onChange: (v: s
               type="time"
               value={time}
               onChange={(e) => set(date, e.target.value)}
-              className="mt-1 min-h-11 w-full rounded-xl border px-3 text-ui outline-none hairline bg-[var(--bg-elevated)]"
+              className="mt-1 min-h-11 w-full rounded-xl border px-2 text-field outline-none hairline bg-[var(--bg-elevated)]"
             />
           </label>
           {max ? (

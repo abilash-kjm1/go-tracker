@@ -478,3 +478,15 @@ body {
 @utility pr-dangle {
   padding-right: var(--dangle-gutter);
 }
+
+/* ---- Form fields ---------------------------------------------------------
+   iOS Safari zooms the whole page when a field smaller than 16px takes focus,
+   and does not zoom back out. Tapping "Pick a day" left the planner magnified
+   and everything on the page apparently out of line — not a layout bug at all,
+   but every input in the app was 14px or 15px.
+
+   16px is the floor, so this is its own step rather than part of the reading
+   scale above: it exists for a browser rule, not for a visual rhythm. */
+@utility text-field {
+  font-size: 16px;
+}

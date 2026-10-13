@@ -181,7 +181,7 @@ export function DepartureCard({
 
       {/* Stub: the platform, torn off. */}
       <span
-        className="flex w-[72px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-r-[15px] px-1.5 py-3 @max-[340px]:w-[56px]"
+        className="flex w-[72px] shrink-0 flex-col items-center justify-between rounded-r-[15px] px-1.5 py-3 @max-[340px]:w-[56px]"
       >
         <span
           className="text-[8px] font-bold tracking-[0.12em] uppercase"
@@ -190,6 +190,7 @@ export function DepartureCard({
           {expectedPlatform && !platformValue ? 'Expected' : 'Platform'}
         </span>
 
+        <span className="flex flex-1 flex-col items-center justify-center gap-0.5">
         {platformValue ? (
           <span
             style={dir ? { color: dir.fg } : undefined}
@@ -258,10 +259,11 @@ export function DepartureCard({
             ) : null}
           </>
         )}
+        </span>
 
         {!cancelled && countdown ? (
           <span
-            className="tabular mt-1.5 text-mini leading-none font-bold whitespace-nowrap"
+            className="tabular text-mini leading-none font-bold whitespace-nowrap"
             style={{ color: departed ? 'var(--fg-faint)' : statusColor }}
           >
             {countdown}
