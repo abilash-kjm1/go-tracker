@@ -14,6 +14,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./', import.meta.url)),
+      // `server-only` throws on import outside a React Server Component, which
+      // is the point of it — but it means a server module cannot be unit
+      // tested at all. Stubbing it here does not weaken the real guard: Next
+      // still enforces it at build time for anything a client imports.
+      'server-only': fileURLToPath(new URL('./tests/stubs/server-only.ts', import.meta.url)),
     },
   },
   test: {

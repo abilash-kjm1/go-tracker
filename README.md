@@ -603,19 +603,11 @@ Found the hard way. The most valuable section here for anyone extending the app.
 
 Honest list, for whoever picks this up.
 
-**No tests at all.** No test runner is configured. The riskiest code — `lib/transit/time.ts` (timezone and service-day maths) and `lib/transit/journeys.ts` (717 lines of connection search) — has no safety net, and several real bugs have lived there: times showing early, journeys arriving before they departed, next-day services leaking into today's results. The highest-value next step is fixture-based unit tests, especially around **DST** (in `America/Toronto`, 02:00–03:00 does not exist in March and happens twice in November) and service-day rollover.
-
-**No `error.tsx` or `loading.tsx` anywhere.** An upstream failure in a server component renders Next's default error page rather than a branded "live data is down, here is the timetable" fallback.
+**Test coverage is thin.** Vitest covers `lib/transit/time.ts`, `lib/transit/geo.ts` and the tick's auth gate (57 tests, `npm test`). Nothing yet covers the journey planner, the providers or the parsers. The riskiest remaining code — `lib/transit/time.ts` (timezone and service-day maths) and `lib/transit/journeys.ts` (717 lines of connection search) is `lib/transit/journeys.ts` (717 lines of connection search), which needs GTFS fixtures to test properly.
 
 **27 distinct hard-coded font sizes** (`text-[12px]`, `text-[12.5px]`, `text-[13px]`, …). No typographic scale, so every screen re-invents one. Collapsing to five named utilities would pay for itself quickly.
 
 **Accessibility is thin.** Only two focus-visible rules in the whole app; `aria-live` is nearly absent, so departure times update silently under a screen reader. `TransitStop.wheelchair` exists in the model and is never rendered.
-
-**`/trips/{unknown-id}` renders an empty shell** rather than a not-found state.
-
-**A stale comment** in `lib/transit/platformSource.ts` claims gotracker.ca is decommissioned. It is not — the mobile proxy is live and serving platforms.
-
-**`.env.example` omits the push variables.**
 
 **iOS Live Activities / Dynamic Island are not possible from a PWA.** Web Push on iOS gives notifications and that is the ceiling.
 

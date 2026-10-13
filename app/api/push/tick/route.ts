@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { recordTick, runPlatformTick } from '@/lib/transit/platformWatch';
+import { requireTickSecret } from '@/lib/transit/tickAuth';
+import { rateLimit } from '@/lib/transit/api';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
@@ -28,17 +30,13 @@ const ALARM_AFTER = 3;
 let unrecordedFailures = 0;
 
 export async function GET(request: Request) {
-  const expected = process.env.PUSH_TICK_SECRET;
-  if (!expected) {
-    return NextResponse.json({ error: 'Tick is not configured' }, { status: 503 });
-  }
+  // Generous, because a one-a-minute scheduler must never be throttled, but
+  // finite, so the endpoint cannot be hammered by someone guessing the secret.
+  const limited = rateLimit(request, 30);
+  if (limited) return limited;
 
-  const provided =
-    new URL(request.url).searchParams.get('key') ??
-    request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
-  if (provided !== expected) {
-    return NextResponse.json({ error: 'Not authorised' }, { status: 401 });
-  }
+  const denied = requireTickSecret(request);
+  if (denied) return denied;
 
   const started = Date.now();
   const headers = { 'Cache-Control': 'no-store' };

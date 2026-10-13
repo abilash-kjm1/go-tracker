@@ -65,7 +65,14 @@ export interface WatchTarget {
   departsAt: string;
 }
 
-/** Asks the server to push when this stop is reached (or its platform posted). */
+/**
+ * Asks the server to push when this stop is reached (or its platform posted).
+ *
+ * True only when the server confirms the watch will outlive the request. A
+ * server with no shared store accepts the watch and then loses it on the next
+ * cold start, which is indistinguishable from success at the HTTP level and
+ * very distinguishable from it on a platform at 7am.
+ */
 export async function registerWatch(
   kind: 'platform' | 'arrival',
   target: WatchTarget,
@@ -78,7 +85,11 @@ export async function registerWatch(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ kind, subscription: subscription.toJSON(), ...target }),
     });
-    return response.ok;
+    if (!response.ok) return false;
+    const body = (await response.json().catch(() => null)) as
+      | { data?: { durable?: boolean } }
+      | null;
+    return body?.data?.durable !== false;
   } catch {
     return false;
   }

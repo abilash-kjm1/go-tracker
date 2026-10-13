@@ -191,7 +191,7 @@ export function TripScreen({ tripId }: { tripId: string }) {
  * the browser will allow a notification, and what iOS needs before it will.
  */
 function StopAlertBar({ state }: { state: ReturnType<typeof useStopAlerts> }) {
-  const { armedCount, permission, request, installed, clearTrip } = state;
+  const { armedCount, pageOnlyCount, permission, request, installed, clearTrip } = state;
   if (armedCount === 0) {
     return (
       <p className="mt-3 rounded-2xl border px-4 py-3 text-[13px] text-muted hairline bg-[var(--bg-elevated)]">
@@ -227,6 +227,14 @@ function StopAlertBar({ state }: { state: ReturnType<typeof useStopAlerts> }) {
         >
           Allow notifications
         </button>
+      ) : null}
+
+      {pageOnlyCount > 0 && !needsPermission && !blocked ? (
+        <p className="mt-2 text-[12px] text-[var(--color-warn-500)]">
+          {pageOnlyCount === armedCount
+            ? 'These alerts can only appear while GO Tracker is open — the server did not accept them.'
+            : `${pageOnlyCount} of these can only appear while GO Tracker is open.`}
+        </p>
       ) : null}
 
       {blocked ? (

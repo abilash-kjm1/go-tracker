@@ -6,11 +6,17 @@ import { config } from './config';
 /**
  * Optional platform enrichment from the official Metrolinx Open Data API.
  *
- * Why this exists separately from MetrolinxOfficialProvider: platform numbers
- * are the one thing the temporary GO Tracker upstream cannot supply at all
- * (its S4 station-status backend returns an error, and gotracker.ca itself is
- * decommissioned). So as soon as a METROLINX_API_KEY is present we use it for
- * platforms only, while everything else keeps running on the current provider.
+ * Why this exists separately from MetrolinxOfficialProvider: the GO Tracker
+ * mobile proxy already supplies confirmed platforms (see sources/goTrackerBoards),
+ * but only this API publishes ScheduledPlatform — the assignment GO *plans* to
+ * make, before it commits to one. That is what lets a board say "expected 12,
+ * not confirmed" instead of saying nothing. So as soon as a METROLINX_API_KEY
+ * is present we use it for platform enrichment only, while everything else
+ * keeps running on the current provider.
+ *
+ * (An earlier note here claimed gotracker.ca was decommissioned. It is not —
+ * only the legacy .svc station-status backend is dead. The mobile proxy is
+ * live and is where confirmed platforms come from.)
  *
  * No key configured → this is inert and boards simply carry no platform.
  * Nothing here ever guesses a platform.

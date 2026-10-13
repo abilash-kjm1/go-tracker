@@ -29,6 +29,14 @@ export interface StopAlert {
    */
   tripNumber?: string;
   departsAt?: string;
+  /**
+   * Whether the server accepted a watch for this stop, and will therefore fire
+   * it with the app closed. 'page-only' means the alert exists in this browser
+   * and nowhere else — true after a refusal, an outage, or a server with no
+   * durable store. It is recorded rather than assumed, because telling someone
+   * an alarm is set when it is not is worse than not offering one.
+   */
+  remote?: 'pending' | 'armed' | 'page-only';
   /** Set once the notification has been delivered, so it never repeats. */
   firedAt?: number;
 }
@@ -43,6 +51,18 @@ export interface StopAlert {
 const STALE_MS = 10 * 60_000;
 
 const alertKey = (tripId: string, stopId: string) => `${tripId}::${stopId}`;
+
+/** Records how a stop's alert actually ended up, from inside or outside React. */
+function markRemote(tripId: string, stopId: string, remote: StopAlert['remote']) {
+  const key = alertKey(tripId, stopId);
+  write(read().map((a) => (alertKey(a.tripId, a.stopId) === key ? { ...a, remote } : a)));
+  // The hook re-reads on this, so a page already showing the list updates.
+  try {
+    window.dispatchEvent(new Event('gotracker:stop-alerts-changed'));
+  } catch {
+    // Not in a browser; the next read picks it up anyway.
+  }
+}
 
 function read(): StopAlert[] {
   try {
@@ -82,9 +102,16 @@ export function useStopAlerts(tripId: string | undefined) {
   const installed = useIsInstalled();
 
   useEffect(() => {
-    setAlerts(read());
+    const sync = () => setAlerts(read());
+    sync();
     if (typeof Notification === 'undefined') setPermission('unsupported');
     else setPermission(Notification.permission as PermissionState);
+    window.addEventListener('gotracker:stop-alerts-changed', sync);
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener('gotracker:stop-alerts-changed', sync);
+      window.removeEventListener('storage', sync);
+    };
   }, []);
 
   const forTrip = useMemo(
@@ -106,7 +133,7 @@ export function useStopAlerts(tripId: string | undefined) {
         armed = !exists;
         const next = exists
           ? current.filter((a) => alertKey(a.tripId, a.stopId) !== alertKey(tripId, stopId))
-          : [...current, { tripId, stopId, stopName }];
+          : [...current, { tripId, stopId, stopName, remote: 'pending' as const }];
         write(next);
         return next;
       });
@@ -114,7 +141,10 @@ export function useStopAlerts(tripId: string | undefined) {
       // The page watches while it is open; the server watches when it is not.
       // Without a trip number there is nothing the server could match on, so
       // the alert simply stays in-page.
-      if (!service?.tripNumber || !service.departsAt) return;
+      if (!service?.tripNumber || !service.departsAt) {
+        if (armed) markRemote(tripId, stopId, 'page-only');
+        return;
+      }
       if (armed) {
         void registerWatch('arrival', {
           stopId,
@@ -122,7 +152,7 @@ export function useStopAlerts(tripId: string | undefined) {
           tripId,
           tripNumber: service.tripNumber,
           departsAt: service.departsAt,
-        });
+        }).then((ok) => markRemote(tripId, stopId, ok ? 'armed' : 'page-only'));
       } else {
         void unregisterWatch('arrival', service.tripNumber, stopId);
       }
@@ -159,10 +189,17 @@ export function useStopAlerts(tripId: string | undefined) {
     }
   }, []);
 
+  // How many of this trip's live alerts exist only in this browser.
+  const pageOnlyCount = useMemo(
+    () => forTrip.filter((a) => !a.firedAt && a.remote === 'page-only').length,
+    [forTrip],
+  );
+
   return {
     alerts: forTrip,
     armedStopIds,
     armedCount: armedStopIds.size,
+    pageOnlyCount,
     toggle,
     markFired,
     clearTrip,
@@ -264,14 +301,17 @@ export function armAlerts(newAlerts: StopAlert[]) {
   write(merged);
 
   for (const alert of added) {
-    if (!alert.tripNumber || !alert.departsAt) continue;
+    if (!alert.tripNumber || !alert.departsAt) {
+      markRemote(alert.tripId, alert.stopId, 'page-only');
+      continue;
+    }
     void registerWatch('arrival', {
       stopId: alert.stopId,
       stopName: alert.stopName,
       tripId: alert.tripId,
       tripNumber: alert.tripNumber,
       departsAt: alert.departsAt,
-    });
+    }).then((armed) => markRemote(alert.tripId, alert.stopId, armed ? 'armed' : 'page-only'));
   }
 
   return merged;

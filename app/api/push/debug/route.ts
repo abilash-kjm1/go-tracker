@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { rateLimit } from '@/lib/transit/api';
+import { requireTickSecret } from '@/lib/transit/tickAuth';
 import {
   listWatches,
   pushConfigured,
@@ -16,11 +18,11 @@ export const dynamic = 'force-dynamic';
  * subscription itself.
  */
 export async function GET(request: Request) {
-  const expected = process.env.PUSH_TICK_SECRET;
-  const provided = new URL(request.url).searchParams.get('key');
-  if (!expected || provided !== expected) {
-    return NextResponse.json({ error: 'Not authorised' }, { status: 401 });
-  }
+  const limited = rateLimit(request, 30);
+  if (limited) return limited;
+
+  const denied = requireTickSecret(request);
+  if (denied) return denied;
 
   const watches = await listWatches();
   const status = await readTickStatus();
