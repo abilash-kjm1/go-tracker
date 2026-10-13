@@ -47,6 +47,7 @@ export function DepartureCard({
     vehicleType,
     platform,
     expectedPlatform,
+    platformEta,
     platformNote,
     routeCode,
     serviceCode,
@@ -219,10 +220,28 @@ export function DepartureCard({
               </>
             ) : (
               <>
-                <span className="text-[20px] leading-none font-bold text-faint">&mdash;</span>
-                {platformNote ? (
-                  <span className="text-center text-[8px] leading-tight text-faint">soon</span>
-                ) : null}
+                {/* How long until GO calls it, worked out from how far ahead
+                    this station is posting right now. The board itself is the
+                    only evidence, so when it offers none this says nothing —
+                    and it takes the number's place rather than hanging under a
+                    dash, because it is the answer, not a footnote to one. */}
+                {platformEta ? (
+                  <>
+                    <span className="tabular text-[15px] leading-none font-bold text-[var(--fg-muted)] @max-[340px]:text-[13px]">
+                      ~{Math.max(1, Math.round((Date.parse(platformEta) - now) / 60_000))} min
+                    </span>
+                    <span className="text-center text-[7.5px] leading-tight tracking-wide text-faint uppercase">
+                      until posted
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-[20px] leading-none font-bold text-faint">&mdash;</span>
+                    {platformNote ? (
+                      <span className="text-center text-[8px] leading-tight text-faint">soon</span>
+                    ) : null}
+                  </>
+                )}
               </>
             )}
             {/* No platform yet is exactly when a rider wants telling. */}
@@ -265,7 +284,16 @@ export function DepartureCard({
   const label = `${depart.time} ${depart.suffix} ${serviceCode ?? routeCode ?? ''} ${
     heading ? `${heading}bound ` : ''
   }to ${arrivalStopName ?? destination ?? ''}, ${statusLabel}${
-    platform ? `, ${platform}` : expectedPlatform ? `, ${expectedPlatform} expected` : ''
+    platform
+      ? `, ${platform}`
+      : expectedPlatform
+        ? `, ${expectedPlatform} expected, not yet confirmed`
+        : platformEta
+          ? `, platform expected to be posted in about ${Math.max(
+              1,
+              Math.round((Date.parse(platformEta) - now) / 60_000),
+            )} minutes`
+          : ''
   }`;
 
   if (!departure.tripId) {

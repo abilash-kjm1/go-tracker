@@ -463,8 +463,23 @@ export class GoTrackerTemporaryProvider implements TransitDataProvider {
           ? new Date(scheduledAt.getTime() + delaySeconds * 1000)
           : undefined;
 
+      // GO's own board is the authority on what has been *posted to riders*.
+      //
+      // The official API publishes an ActualPlatform up to two hours ahead —
+      // its operational assignment — while Union's board still reads "Wait /
+      // Attendez". Taking the API's word for it printed a confirmed platform
+      // for a train GO had not called yet, and Union reassigns. Verified
+      // against the live board: trips 1041, 9140, 1641 and 9340 all read
+      // "Wait" on GO's screens while this app said "Platform 7" and
+      // "Platform 11".
+      //
+      // So a platform is only confirmed when GO has posted it. The API's
+      // assignment is still worth showing — it is usually right — but as an
+      // expectation, which the card renders differently.
+      const postedPlatform = boardRow?.platform ?? boardingLocation(stationRow);
+      const boardSaysNotPostedYet = Boolean(boardRow) && !boardRow?.platform;
       const assignedPlatform =
-        official?.platform ?? boardRow?.platform ?? boardingLocation(stationRow);
+        postedPlatform ?? (boardSaysNotPostedYet ? undefined : official?.platform);
 
       const [originStop, destinationStop] = await Promise.all([
         getStop(entry.originStopId),
@@ -512,9 +527,12 @@ export class GoTrackerTemporaryProvider implements TransitDataProvider {
         delaySeconds,
         // Platform only when a source actually reports one.
         platform: assignedPlatform,
-        // Carried only while nothing has actually been assigned, so a plan can
-        // never be mistaken for the real thing further down the line.
-        expectedPlatform: assignedPlatform ? undefined : official?.expectedPlatform,
+        // Carried only while nothing has been posted, so a plan can never be
+        // mistaken for the real thing further down the line. The operational
+        // assignment is the better guess of the two when we have it.
+        expectedPlatform: assignedPlatform
+          ? undefined
+          : (official?.platform ?? official?.expectedPlatform),
         platformNote: boardRow?.platform ? undefined : boardRow?.note,
         cancelled: isCancelled(stationRow) || official?.cancelled === true || boardRow?.cancelled === true,
         // The live board knows which runs skip stops; failing that, GO names
@@ -528,7 +546,7 @@ export class GoTrackerTemporaryProvider implements TransitDataProvider {
       if (out.length >= limit) break;
     }
 
-    return out;
+    return withPlatformEta(out);
   }
 
   private async safeLiveVehicles(): Promise<LiveVehicle[]> {
@@ -937,3 +955,50 @@ function isSubsequence(needle: string, haystack: string): boolean {
 }
 
 export type { ScheduledStopTime };
+
+/**
+ * Says roughly when an unposted platform should appear, using nothing but the
+ * board it is given.
+ *
+ * A station posts platforms a fairly consistent distance ahead of departure —
+ * Union holds them back about ten minutes, a quiet station may post hours
+ * early. So the furthest-out departure that *already* has a platform shows how
+ * far ahead this station is currently posting, right now, with no history to
+ * keep and nothing assumed. A train departing later than that should be called
+ * in about the difference.
+ *
+ * Deliberately conservative. It needs at least two posted departures, so one
+ * outlier cannot set the horizon; it never contradicts a platform that is
+ * already up; and where the board offers nothing to measure, it says nothing
+ * rather than guessing.
+ */
+export function withPlatformEta(rows: Departure[], now = Date.now()): Departure[] {
+  const minutesOut = (row: Departure) =>
+    (Date.parse(row.estimatedTime ?? row.scheduledTime) - now) / 60_000;
+
+  // Grouped by stop and mode, because the two halves of a site behave nothing
+  // alike. Union Bus Terminal publishes bay numbers hours ahead while Union's
+  // train platforms stay blank until minutes before departure — pooled, the
+  // buses push the horizon out past every train on the board and the answer
+  // becomes meaningless.
+  const group = (row: Departure) => `${row.stopId}|${row.vehicleType}`;
+
+  const horizons = new Map<string, number>();
+  for (const key of new Set(rows.map(group))) {
+    const posted = rows
+      .filter((row) => group(row) === key && row.platform)
+      .map(minutesOut)
+      .filter((m) => Number.isFinite(m) && m > 0);
+    // Two, so a single early outlier cannot define the horizon on its own.
+    if (posted.length >= 2) horizons.set(key, Math.max(...posted));
+  }
+
+  return rows.map((row) => {
+    if (row.platform) return row;
+    const horizon = horizons.get(group(row));
+    if (horizon == null) return row;
+    const away = minutesOut(row);
+    if (!Number.isFinite(away) || away <= horizon) return row;
+    return { ...row, platformEta: new Date(now + (away - horizon) * 60_000).toISOString() };
+  });
+}

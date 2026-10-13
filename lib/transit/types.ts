@@ -135,6 +135,14 @@ export interface Departure {
   express?: boolean;
 
   /**
+   * Roughly when GO is expected to post the platform, derived from this very
+   * board: the furthest-out departure that already has one marks how far ahead
+   * this station is currently posting. Absent whenever the board gives nothing
+   * to derive it from, which is most of the time at most stations.
+   */
+  platformEta?: string;
+
+  /**
    * Board status shown where there is no platform yet — Union withholds the
    * platform until close to departure and says so.
    */
