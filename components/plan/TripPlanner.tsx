@@ -425,39 +425,57 @@ function WhenPicker({ value, onChange }: { value: string | null; onChange: (v: s
       </div>
 
       {open ? (
-        <div
-          className="mt-2 flex flex-col gap-2 rounded-2xl border p-3 text-[var(--fg)] sm:flex-row sm:flex-wrap sm:items-end"
-          style={{
-            background: 'color-mix(in srgb, var(--accent) 7%, var(--bg-elevated))',
-            borderColor: 'color-mix(in srgb, var(--accent) 24%, transparent)',
-          }}
-        >
-          <label className="w-full min-w-0 sm:flex-1">
-            <span className="block text-micro font-bold tracking-wide text-faint uppercase">Day</span>
-            <input
-              type="date"
-              value={date}
-              min={min}
-              max={max}
-              onChange={(e) => set(e.target.value, time)}
-              className="mt-1 min-h-11 w-full min-w-0 rounded-xl border px-2 text-field outline-none hairline bg-[var(--bg-elevated)]"
+        <>
+          {/*
+            Two rows, label left and value right, the way a phone's own settings
+            read. Boxed fields were the problem: stacked they became a pair of
+            heavy white slabs four hundred pixels tall, and side by side a
+            native date picker refuses to shrink and shoves its neighbour off
+            the panel. With no box there is nothing to overflow — the value
+            simply sits at the end of its own row.
+          */}
+          <div
+            className="mt-2 overflow-hidden rounded-2xl border"
+            style={{
+              background: 'color-mix(in srgb, var(--accent) 7%, var(--bg-elevated))',
+              borderColor: 'color-mix(in srgb, var(--accent) 22%, transparent)',
+            }}
+          >
+            <label className="flex min-h-12 items-center justify-between gap-3 px-3.5">
+              <span className="shrink-0 text-small font-semibold text-muted">Day</span>
+              <input
+                type="date"
+                value={date}
+                min={min}
+                max={max}
+                onChange={(e) => set(e.target.value, time)}
+                className="min-w-0 bg-transparent text-right text-field font-semibold outline-none"
+              />
+            </label>
+
+            <span
+              aria-hidden
+              className="block h-px"
+              style={{ background: 'color-mix(in srgb, var(--accent) 18%, transparent)' }}
             />
-          </label>
-          <label className="w-full min-w-0 sm:w-[132px]">
-            <span className="block text-micro font-bold tracking-wide text-faint uppercase">Time</span>
-            <input
-              type="time"
-              value={time}
-              onChange={(e) => set(date, e.target.value)}
-              className="mt-1 min-h-11 w-full min-w-0 rounded-xl border px-2 text-field outline-none hairline bg-[var(--bg-elevated)]"
-            />
-          </label>
+
+            <label className="flex min-h-12 items-center justify-between gap-3 px-3.5">
+              <span className="shrink-0 text-small font-semibold text-muted">Time</span>
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => set(date, e.target.value)}
+                className="min-w-0 bg-transparent text-right text-field font-semibold outline-none"
+              />
+            </label>
+          </div>
+
           {max ? (
-            <p className="w-full text-mini text-faint">
+            <p className="mt-1.5 px-1 text-mini text-faint">
               Timetable loaded through {describeDay(max)}.
             </p>
           ) : null}
-        </div>
+        </>
       ) : null}
     </div>
   );
