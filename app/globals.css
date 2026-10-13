@@ -472,11 +472,21 @@ body {
 @media (max-width: 767px) {
   [data-dangle='on'] {
     --dangle-gutter: 68px;
+    /* How far down the lamp reaches, so a header can be told to stand at least
+       that tall and the first card below it starts in clear air. Reserving the
+       corner was not enough on its own: the home planner began 25px above the
+       bottom of the lamp and the lamp sat on its shoulder. */
+    --dangle-clear: 118px;
   }
 }
 
 @utility pr-dangle {
   padding-right: var(--dangle-gutter);
+}
+
+/* For the one header on a page that the lamp would otherwise hang past. */
+@utility clear-dangle {
+  min-height: var(--dangle-clear, 0px);
 }
 
 /* ---- Form fields ---------------------------------------------------------

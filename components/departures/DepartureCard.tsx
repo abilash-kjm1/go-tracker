@@ -181,7 +181,7 @@ export function DepartureCard({
 
       {/* Stub: the platform, torn off. */}
       <span
-        className="flex w-[72px] shrink-0 flex-col items-center justify-between rounded-r-[15px] px-1.5 py-3 @max-[340px]:w-[56px]"
+        className="flex w-[80px] shrink-0 flex-col items-center justify-between rounded-r-[15px] px-1.5 py-3 @max-[340px]:w-[68px]"
       >
         <span
           className="text-[8px] font-bold tracking-[0.12em] uppercase"
@@ -216,7 +216,7 @@ export function DepartureCard({
                   {expectedPlatform.replace(/^platforms?\s*/i, '')}
                 </span>
                 <span className="text-center text-[7.5px] leading-tight tracking-wide text-faint uppercase">
-                  not confirmed
+                  not yet
                 </span>
               </>
             ) : (

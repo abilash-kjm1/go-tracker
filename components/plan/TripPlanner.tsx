@@ -391,13 +391,17 @@ function WhenPicker({ value, onChange }: { value: string | null; onChange: (v: s
             setOpen(false);
           }}
           aria-pressed={!value}
-          className={`flex min-h-11 items-center rounded-full px-4 text-tiny font-bold shadow-sm ring-1 backdrop-blur ${
+          className="flex min-h-11 items-center gap-1.5 rounded-full px-4 text-tiny font-bold shadow-sm transition-colors"
+          style={
             value
-              ? 'bg-[var(--bg-elevated)]/70 text-[var(--fg)] ring-black/10'
-              : 'bg-[var(--bg-elevated)] text-[var(--fg)] ring-black/10'
-          }`}
-          style={!value ? { boxShadow: 'inset 0 0 0 2px var(--accent)' } : undefined}
+              ? {
+                  background: 'color-mix(in srgb, var(--accent) 10%, var(--bg-elevated))',
+                  color: 'var(--fg-muted)',
+                }
+              : { background: 'var(--accent)', color: 'var(--accent-fg)' }
+          }
         >
+          <BoltGlyph />
           Leave now
         </button>
 
@@ -405,8 +409,15 @@ function WhenPicker({ value, onChange }: { value: string | null; onChange: (v: s
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="flex min-h-11 items-center gap-1.5 rounded-full bg-[var(--bg-elevated)]/85 px-4 text-tiny font-bold text-[var(--fg)] shadow-sm ring-1 ring-black/10 backdrop-blur"
-          style={value ? { boxShadow: 'inset 0 0 0 2px var(--accent)' } : undefined}
+          className="flex min-h-11 items-center gap-1.5 rounded-full px-4 text-tiny font-bold shadow-sm transition-colors"
+          style={
+            value
+              ? { background: 'var(--accent)', color: 'var(--accent-fg)' }
+              : {
+                  background: 'color-mix(in srgb, var(--accent) 10%, var(--bg-elevated))',
+                  color: 'var(--fg-muted)',
+                }
+          }
         >
           <CalendarGlyph />
           {value ? describeWhen(value) : 'Pick a day'}
@@ -414,7 +425,13 @@ function WhenPicker({ value, onChange }: { value: string | null; onChange: (v: s
       </div>
 
       {open ? (
-        <div className="mt-2 flex flex-wrap items-end gap-2 rounded-2xl p-3 text-[var(--fg)] surface">
+        <div
+          className="mt-2 flex flex-wrap items-end gap-2 rounded-2xl border p-3 text-[var(--fg)]"
+          style={{
+            background: 'color-mix(in srgb, var(--accent) 7%, var(--bg-elevated))',
+            borderColor: 'color-mix(in srgb, var(--accent) 24%, transparent)',
+          }}
+        >
           <label className="min-w-0 flex-1">
             <span className="block text-micro font-bold tracking-wide text-faint uppercase">Day</span>
             <input
@@ -443,6 +460,17 @@ function WhenPicker({ value, onChange }: { value: string | null; onChange: (v: s
         </div>
       ) : null}
     </div>
+  );
+}
+
+function BoltGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-3.5 shrink-0" fill="none" aria-hidden>
+      <path
+        d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z"
+        fill="currentColor"
+      />
+    </svg>
   );
 }
 

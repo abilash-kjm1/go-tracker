@@ -85,7 +85,7 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
           of it and search moved below, where it can line up with everything
           else. A 44px button squeezed in beside the lamp could only ever sit
           68px short of the right edge every other card reaches. */}
-      <header className="pr-dangle pt-6 pb-4">
+      <header className="pr-dangle clear-dangle flex flex-col justify-center pt-6 pb-4">
         <p className="text-tiny font-medium text-muted">{greeting()}</p>
         <h1 className="mt-0.5 text-[26px] leading-none font-bold tracking-tight">Where to?</h1>
       </header>

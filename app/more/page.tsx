@@ -16,7 +16,7 @@ const LINKS = [
 export default function MorePage() {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-safe">
-      <header className="pt-6 pb-4">
+      <header className="clear-dangle flex flex-col justify-center pt-6 pb-4">
         <h1 className="pr-dangle text-[28px] leading-tight font-semibold tracking-tight">More</h1>
       </header>
 

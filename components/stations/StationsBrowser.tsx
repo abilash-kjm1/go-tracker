@@ -59,7 +59,7 @@ export function StationsBrowser({
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-safe">
-      <header className="pr-dangle pt-6 pb-3">
+      <header className="pr-dangle clear-dangle flex flex-col justify-center pt-6 pb-3">
         <h1 className="text-[28px] leading-tight font-semibold tracking-tight">Stations &amp; stops</h1>
         <p className="mt-1 text-small text-muted">
           {stops.length} GO stations and bus stops in the schedule.
