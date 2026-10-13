@@ -37,8 +37,8 @@ export function SignalShortcutSettings() {
     <div className="space-y-4">
       <label className="flex items-center justify-between gap-4">
         <span className="min-w-0">
-          <span className="block text-[14px] font-semibold">Show the signal lamp</span>
-          <span className="block text-[12.5px] text-muted">
+          <span className="block text-ui font-semibold">Show the signal lamp</span>
+          <span className="block text-tiny text-muted">
             Hangs in the corner. Tap it to change station, hold it to open.
           </span>
         </span>
@@ -60,12 +60,12 @@ export function SignalShortcutSettings() {
       {!hidden ? (
         <>
           <div>
-            <p className="mb-2 text-[12px] font-semibold tracking-wide text-faint uppercase">
+            <p className="mb-2 text-tiny font-semibold tracking-wide text-faint uppercase">
               Stations it opens
             </p>
 
             {ready && stops.length === 0 ? (
-              <p className="rounded-xl bg-[var(--bg-sunken)] px-3 py-2.5 text-[13px] text-muted">
+              <p className="rounded-xl bg-[var(--bg-sunken)] px-3 py-2.5 text-small text-muted">
                 {starred.length > 0
                   ? `Using your ${starred.length} favourite stop${starred.length === 1 ? '' : 's'}. Add one below to choose for yourself.`
                   : 'Using Union Station. Add a station below to change it.'}
@@ -78,17 +78,17 @@ export function SignalShortcutSettings() {
                   key={stop.id}
                   className="flex items-center gap-3 rounded-xl bg-[var(--bg-sunken)] px-3 py-2.5"
                 >
-                  <span className="tabular grid size-6 shrink-0 place-items-center rounded-full bg-[var(--bg-elevated)] text-[11px] font-bold text-muted">
+                  <span className="tabular grid size-6 shrink-0 place-items-center rounded-full bg-[var(--bg-elevated)] text-mini font-bold text-muted">
                     {i + 1}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-[14px] font-medium">
+                  <span className="min-w-0 flex-1 truncate text-ui font-medium">
                     {tidy(stop.name)}
                   </span>
                   <button
                     type="button"
                     onClick={() => remove(stop.id)}
                     aria-label={`Remove ${tidy(stop.name)}`}
-                    className="shrink-0 rounded-full px-2.5 py-1 text-[12px] font-semibold text-muted hover:bg-[var(--bg-elevated)]"
+                    className="shrink-0 rounded-full px-2.5 py-1 text-tiny font-semibold text-muted hover:bg-[var(--bg-elevated)]"
                   >
                     Remove
                   </button>
@@ -98,7 +98,7 @@ export function SignalShortcutSettings() {
           </div>
 
           {full ? (
-            <p className="text-[12.5px] text-muted">
+            <p className="text-tiny text-muted">
               Four is the most it will hold. Remove one to add another.
             </p>
           ) : (
@@ -108,7 +108,7 @@ export function SignalShortcutSettings() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Add a station or stop"
                 aria-label="Add a station to the signal lamp"
-                className="min-h-12 w-full rounded-xl border px-3.5 text-[14px] outline-none hairline bg-[var(--bg-elevated)] focus:border-[var(--accent)]"
+                className="min-h-12 w-full rounded-xl border px-3.5 text-ui outline-none hairline bg-[var(--bg-elevated)] focus:border-[var(--accent)]"
               />
               {matches.length > 0 ? (
                 <ul className="absolute inset-x-0 top-full z-20 mt-1 overflow-hidden rounded-xl p-1 surface">
@@ -120,7 +120,7 @@ export function SignalShortcutSettings() {
                           add({ id: stop.id, name: stop.name });
                           setQuery('');
                         }}
-                        className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-[14px] hover:bg-[var(--bg-sunken)]"
+                        className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-ui hover:bg-[var(--bg-sunken)]"
                       >
                         <span className="truncate">{stop.name}</span>
                       </button>

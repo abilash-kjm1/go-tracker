@@ -10,7 +10,7 @@ export default function OfflinePage() {
         ◌
       </span>
       <h1 className="text-2xl font-semibold tracking-tight">You&rsquo;re offline.</h1>
-      <p className="text-[15px] text-muted">
+      <p className="text-body text-muted">
         Showing the latest available information. Nothing on screen is live until you reconnect.
       </p>
       <Link

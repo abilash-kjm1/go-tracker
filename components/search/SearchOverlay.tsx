@@ -52,7 +52,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             placeholder="Search stations, routes or trips"
             aria-label="Search GO Transit"
             enterKeyHint="search"
-            className="min-h-11 flex-1 bg-transparent text-[16px] outline-none placeholder:text-[var(--fg-faint)]"
+            className="min-h-11 flex-1 bg-transparent text-body outline-none placeholder:text-[var(--fg-faint)]"
           />
           <button
             type="button"
@@ -137,7 +137,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mb-4">
-      <h2 className="px-2 pb-1 text-[11px] font-semibold tracking-wide text-faint uppercase">{title}</h2>
+      <h2 className="px-2 pb-1 text-mini font-semibold tracking-wide text-faint uppercase">{title}</h2>
       <ul className="space-y-1">{children}</ul>
     </section>
   );
@@ -166,7 +166,7 @@ function Row({
         <span className="text-[var(--fg-muted)]">{leading}</span>
         <span className="min-w-0 flex-1">
           <span className="block truncate font-medium">{title}</span>
-          {subtitle ? <span className="block truncate text-[13px] text-muted">{subtitle}</span> : null}
+          {subtitle ? <span className="block truncate text-small text-muted">{subtitle}</span> : null}
         </span>
       </Link>
     </li>

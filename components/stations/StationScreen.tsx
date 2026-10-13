@@ -34,7 +34,7 @@ export function StationScreen({
       <div className="flex items-center justify-between gap-2 pt-3">
         <Link
           href="/stations"
-          className="-ml-2 flex min-h-10 items-center gap-1 rounded-xl px-2 text-[13px] font-medium text-muted"
+          className="-ml-2 flex min-h-10 items-center gap-1 rounded-xl px-2 text-small font-medium text-muted"
         >
           <span aria-hidden>←</span> Stations
         </Link>
@@ -66,7 +66,7 @@ export function StationScreen({
 
       <header className="pb-4">
         <h1 className="text-[26px] leading-tight font-semibold tracking-tight">{stop.name}</h1>
-        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-muted">
+        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-tiny text-muted">
           {stop.modes.map((m) => (
             <span key={m} className="flex items-center gap-1">
               <ModeIcon type={m} className="size-3.5" />

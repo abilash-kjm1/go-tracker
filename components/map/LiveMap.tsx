@@ -634,7 +634,7 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
 
       {following ? (
         <div className="pointer-events-none absolute inset-x-0 bottom-6 z-10 flex justify-center px-4">
-          <div className="pointer-events-auto w-full max-w-sm rounded-2xl p-3 text-[13px] surface">
+          <div className="pointer-events-auto w-full max-w-sm rounded-2xl p-3 text-small surface">
             {followed ? (
               <FollowCard
                 vehicle={followed}
@@ -667,7 +667,7 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
 
       {error && !vehicles ? (
         <div className="pointer-events-none absolute inset-x-0 bottom-6 z-10 flex justify-center px-4">
-          <p className="pointer-events-auto max-w-xs rounded-2xl px-4 py-3 text-center text-[13px] surface">
+          <p className="pointer-events-auto max-w-xs rounded-2xl px-4 py-3 text-center text-small surface">
             <span className="block font-semibold">GO real-time data is temporarily unavailable.</span>
             <span className="mt-1 block text-muted">
               {meta?.updatedAt
@@ -680,7 +680,7 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
 
       {vehicles && visible.length === 0 ? (
         <div className="pointer-events-none absolute inset-x-0 bottom-6 z-10 flex justify-center px-4">
-          <p className="pointer-events-auto rounded-full px-4 py-2 text-center text-[13px] text-muted surface">
+          <p className="pointer-events-auto rounded-full px-4 py-2 text-center text-small text-muted surface">
             {vehicles.length === 0
               ? 'No vehicles are reporting positions right now.'
               : 'No vehicles match these filters.'}
@@ -743,7 +743,7 @@ function FollowCard({
       {next ? (
         <div className="flex items-center justify-between gap-3 rounded-xl bg-[var(--bg-sunken)] px-3 py-2">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold tracking-wide text-faint uppercase">Next stop</p>
+            <p className="text-mini font-semibold tracking-wide text-faint uppercase">Next stop</p>
             <p className="truncate font-semibold">{next.stopName.replace(/\s+GO(\s+Bus)?$/i, '')}</p>
           </div>
           <div className="shrink-0 text-right">
@@ -752,7 +752,7 @@ function FollowCard({
                 {nextClock.time} {nextClock.suffix}
               </p>
             ) : null}
-            <p className="text-[11px] text-muted">
+            <p className="text-mini text-muted">
               {upcoming.length} stop{upcoming.length === 1 ? '' : 's'} left
             </p>
           </div>
@@ -763,7 +763,7 @@ function FollowCard({
         <button
           type="button"
           onClick={onRecentre}
-          className="w-full rounded-full bg-[var(--accent)] px-3 py-2 text-[13px] font-semibold text-[var(--accent-fg)]"
+          className="w-full rounded-full bg-[var(--accent)] px-3 py-2 text-small font-semibold text-[var(--accent-fg)]"
         >
           Re-centre on this train
         </button>
@@ -787,7 +787,7 @@ function FilterChip({
       onClick={onClick}
       aria-pressed={active}
       className={[
-        'flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px] font-medium whitespace-nowrap transition-colors hairline',
+        'flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-small font-medium whitespace-nowrap transition-colors hairline',
         active
           ? 'bg-[var(--accent)] text-[var(--accent-fg)] border-transparent'
           : 'bg-[var(--bg-elevated)] text-[var(--fg-muted)]',

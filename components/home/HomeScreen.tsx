@@ -84,7 +84,7 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
       {/* Right padding leaves the corner free for the hanging signal. */}
       <header className="flex items-end justify-between gap-3 pt-6 pr-16 pb-4 md:pr-0">
         <div className="min-w-0">
-          <p className="text-[12.5px] font-medium text-muted">{greeting()}</p>
+          <p className="text-tiny font-medium text-muted">{greeting()}</p>
           <h1 className="mt-0.5 text-[26px] leading-none font-bold tracking-tight">Where to?</h1>
         </div>
         <button
@@ -103,7 +103,7 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
       {alerts && alerts.length > 0 ? (
         <Link
           href="/alerts"
-          className="mt-4 flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5 text-[13px] font-semibold"
+          className="mt-4 flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5 text-small font-semibold"
           style={{ background: 'var(--tile-amber-bg)', color: 'var(--tile-amber-fg)' }}
         >
           <span aria-hidden>⚠</span>
@@ -172,14 +172,14 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
         <button
           type="button"
           onClick={nearby.request}
-          className="mt-3 flex min-h-11 w-full items-center justify-center rounded-2xl border px-4 text-[13px] font-semibold text-muted hairline"
+          className="mt-3 flex min-h-11 w-full items-center justify-center rounded-2xl border px-4 text-small font-semibold text-muted hairline"
         >
           Use my location to show the nearest stops
         </button>
       ) : null}
 
       {nearby.status === 'denied' ? (
-        <p className="mt-3 text-[12px] text-faint">
+        <p className="mt-3 text-tiny text-faint">
           Location is blocked, so nearby stops are unavailable.{' '}
           <Link href="/stations" className="font-medium text-[var(--accent)]">
             Browse stations
@@ -197,7 +197,7 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
           className="flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors hairline bg-[var(--bg-elevated)] hover:bg-[var(--bg-sunken)]"
         >
           <span className="live-dot size-2 shrink-0 rounded-full bg-signal-500" aria-hidden />
-          <span className="min-w-0 flex-1 text-[13px]">
+          <span className="min-w-0 flex-1 text-small">
             {vehicles ? (
               <>
                 <span className="tabular font-bold">{trains}</span> trains running
@@ -243,7 +243,7 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
                     type="button"
                     aria-pressed={liveView.kind === 'line' && liveView.routeId === route.id}
                     onClick={() => toggleView({ kind: 'line', routeId: route.id })}
-                    className="flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-1 text-[12px] font-semibold"
+                    className="flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-1 text-tiny font-semibold"
                     style={{
                       boxShadow:
                         liveView.kind === 'line' && liveView.routeId === route.id
@@ -252,7 +252,7 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
                     }}
                   >
                     <span
-                      className="grid h-5 min-w-7 place-items-center rounded-full px-1.5 text-[10px] font-extrabold text-white"
+                      className="grid h-5 min-w-7 place-items-center rounded-full px-1.5 text-micro font-extrabold text-white"
                       style={{ background: route.color ?? '#64748b' }}
                     >
                       {route.code}
@@ -283,13 +283,13 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
 
         <Link
           href="/map"
-          className="mt-2 flex min-h-11 items-center justify-center rounded-2xl border text-[13px] font-semibold text-[var(--accent)] hairline"
+          className="mt-2 flex min-h-11 items-center justify-center rounded-2xl border text-small font-semibold text-[var(--accent)] hairline"
         >
           Open the live map
         </Link>
       </section>
 
-      <p className="mt-8 pb-4 text-center text-[11px] leading-relaxed text-faint">
+      <p className="mt-8 pb-4 text-center text-mini leading-relaxed text-faint">
         Independent app. Not operated by or affiliated with Metrolinx or GO Transit.
       </p>
 
@@ -312,7 +312,7 @@ function FilterPill({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`rounded-full px-3 py-1 text-[12px] font-semibold ${
+      className={`rounded-full px-3 py-1 text-tiny font-semibold ${
         active
           ? 'bg-[var(--accent)] text-[var(--accent-fg)]'
           : 'text-[var(--fg-muted)] ring-1 ring-[var(--border-strong)] ring-inset'
@@ -326,7 +326,7 @@ function FilterPill({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-6">
-      <h2 className="px-1 pb-2 text-[12px] font-bold tracking-[0.12em] text-faint uppercase">
+      <h2 className="px-1 pb-2 text-tiny font-bold tracking-[0.12em] text-faint uppercase">
         {title}
       </h2>
       <div className="space-y-2">{children}</div>
@@ -350,12 +350,12 @@ function Shortcut({
   return (
     <Link
       href={href}
-      className="relative flex flex-col items-center gap-1 rounded-2xl border py-2.5 text-[11.5px] font-semibold text-[var(--fg-muted)] transition-colors hairline bg-[var(--bg-elevated)] hover:bg-[var(--bg-sunken)]"
+      className="relative flex flex-col items-center gap-1 rounded-2xl border py-2.5 text-mini font-semibold text-[var(--fg-muted)] transition-colors hairline bg-[var(--bg-elevated)] hover:bg-[var(--bg-sunken)]"
     >
       <span className="grid size-5 place-items-center">{icon}</span>
       {label}
       {badge ? (
-        <span className="tabular absolute top-1 right-2 grid h-[17px] min-w-[17px] place-items-center rounded-full bg-[var(--color-alert-500)] px-1 text-[10px] font-extrabold text-white">
+        <span className="tabular absolute top-1 right-2 grid h-[17px] min-w-[17px] place-items-center rounded-full bg-[var(--color-alert-500)] px-1 text-micro font-extrabold text-white">
           {badge}
         </span>
       ) : null}
@@ -437,7 +437,7 @@ function StatButton({
         boxShadow: active ? `inset 0 0 0 2px var(--tile-${hue}-fg)` : undefined,
       }}
     >
-      <p className="flex items-center justify-between text-[10px] font-bold tracking-[0.12em] uppercase opacity-75">
+      <p className="flex items-center justify-between text-micro font-bold tracking-[0.12em] uppercase opacity-75">
         {label}
         <span aria-hidden className={active ? 'rotate-180' : ''}>▾</span>
       </p>
@@ -478,11 +478,11 @@ function LiveList({
   return (
     <div className="mt-4 border-t pt-3 hairline">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-[13px] font-bold">{title}</h3>
+        <h3 className="text-small font-bold">{title}</h3>
         <button
           type="button"
           onClick={onClose}
-          className="rounded-full bg-[var(--bg-sunken)] px-3 py-1 text-[12px] font-semibold text-muted"
+          className="rounded-full bg-[var(--bg-sunken)] px-3 py-1 text-tiny font-semibold text-muted"
         >
           Close
         </button>
@@ -498,14 +498,14 @@ function LiveList({
                 className="flex w-full items-center gap-3 rounded-2xl bg-[var(--bg-sunken)] px-3 py-2.5 text-left"
               >
                 <span
-                  className="grid h-7 min-w-9 place-items-center rounded-full px-2 text-[11px] font-extrabold text-white"
+                  className="grid h-7 min-w-9 place-items-center rounded-full px-2 text-mini font-extrabold text-white"
                   style={{ background: route.color ?? '#64748b' }}
                 >
                   {route.code}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[14px] font-semibold">{route.name}</span>
-                  <span className="text-[12px] text-muted">
+                  <span className="block truncate text-ui font-semibold">{route.name}</span>
+                  <span className="text-tiny text-muted">
                     {count} train{count === 1 ? '' : 's'} out
                     {late > 0 ? ` · ${late} running late` : ' · all on time'}
                   </span>
@@ -516,7 +516,7 @@ function LiveList({
           ))}
         </ul>
       ) : trains.length === 0 ? (
-        <p className="rounded-xl bg-[var(--bg-sunken)] px-3 py-3 text-[13px] text-muted">
+        <p className="rounded-xl bg-[var(--bg-sunken)] px-3 py-3 text-small text-muted">
           {view.kind === 'late' ? 'No trains are running late right now.' : 'No trains to show.'}
         </p>
       ) : (
@@ -544,30 +544,30 @@ function TrainRowItem({ vehicle: v, route }: { vehicle: LiveVehicle; route?: Tra
           className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5"
         >
           <span
-            className="grid h-7 min-w-9 shrink-0 place-items-center rounded-full px-2 text-[11px] font-extrabold text-white"
+            className="grid h-7 min-w-9 shrink-0 place-items-center rounded-full px-2 text-mini font-extrabold text-white"
             style={{ background: route?.color ?? '#64748b' }}
           >
             {route?.code ?? '?'}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[14px] font-semibold">
+            <span className="block truncate text-ui font-semibold">
               {dest ? `to ${dest}` : (route?.name ?? 'Train')}
               {v.tripNumber ? (
-                <span className="ml-1.5 text-[12px] font-medium text-faint">#{v.tripNumber}</span>
+                <span className="ml-1.5 text-tiny font-medium text-faint">#{v.tripNumber}</span>
               ) : null}
             </span>
-            <span className="block truncate text-[12px] text-muted">
+            <span className="block truncate text-tiny text-muted">
               {v.isMoving === false ? 'Stopped' : 'Moving'}
               {nextStop ? ` · next ${nextStop}` : ''}
             </span>
             {late && v.delayReason ? (
-              <span className="block truncate text-[11px] font-medium text-[var(--tile-amber-fg)]">
+              <span className="block truncate text-mini font-medium text-[var(--tile-amber-fg)]">
                 {v.delayReason}
               </span>
             ) : null}
           </span>
           <span
-            className="tabular shrink-0 rounded-full px-2.5 py-1 text-[12px] font-bold"
+            className="tabular shrink-0 rounded-full px-2.5 py-1 text-tiny font-bold"
             style={
               late
                 ? { background: 'var(--tile-amber-bg)', color: 'var(--tile-amber-fg)' }

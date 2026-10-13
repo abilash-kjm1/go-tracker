@@ -17,7 +17,7 @@ export default async function AboutPage() {
         </h1>
       </header>
 
-      <div className="space-y-4 text-[15px] leading-relaxed text-muted">
+      <div className="space-y-4 text-body leading-relaxed text-muted">
         <p>
           GO Tracker is an independent project. It is not operated by, endorsed by, or affiliated
           with Metrolinx or GO Transit.

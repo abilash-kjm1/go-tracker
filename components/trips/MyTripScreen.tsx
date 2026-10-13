@@ -80,14 +80,14 @@ export function MyTripScreen() {
       <header className="flex items-center justify-between gap-3 pt-6 pb-3">
         <div className="min-w-0">
           <h1 className="truncate text-[26px] leading-tight font-semibold tracking-tight">My trip</h1>
-          <p className="truncate text-[13px] text-muted">
+          <p className="truncate text-small text-muted">
             {tidy(trip.originName)} → {tidy(trip.destinationName)}
           </p>
         </div>
         <button
           type="button"
           onClick={end}
-          className="shrink-0 rounded-full bg-[var(--bg-sunken)] px-3.5 py-2 text-[12px] font-semibold text-muted"
+          className="shrink-0 rounded-full bg-[var(--bg-sunken)] px-3.5 py-2 text-tiny font-semibold text-muted"
         >
           End trip
         </button>
@@ -99,7 +99,7 @@ export function MyTripScreen() {
         style={{ background: 'linear-gradient(150deg, #04351f 0%, #067a45 100%)' }}
       >
         <div className="flex items-start justify-between gap-3">
-          <p className="text-[11px] font-bold tracking-[0.18em] text-white/60 uppercase">
+          <p className="text-mini font-bold tracking-[0.18em] text-white/60 uppercase">
             {finalLeg ? 'Get off at' : 'Change at'}
           </p>
           <LiveIndicator freshness={freshness} updatedAt={meta?.updatedAt ?? null} compact />
@@ -111,7 +111,7 @@ export function MyTripScreen() {
             <p className="tabular text-[46px] leading-none font-black">
               {stopsLeft ?? (loading ? '–' : '?')}
             </p>
-            <p className="mt-1 text-[11px] font-semibold tracking-wide text-white/60">
+            <p className="mt-1 text-mini font-semibold tracking-wide text-white/60">
               {stopsLeft === 1 ? 'stop to go' : 'stops to go'}
             </p>
           </div>
@@ -120,14 +120,14 @@ export function MyTripScreen() {
             <p className="tabular text-[24px] leading-none font-bold">
               {minutes != null ? `${minutes} min` : '—'}
             </p>
-            <p className="mt-1 text-[11px] font-semibold tracking-wide text-white/60">
+            <p className="mt-1 text-mini font-semibold tracking-wide text-white/60">
               {arriveAt ? formatClock(arriveAt) : 'no estimate yet'}
             </p>
           </div>
         </div>
 
         {arrived ? (
-          <p className="mt-4 rounded-xl bg-white/15 px-3 py-2 text-[13px] font-bold">
+          <p className="mt-4 rounded-xl bg-white/15 px-3 py-2 text-small font-bold">
             {finalLeg ? 'This is your stop.' : 'Change here for your next leg.'}
           </p>
         ) : null}
@@ -136,7 +136,7 @@ export function MyTripScreen() {
           {detail ? (
             <Link
               href={`/map?trip=${encodeURIComponent(detail.id)}`}
-              className="rounded-full bg-white/15 px-3.5 py-2 text-[12.5px] font-bold ring-1 ring-white/20"
+              className="rounded-full bg-white/15 px-3.5 py-2 text-tiny font-bold ring-1 ring-white/20"
             >
               Show on map
             </Link>
@@ -145,7 +145,7 @@ export function MyTripScreen() {
             <button
               type="button"
               onClick={() => setLegIndex((i) => (i + 1) % legs.length)}
-              className="rounded-full bg-white/15 px-3.5 py-2 text-[12.5px] font-bold ring-1 ring-white/20"
+              className="rounded-full bg-white/15 px-3.5 py-2 text-tiny font-bold ring-1 ring-white/20"
             >
               {finalLeg ? 'Show first leg' : 'Show next leg'}
             </button>
@@ -155,7 +155,7 @@ export function MyTripScreen() {
               type="button"
               onClick={() => setAwake((v) => !v)}
               aria-pressed={awake}
-              className="rounded-full px-3.5 py-2 text-[12.5px] font-bold ring-1 ring-white/20"
+              className="rounded-full px-3.5 py-2 text-tiny font-bold ring-1 ring-white/20"
               style={awake ? { background: '#7dfab8', color: '#04351f' } : { background: 'rgb(255 255 255 / 0.15)' }}
             >
               {awake ? 'Screen staying on' : 'Keep screen on'}
@@ -168,13 +168,13 @@ export function MyTripScreen() {
         <button
           type="button"
           onClick={() => void stopAlerts.request()}
-          className="mt-3 flex min-h-12 w-full items-center justify-center rounded-2xl bg-[var(--accent)] px-4 text-[13px] font-bold text-[var(--accent-fg)]"
+          className="mt-3 flex min-h-12 w-full items-center justify-center rounded-2xl bg-[var(--accent)] px-4 text-small font-bold text-[var(--accent-fg)]"
         >
           Allow notifications for your stop alerts
         </button>
       ) : null}
       {stopAlerts.permission === 'granted' ? (
-        <p className="mt-3 rounded-2xl border px-4 py-3 text-[12px] text-muted hairline bg-[var(--bg-elevated)]">
+        <p className="mt-3 rounded-2xl border px-4 py-3 text-tiny text-muted hairline bg-[var(--bg-elevated)]">
           {stopAlerts.armedCount} alert{stopAlerts.armedCount === 1 ? '' : 's'} set on this leg. These
           reach you with the phone locked, so you can put it away.
         </p>

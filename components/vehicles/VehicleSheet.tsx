@@ -33,7 +33,7 @@ export function VehicleSheet({
             {vehicle.routeName ?? vehicle.serviceName ?? 'GO service'}
           </h2>
           {vehicle.origin || vehicle.destination ? (
-            <p className="text-[15px] text-muted">
+            <p className="text-body text-muted">
               {[vehicle.origin, vehicle.destination].filter(Boolean).join(' → ')}
             </p>
           ) : null}
@@ -48,7 +48,7 @@ export function VehicleSheet({
         </div>
 
         {vehicle.delayReason ? (
-          <p className="rounded-xl bg-warn-500/10 px-3 py-2 text-[13px] text-warn-500">
+          <p className="rounded-xl bg-warn-500/10 px-3 py-2 text-small text-warn-500">
             {vehicle.delayReason}
           </p>
         ) : null}
@@ -56,24 +56,24 @@ export function VehicleSheet({
         <dl className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm">
           {vehicle.nextStopName ? (
             <div className="col-span-2">
-              <dt className="text-[11px] font-semibold tracking-wide text-faint uppercase">Next stop</dt>
-              <dd className="mt-0.5 text-[15px] font-medium">{vehicle.nextStopName}</dd>
+              <dt className="text-mini font-semibold tracking-wide text-faint uppercase">Next stop</dt>
+              <dd className="mt-0.5 text-body font-medium">{vehicle.nextStopName}</dd>
             </div>
           ) : null}
           {vehicle.detail ? (
             <div className="col-span-2">
-              <dt className="text-[11px] font-semibold tracking-wide text-faint uppercase">Status</dt>
+              <dt className="text-mini font-semibold tracking-wide text-faint uppercase">Status</dt>
               <dd className="mt-0.5">{vehicle.detail}</dd>
             </div>
           ) : null}
           {vehicle.vehicleLabel ? (
             <div>
-              <dt className="text-[11px] font-semibold tracking-wide text-faint uppercase">Vehicle</dt>
+              <dt className="text-mini font-semibold tracking-wide text-faint uppercase">Vehicle</dt>
               <dd className="mt-0.5 tabular">{vehicle.vehicleLabel}</dd>
             </div>
           ) : null}
           <div>
-            <dt className="text-[11px] font-semibold tracking-wide text-faint uppercase">Updated</dt>
+            <dt className="text-mini font-semibold tracking-wide text-faint uppercase">Updated</dt>
             <dd className="mt-0.5">{formatAge(vehicle.updatedAt, now)}</dd>
           </div>
         </dl>

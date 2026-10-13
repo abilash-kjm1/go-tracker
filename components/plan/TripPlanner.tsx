@@ -151,7 +151,7 @@ export function PlannerForm({
               key={`${journey.from}-${journey.to}`}
               type="button"
               onClick={() => pick(journey)}
-              className="shrink-0 rounded-full bg-[var(--bg-elevated)]/75 px-3 py-1.5 text-[12px] font-semibold whitespace-nowrap text-[var(--fg)] shadow-sm ring-1 ring-black/10 backdrop-blur"
+              className="shrink-0 rounded-full bg-[var(--bg-elevated)]/75 px-3 py-1.5 text-tiny font-semibold whitespace-nowrap text-[var(--fg)] shadow-sm ring-1 ring-black/10 backdrop-blur"
             >
               {journey.fromName.replace(/\s+GO$/i, '')} → {journey.toName.replace(/\s+GO$/i, '')}
             </button>
@@ -171,11 +171,11 @@ export function PlannerResults({ planner }: { planner: TripPlannerState }) {
   return (
     <section className="mt-5" aria-label="Journeys">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h2 className="text-[12px] font-bold tracking-[0.12em] text-faint uppercase">
+        <h2 className="text-tiny font-bold tracking-[0.12em] text-faint uppercase">
           {from!.name.replace(/\s+GO$/i, '')} → {to!.name.replace(/\s+GO$/i, '')}
         </h2>
         {at ? (
-          <span className="shrink-0 text-[12px] font-semibold text-muted">{describeWhen(at)}</span>
+          <span className="shrink-0 text-tiny font-semibold text-muted">{describeWhen(at)}</span>
         ) : (
           <LiveIndicator freshness={freshness} updatedAt={meta?.updatedAt ?? null} compact />
         )}
@@ -199,7 +199,7 @@ export function PlannerResults({ planner }: { planner: TripPlannerState }) {
       ) : null}
 
       {meta?.degraded ? (
-        <p className="mb-2 rounded-xl bg-[var(--bg-sunken)] px-3 py-2 text-[12px] text-muted">
+        <p className="mb-2 rounded-xl bg-[var(--bg-sunken)] px-3 py-2 text-tiny text-muted">
           {meta.degraded}
         </p>
       ) : null}
@@ -215,7 +215,7 @@ export function PlannerResults({ planner }: { planner: TripPlannerState }) {
             <button
               type="button"
               onClick={() => void start(journey, to!.id, to!.name)}
-              className="mt-1.5 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border text-[13px] font-bold transition-colors hairline bg-[var(--bg-elevated)] hover:bg-[var(--bg-sunken)]"
+              className="mt-1.5 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border text-small font-bold transition-colors hairline bg-[var(--bg-elevated)] hover:bg-[var(--bg-sunken)]"
             >
               {active?.id === journey.id ? (
                 <span className="text-[var(--accent)]">Following this trip</span>
@@ -228,7 +228,7 @@ export function PlannerResults({ planner }: { planner: TripPlannerState }) {
       </ul>
 
       {data?.some((j) => j.transfers > 0) ? (
-        <p className="mt-3 text-[12px] leading-relaxed text-faint">
+        <p className="mt-3 text-tiny leading-relaxed text-faint">
           Change times come from the published timetable. If the first leg runs late the
           connection may not hold. Check the live status of each leg before relying on it.
         </p>
@@ -290,7 +290,7 @@ function StopPicker({
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           placeholder={loading ? 'Loading stations…' : label === 'From' ? 'From: station or stop' : 'To: station or stop'}
           aria-label={`${label} stop`}
-          className="min-w-0 flex-1 bg-transparent py-3 pr-12 text-[16px] font-semibold outline-none placeholder:font-medium placeholder:text-[var(--fg-faint)]"
+          className="min-w-0 flex-1 bg-transparent py-3 pr-12 text-body font-semibold outline-none placeholder:font-medium placeholder:text-[var(--fg-faint)]"
         />
       </label>
 
@@ -313,7 +313,7 @@ function StopPicker({
                     <ModeIcon key={m} type={m} className="size-4" />
                   ))}
                 </span>
-                <span className="min-w-0 flex-1 truncate text-[14px]">{stop.name}</span>
+                <span className="min-w-0 flex-1 truncate text-ui">{stop.name}</span>
               </button>
             </li>
           ))}
@@ -391,7 +391,7 @@ function WhenPicker({ value, onChange }: { value: string | null; onChange: (v: s
             setOpen(false);
           }}
           aria-pressed={!value}
-          className={`rounded-full px-3 py-1.5 text-[12px] font-bold shadow-sm ring-1 backdrop-blur ${
+          className={`rounded-full px-3 py-1.5 text-tiny font-bold shadow-sm ring-1 backdrop-blur ${
             value
               ? 'bg-[var(--bg-elevated)]/70 text-[var(--fg)] ring-black/10'
               : 'bg-[var(--bg-elevated)] text-[var(--fg)] ring-black/10'
@@ -405,7 +405,7 @@ function WhenPicker({ value, onChange }: { value: string | null; onChange: (v: s
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="flex items-center gap-1.5 rounded-full bg-[var(--bg-elevated)]/85 px-3 py-1.5 text-[12px] font-bold text-[var(--fg)] shadow-sm ring-1 ring-black/10 backdrop-blur"
+          className="flex items-center gap-1.5 rounded-full bg-[var(--bg-elevated)]/85 px-3 py-1.5 text-tiny font-bold text-[var(--fg)] shadow-sm ring-1 ring-black/10 backdrop-blur"
           style={value ? { boxShadow: 'inset 0 0 0 2px var(--accent)' } : undefined}
         >
           <CalendarGlyph />
@@ -416,27 +416,27 @@ function WhenPicker({ value, onChange }: { value: string | null; onChange: (v: s
       {open ? (
         <div className="mt-2 flex flex-wrap items-end gap-2 rounded-2xl p-3 text-[var(--fg)] surface">
           <label className="min-w-0 flex-1">
-            <span className="block text-[10.5px] font-bold tracking-wide text-faint uppercase">Day</span>
+            <span className="block text-micro font-bold tracking-wide text-faint uppercase">Day</span>
             <input
               type="date"
               value={date}
               min={min}
               max={max}
               onChange={(e) => set(e.target.value, time)}
-              className="mt-1 min-h-11 w-full rounded-xl border px-3 text-[14px] outline-none hairline bg-[var(--bg-elevated)]"
+              className="mt-1 min-h-11 w-full rounded-xl border px-3 text-ui outline-none hairline bg-[var(--bg-elevated)]"
             />
           </label>
           <label className="w-[124px]">
-            <span className="block text-[10.5px] font-bold tracking-wide text-faint uppercase">Time</span>
+            <span className="block text-micro font-bold tracking-wide text-faint uppercase">Time</span>
             <input
               type="time"
               value={time}
               onChange={(e) => set(date, e.target.value)}
-              className="mt-1 min-h-11 w-full rounded-xl border px-3 text-[14px] outline-none hairline bg-[var(--bg-elevated)]"
+              className="mt-1 min-h-11 w-full rounded-xl border px-3 text-ui outline-none hairline bg-[var(--bg-elevated)]"
             />
           </label>
           {max ? (
-            <p className="w-full text-[11px] text-faint">
+            <p className="w-full text-mini text-faint">
               Timetable loaded through {describeDay(max)}.
             </p>
           ) : null}

@@ -42,7 +42,7 @@ export function CardStyles({ stationId = 'BU' }: { stationId?: string }) {
     <div className="mx-auto w-full max-w-2xl px-4 pt-safe">
       <header className="pt-6 pb-2">
         <h1 className="text-[26px] leading-tight font-semibold tracking-tight">Card styles</h1>
-        <p className="mt-1 text-[13px] text-muted">
+        <p className="mt-1 text-small text-muted">
           Same live departures, five designs. Pick one by letter.
         </p>
       </header>
@@ -50,12 +50,12 @@ export function CardStyles({ stationId = 'BU' }: { stationId?: string }) {
       {styles.map((style) => (
         <section key={style.id} className="py-6">
           <div className="mb-3 flex items-baseline gap-2">
-            <span className="grid size-6 place-items-center rounded-md bg-[var(--fg)] text-[12px] font-bold text-[var(--bg)]">
+            <span className="grid size-6 place-items-center rounded-md bg-[var(--fg)] text-tiny font-bold text-[var(--bg)]">
               {style.id}
             </span>
-            <h2 className="text-[15px] font-semibold">{style.name}</h2>
+            <h2 className="text-body font-semibold">{style.name}</h2>
           </div>
-          <p className="mb-3 text-[12px] text-faint">{style.note}</p>
+          <p className="mb-3 text-tiny text-faint">{style.note}</p>
           <div className={style.id === 'E' ? '' : 'space-y-2'}>
             {picks.map((d) => (
               <style.render key={`${style.id}-${d.id}`} d={d} />
@@ -107,17 +107,17 @@ function StyleA({ d }: { d: Departure }) {
         className="flex w-11 shrink-0 flex-col items-center justify-center gap-1 py-3 text-white"
         style={{ background: b.color }}
       >
-        <span className="text-[13px] font-bold">{d.serviceCode ?? d.routeCode}</span>
+        <span className="text-small font-bold">{d.serviceCode ?? d.routeCode}</span>
         <ModeIcon type={d.vehicleType} className="size-4" />
       </div>
 
       <div className="min-w-0 flex-1 px-3.5 py-3">
         <p className="tabular text-[22px] leading-none font-semibold tracking-tight">
           {b.depart.time}
-          <span className="ml-1 text-[11px] text-faint">{b.depart.suffix.replace(/\./g, '')}</span>
+          <span className="ml-1 text-mini text-faint">{b.depart.suffix.replace(/\./g, '')}</span>
         </p>
-        <p className="mt-1.5 truncate text-[14px] font-medium">{d.arrivalStopName}</p>
-        <p className="mt-1 text-[12px] text-muted">
+        <p className="mt-1.5 truncate text-ui font-medium">{d.arrivalStopName}</p>
+        <p className="mt-1 text-tiny text-muted">
           arrives {b.arrive.time} · {b.dur}
         </p>
       </div>
@@ -129,10 +129,10 @@ function StyleA({ d }: { d: Departure }) {
             <span className="tabular text-[20px] leading-none font-bold">{b.plat}</span>
           </>
         ) : (
-          <span className="text-[11px] text-faint">—</span>
+          <span className="text-mini text-faint">—</span>
         )}
         <span
-          className="mt-1 text-[10px] font-semibold"
+          className="mt-1 text-micro font-semibold"
           style={{ color: statusColor(b.late, d.realtime) }}
         >
           {b.countdown}
@@ -152,21 +152,21 @@ function StyleB({ d }: { d: Departure }) {
         <div className="min-w-0">
           <p className="tabular text-[34px] leading-none font-semibold tracking-tighter">
             {b.depart.time}
-            <span className="ml-1.5 text-[12px] font-medium text-faint">
+            <span className="ml-1.5 text-tiny font-medium text-faint">
               {b.depart.suffix.replace(/\./g, '')}
             </span>
           </p>
           <p className="mt-2 truncate text-[17px] leading-tight font-medium">{d.arrivalStopName}</p>
-          <p className="mt-1 text-[12px] text-faint">
+          <p className="mt-1 text-tiny text-faint">
             {d.serviceCode ?? d.routeCode} · {d.routeName} · arrives {b.arrive.time}
           </p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="tabular text-[15px] font-semibold">{b.countdown}</p>
-          <p className="mt-1 text-[11px]" style={{ color: statusColor(b.late, d.realtime) }}>
+          <p className="tabular text-body font-semibold">{b.countdown}</p>
+          <p className="mt-1 text-mini" style={{ color: statusColor(b.late, d.realtime) }}>
             {b.status}
           </p>
-          {b.plat ? <p className="tabular mt-2 text-[13px] font-bold">Plat {b.plat}</p> : null}
+          {b.plat ? <p className="tabular mt-2 text-small font-bold">Plat {b.plat}</p> : null}
         </div>
       </div>
     </article>
@@ -184,8 +184,8 @@ function StyleC({ d }: { d: Departure }) {
         style={{ background: b.color }}
       >
         <ModeIcon type={d.vehicleType} className="size-4" />
-        <span className="text-[13px] font-bold">{d.serviceCode ?? d.routeCode}</span>
-        <span className="min-w-0 flex-1 truncate text-[12px] opacity-90">{d.routeName}</span>
+        <span className="text-small font-bold">{d.serviceCode ?? d.routeCode}</span>
+        <span className="min-w-0 flex-1 truncate text-tiny opacity-90">{d.routeName}</span>
         {d.express ? (
           <span className="rounded bg-white/25 px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase">
             Express
@@ -197,10 +197,10 @@ function StyleC({ d }: { d: Departure }) {
         <div className="min-w-0">
           <p className="tabular text-[24px] leading-none font-semibold tracking-tight">
             {b.depart.time}
-            <span className="ml-1 text-[11px] text-faint">{b.depart.suffix.replace(/\./g, '')}</span>
+            <span className="ml-1 text-mini text-faint">{b.depart.suffix.replace(/\./g, '')}</span>
           </p>
-          <p className="mt-1.5 truncate text-[14px] font-medium">{d.arrivalStopName}</p>
-          <p className="mt-0.5 text-[12px] text-muted">
+          <p className="mt-1.5 truncate text-ui font-medium">{d.arrivalStopName}</p>
+          <p className="mt-0.5 text-tiny text-muted">
             arrives {b.arrive.time} · {b.dur}
           </p>
         </div>
@@ -211,10 +211,10 @@ function StyleC({ d }: { d: Departure }) {
               {b.plat}
             </p>
           ) : null}
-          <p className="mt-2 text-[12px] font-semibold" style={{ color: statusColor(b.late, d.realtime) }}>
+          <p className="mt-2 text-tiny font-semibold" style={{ color: statusColor(b.late, d.realtime) }}>
             {b.status}
           </p>
-          <p className="tabular mt-0.5 text-[12px] font-semibold">{b.countdown}</p>
+          <p className="tabular mt-0.5 text-tiny font-semibold">{b.countdown}</p>
         </div>
       </div>
     </article>
@@ -236,14 +236,14 @@ function StyleD({ d }: { d: Departure }) {
     >
       <div className="flex items-center gap-2">
         <span
-          className="grid size-7 shrink-0 place-items-center rounded-full text-[11px] font-bold text-white"
+          className="grid size-7 shrink-0 place-items-center rounded-full text-mini font-bold text-white"
           style={{ background: b.color }}
         >
           {d.serviceCode ?? d.routeCode}
         </span>
-        <span className="min-w-0 flex-1 truncate text-[13px] font-medium">{d.routeName}</span>
+        <span className="min-w-0 flex-1 truncate text-small font-medium">{d.routeName}</span>
         <span
-          className="rounded-full px-2 py-1 text-[11px] font-semibold"
+          className="rounded-full px-2 py-1 text-mini font-semibold"
           style={{ background: 'var(--bg-elevated)', color: statusColor(b.late, d.realtime) }}
         >
           {b.status}
@@ -254,17 +254,17 @@ function StyleD({ d }: { d: Departure }) {
         <p className="tabular text-[26px] leading-none font-semibold tracking-tight">
           {b.depart.time}
         </p>
-        <span className="text-[11px] text-faint">{b.depart.suffix.replace(/\./g, '')}</span>
+        <span className="text-mini text-faint">{b.depart.suffix.replace(/\./g, '')}</span>
         <span className="text-faint">→</span>
         <p className="tabular text-[17px] leading-none font-medium text-muted">{b.arrive.time}</p>
       </div>
-      <p className="mt-1.5 truncate text-[13px] text-muted">{d.arrivalStopName}</p>
+      <p className="mt-1.5 truncate text-small text-muted">{d.arrivalStopName}</p>
 
       <div className="mt-3 flex items-center justify-between">
-        <span className="tabular text-[13px] font-semibold">{b.countdown}</span>
+        <span className="tabular text-small font-semibold">{b.countdown}</span>
         {b.plat ? (
           <span
-            className="rounded-full px-3 py-1 text-[12px] font-bold text-white"
+            className="rounded-full px-3 py-1 text-tiny font-bold text-white"
             style={{ background: b.color }}
           >
             Platform {b.plat}
@@ -287,15 +287,15 @@ function StyleE({ d }: { d: Departure }) {
         <span className="ml-0.5 text-[9px] text-faint">{b.depart.suffix.replace(/\./g, '')}</span>
       </p>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[14px] font-medium">{d.arrivalStopName}</p>
-        <p className="truncate text-[11px] text-faint">
+        <p className="truncate text-ui font-medium">{d.arrivalStopName}</p>
+        <p className="truncate text-mini text-faint">
           {d.serviceCode ?? d.routeCode} · arrives {b.arrive.time} ·{' '}
           <span style={{ color: statusColor(b.late, d.realtime) }}>{b.status}</span>
         </p>
       </div>
       <div className="shrink-0 text-right">
-        {b.plat ? <p className="tabular text-[15px] leading-none font-bold">{b.plat}</p> : null}
-        <p className="tabular mt-1 text-[11px] text-muted">{b.countdown}</p>
+        {b.plat ? <p className="tabular text-body leading-none font-bold">{b.plat}</p> : null}
+        <p className="tabular mt-1 text-mini text-muted">{b.countdown}</p>
       </div>
     </div>
   );

@@ -436,3 +436,21 @@ body {
   outline: 3px solid var(--accent);
   outline-offset: -3px;
 }
+
+/* ---- Type scale ----------------------------------------------------------
+   There were twenty-seven hard-coded font sizes across the app, including
+   12px, 12.5px and 13px all in use where nobody could tell them apart. With no
+   scale to reach for, every screen invented one.
+
+   Six named steps at the sizes already doing the work, so migrating changed no
+   pixels. Sizes only — line-height stays at the call site, where `leading-*`
+   is already set deliberately and a blanket value here would shift layouts.
+
+   Display sizes (20px and up) stay as one-offs: they are chosen per screen for
+   a specific headline and do not form a scale. */
+@utility text-micro { font-size: 10px; }
+@utility text-mini  { font-size: 11px; }
+@utility text-tiny  { font-size: 12px; }
+@utility text-small { font-size: 13px; }
+@utility text-ui    { font-size: 14px; }
+@utility text-body  { font-size: 15px; }

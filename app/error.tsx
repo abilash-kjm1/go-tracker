@@ -35,7 +35,7 @@ export default function Error({
 
       <div>
         <h1 className="text-[22px] font-semibold tracking-tight">This screen didn&rsquo;t load</h1>
-        <p className="mt-1.5 text-[14px] leading-relaxed text-muted">
+        <p className="mt-1.5 text-ui leading-relaxed text-muted">
           Something failed on our side, most likely a live GO feed that stopped answering.
           Timetables are built into the app and still work.
         </p>
@@ -45,21 +45,21 @@ export default function Error({
         <button
           type="button"
           onClick={reset}
-          className="flex min-h-11 items-center justify-center rounded-2xl px-4 text-[14px] font-semibold"
+          className="flex min-h-11 items-center justify-center rounded-2xl px-4 text-ui font-semibold"
           style={{ background: 'var(--accent)', color: 'var(--accent-fg)' }}
         >
           Try again
         </button>
         <Link
           href="/stations"
-          className="flex min-h-11 items-center justify-center rounded-2xl border px-4 text-[14px] font-semibold text-muted hairline"
+          className="flex min-h-11 items-center justify-center rounded-2xl border px-4 text-ui font-semibold text-muted hairline"
         >
           Browse the timetable
         </Link>
       </div>
 
       {error.digest ? (
-        <p className="tabular text-[11px] text-faint">Reference {error.digest}</p>
+        <p className="tabular text-mini text-faint">Reference {error.digest}</p>
       ) : null}
     </div>
   );

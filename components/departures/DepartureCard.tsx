@@ -122,7 +122,7 @@ export function DepartureCard({
           {heading && directional ? <Arrow heading={heading} /> : null}
           <ModeIcon type={vehicleType} className="size-4 shrink-0 text-[var(--fg-faint)]" />
           <span
-            className="inline-flex h-[18px] shrink-0 items-center rounded px-1.5 text-[11px] leading-none font-bold whitespace-nowrap text-white"
+            className="inline-flex h-[18px] shrink-0 items-center rounded px-1.5 text-mini leading-none font-bold whitespace-nowrap text-white"
             style={{ background: cancelled ? 'var(--color-ink-500)' : (routeColor ?? 'var(--color-ink-600)') }}
           >
             {serviceCode ?? routeCode}
@@ -135,7 +135,7 @@ export function DepartureCard({
               Exp
             </span>
           ) : null}
-          <span className="min-w-0 truncate text-[12px] text-faint">{routeName}</span>
+          <span className="min-w-0 truncate text-tiny text-faint">{routeName}</span>
         </span>
 
         <span className="mt-2 flex items-baseline gap-2">
@@ -147,21 +147,21 @@ export function DepartureCard({
           >
             {depart.time}
           </span>
-          <span className="text-[10px] font-semibold tracking-wide text-faint uppercase">
+          <span className="text-micro font-semibold tracking-wide text-faint uppercase">
             {depart.suffix.replace(/\./g, '')}
           </span>
           {late ? (
-            <span className="tabular text-[13px] leading-none font-bold text-warn-500">
+            <span className="tabular text-small leading-none font-bold text-warn-500">
               {actual.time}
             </span>
           ) : null}
         </span>
 
-        <span className="mt-1.5 block truncate text-[15px] leading-tight font-semibold @max-[340px]:text-[13.5px]">
+        <span className="mt-1.5 block truncate text-body leading-tight font-semibold @max-[340px]:text-small">
           {arrivalStopName ?? destination ?? routeName}
         </span>
 
-        <span className="mt-1.5 flex items-center gap-1.5 text-[12px] text-muted">
+        <span className="mt-1.5 flex items-center gap-1.5 text-tiny text-muted">
           <span
             aria-hidden
             className="size-1.5 shrink-0 rounded-full"
@@ -196,7 +196,7 @@ export function DepartureCard({
             className={clsx(
               'tabular leading-none font-bold',
               platformValue.length > 2
-                ? 'text-[15px] @max-[340px]:text-[13px]'
+                ? 'text-body @max-[340px]:text-small'
                 : 'text-[26px] @max-[340px]:text-[21px]',
             )}
           >
@@ -209,7 +209,7 @@ export function DepartureCard({
                 {/* Dashed and unfilled: a provisional number, deliberately
                     unlike the solid one GO has actually committed to. */}
                 <span
-                  className="tabular rounded-md border-[1.5px] border-dashed px-1.5 py-0.5 text-[15px] leading-none font-semibold @max-[340px]:text-[13px]"
+                  className="tabular rounded-md border-[1.5px] border-dashed px-1.5 py-0.5 text-body leading-none font-semibold @max-[340px]:text-small"
                   style={{ borderColor: 'var(--border-strong)', color: 'var(--fg-muted)' }}
                 >
                   {expectedPlatform.replace(/^platforms?\s*/i, '')}
@@ -227,7 +227,7 @@ export function DepartureCard({
                     dash, because it is the answer, not a footnote to one. */}
                 {platformEta ? (
                   <>
-                    <span className="tabular text-[15px] leading-none font-bold text-[var(--fg-muted)] @max-[340px]:text-[13px]">
+                    <span className="tabular text-body leading-none font-bold text-[var(--fg-muted)] @max-[340px]:text-small">
                       ~{Math.max(1, Math.round((Date.parse(platformEta) - now) / 60_000))} min
                     </span>
                     <span className="text-center text-[7.5px] leading-tight tracking-wide text-faint uppercase">
@@ -261,7 +261,7 @@ export function DepartureCard({
 
         {!cancelled && countdown ? (
           <span
-            className="tabular mt-1.5 text-[11px] leading-none font-bold whitespace-nowrap"
+            className="tabular mt-1.5 text-mini leading-none font-bold whitespace-nowrap"
             style={{ color: departed ? 'var(--fg-faint)' : statusColor }}
           >
             {countdown}
@@ -276,7 +276,7 @@ export function DepartureCard({
     'bg-[var(--bg-elevated)] shadow-[var(--shadow-card)]',
     'transition-[transform,box-shadow] duration-150',
     'hover:-translate-y-px hover:shadow-lg active:translate-y-0 active:scale-[0.997]',
-    compact && 'text-[13px]',
+    compact && 'text-small',
     cancelled && 'opacity-90',
     departed && 'opacity-55',
   );

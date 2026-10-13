@@ -22,7 +22,7 @@ export function AlertsScreen() {
       <header className="flex items-end justify-between gap-3 pt-6 pb-4">
         <div>
           <h1 className="text-[28px] leading-tight font-semibold tracking-tight">Alerts</h1>
-          <p className="mt-1 text-[13px] text-muted">Delays reported by vehicles in service.</p>
+          <p className="mt-1 text-small text-muted">Delays reported by vehicles in service.</p>
         </div>
         <LiveIndicator freshness={freshness} updatedAt={meta?.updatedAt ?? null} compact />
       </header>
@@ -60,7 +60,7 @@ export function AlertsScreen() {
               <h2 className="min-w-0 flex-1 truncate font-semibold">{alert.title}</h2>
               <span
                 className={clsx(
-                  'text-[11px] font-semibold tracking-wide uppercase',
+                  'text-mini font-semibold tracking-wide uppercase',
                   alert.severity === 'severe' ? 'text-alert-500' : 'text-warn-500',
                 )}
               >

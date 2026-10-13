@@ -58,7 +58,7 @@ export function StationSummaryCard({
         </div>
       ) : next ? (
         <div className="mt-3">
-          <p className="text-[11px] font-semibold tracking-wide text-faint uppercase">
+          <p className="text-mini font-semibold tracking-wide text-faint uppercase">
             Next departure
           </p>
           <div className="mt-1 flex items-baseline gap-2">
@@ -81,13 +81,13 @@ export function StationSummaryCard({
             <span className="min-w-0 truncate">{next.destination ?? next.routeName}</span>
           </div>
 
-          <div className="mt-2 flex items-center gap-3 text-[13px] text-muted">
+          <div className="mt-2 flex items-center gap-3 text-small text-muted">
             {next.platform ? (
               <span className="flex items-baseline gap-1.5 rounded-lg bg-[var(--bg-sunken)] px-2 py-1">
                 <span className="text-[8px] font-bold tracking-[0.1em] text-faint uppercase">
                   Platform
                 </span>
-                <span className="tabular text-[15px] leading-none font-bold text-[var(--fg)]">
+                <span className="tabular text-body leading-none font-bold text-[var(--fg)]">
                   {next.platform.replace(/^platforms?\s*/i, '')}
                 </span>
               </span>

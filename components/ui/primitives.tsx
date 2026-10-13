@@ -59,7 +59,7 @@ export function Pill({
   return (
     <span
       className={clsx(
-        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold tracking-wide uppercase',
+        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-mini font-semibold tracking-wide uppercase',
         tone === 'neutral' && 'bg-[var(--bg-sunken)] text-[var(--fg-muted)]',
         tone === 'ok' && 'bg-signal-500/12 text-signal-600 dark:text-signal-300',
         tone === 'warn' && 'bg-warn-500/14 text-warn-500',
@@ -90,7 +90,7 @@ export function RouteBadge({
       className={clsx(
         'inline-flex h-6 min-w-6 items-center justify-center rounded-md px-1.5 font-bold whitespace-nowrap text-white',
         // A variant like "12B" needs to fit without shrinking the badge.
-        code.length > 3 ? 'text-[10px]' : 'text-xs',
+        code.length > 3 ? 'text-micro' : 'text-xs',
         className,
       )}
       style={{ background: color ?? 'var(--color-ink-600)' }}
@@ -109,7 +109,7 @@ export function ExpressBadge({ className }: { className?: string }) {
   return (
     <span
       className={clsx(
-        'inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-bold tracking-wide uppercase',
+        'inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 text-micro font-bold tracking-wide uppercase',
         className,
       )}
       style={{

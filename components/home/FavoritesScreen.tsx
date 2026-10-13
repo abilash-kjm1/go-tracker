@@ -16,7 +16,7 @@ export function FavoritesScreen() {
     <div className="mx-auto w-full max-w-2xl px-4 pt-safe">
       <header className="pt-6 pb-4">
         <h1 className="text-[28px] leading-tight font-semibold tracking-tight">Favourites</h1>
-        <p className="mt-1 text-[13px] text-muted">Saved on this device. No account needed.</p>
+        <p className="mt-1 text-small text-muted">Saved on this device. No account needed.</p>
       </header>
 
       {!ready ? (
@@ -41,7 +41,7 @@ export function FavoritesScreen() {
 
       {stops.length ? (
         <section className="mb-6">
-          <h2 className="px-1 pb-2 text-[11px] font-semibold tracking-wide text-faint uppercase">
+          <h2 className="px-1 pb-2 text-mini font-semibold tracking-wide text-faint uppercase">
             Stations &amp; stops
           </h2>
           <div className="space-y-2">
@@ -54,7 +54,7 @@ export function FavoritesScreen() {
 
       {routes.length ? (
         <section className="mb-6">
-          <h2 className="px-1 pb-2 text-[11px] font-semibold tracking-wide text-faint uppercase">
+          <h2 className="px-1 pb-2 text-mini font-semibold tracking-wide text-faint uppercase">
             Routes
           </h2>
           <ul className="space-y-1">
@@ -65,7 +65,7 @@ export function FavoritesScreen() {
                 <button
                   type="button"
                   onClick={() => remove('route', fav.id)}
-                  className="min-h-9 rounded-lg px-2 text-[13px] font-medium text-muted"
+                  className="min-h-9 rounded-lg px-2 text-small font-medium text-muted"
                 >
                   Remove
                 </button>
@@ -77,7 +77,7 @@ export function FavoritesScreen() {
 
       {trips.length ? (
         <section className="mb-6">
-          <h2 className="px-1 pb-2 text-[11px] font-semibold tracking-wide text-faint uppercase">
+          <h2 className="px-1 pb-2 text-mini font-semibold tracking-wide text-faint uppercase">
             Trips
           </h2>
           <ul className="space-y-1">
@@ -87,13 +87,13 @@ export function FavoritesScreen() {
                 <Link href={`/trips/${encodeURIComponent(fav.id)}`} className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{fav.name}</span>
                   {fav.subtitle ? (
-                    <span className="block truncate text-[13px] text-muted">{fav.subtitle}</span>
+                    <span className="block truncate text-small text-muted">{fav.subtitle}</span>
                   ) : null}
                 </Link>
                 <button
                   type="button"
                   onClick={() => remove('trip', fav.id)}
-                  className="min-h-9 rounded-lg px-2 text-[13px] font-medium text-muted"
+                  className="min-h-9 rounded-lg px-2 text-small font-medium text-muted"
                 >
                   Remove
                 </button>

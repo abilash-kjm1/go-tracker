@@ -94,7 +94,7 @@ export function TripScreen({ tripId }: { tripId: string }) {
           <h1 className="mt-1.5 text-[26px] leading-tight font-semibold tracking-tight">
             {trip.routeName ?? 'GO service'}
           </h1>
-          <p className="mt-1 text-[15px] text-muted">
+          <p className="mt-1 text-body text-muted">
             {[trip.origin, trip.destination].filter(Boolean).join(' → ')}
           </p>
         </div>
@@ -129,7 +129,7 @@ export function TripScreen({ tripId }: { tripId: string }) {
       </div>
 
       {meta?.degraded ? (
-        <p className="mb-4 rounded-xl bg-[var(--bg-sunken)] px-3 py-2 text-[13px] text-muted">
+        <p className="mb-4 rounded-xl bg-[var(--bg-sunken)] px-3 py-2 text-small text-muted">
           {meta.degraded}
         </p>
       ) : null}
@@ -148,14 +148,14 @@ export function TripScreen({ tripId }: { tripId: string }) {
               )}
               aria-hidden
             />
-            <p className="text-[15px] font-semibold">
+            <p className="text-body font-semibold">
               {trip.vehicle.isMoving ? 'Moving' : 'Stopped'}
               {trip.vehicle.nextStopName ? (
                 <span className="font-normal text-muted"> · next stop {trip.vehicle.nextStopName}</span>
               ) : null}
             </p>
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-faint">
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-tiny text-faint">
             <span>Updated {formatAge(trip.vehicle.updatedAt, now)}</span>
             {trip.vehicle.vehicleLabel ? <span>Vehicle {trip.vehicle.vehicleLabel}</span> : null}
           </div>
@@ -194,7 +194,7 @@ function StopAlertBar({ state }: { state: ReturnType<typeof useStopAlerts> }) {
   const { armedCount, pageOnlyCount, permission, request, installed, clearTrip } = state;
   if (armedCount === 0) {
     return (
-      <p className="mt-3 rounded-2xl border px-4 py-3 text-[13px] text-muted hairline bg-[var(--bg-elevated)]">
+      <p className="mt-3 rounded-2xl border px-4 py-3 text-small text-muted hairline bg-[var(--bg-elevated)]">
         Tap the bell beside a stop to be told when this train reaches it.
       </p>
     );
@@ -207,13 +207,13 @@ function StopAlertBar({ state }: { state: ReturnType<typeof useStopAlerts> }) {
   return (
     <div className="mt-3 rounded-2xl border px-4 py-3 hairline bg-[var(--bg-elevated)]">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[13px] font-semibold">
+        <p className="text-small font-semibold">
           {armedCount} stop alert{armedCount === 1 ? '' : 's'} set
         </p>
         <button
           type="button"
           onClick={clearTrip}
-          className="rounded-full bg-[var(--bg-sunken)] px-3 py-1 text-[12px] font-semibold text-muted"
+          className="rounded-full bg-[var(--bg-sunken)] px-3 py-1 text-tiny font-semibold text-muted"
         >
           Clear
         </button>
@@ -223,14 +223,14 @@ function StopAlertBar({ state }: { state: ReturnType<typeof useStopAlerts> }) {
         <button
           type="button"
           onClick={() => void request()}
-          className="mt-2.5 flex min-h-11 w-full items-center justify-center rounded-xl bg-[var(--accent)] px-4 text-[13px] font-bold text-[var(--accent-fg)]"
+          className="mt-2.5 flex min-h-11 w-full items-center justify-center rounded-xl bg-[var(--accent)] px-4 text-small font-bold text-[var(--accent-fg)]"
         >
           Allow notifications
         </button>
       ) : null}
 
       {pageOnlyCount > 0 && !needsPermission && !blocked ? (
-        <p className="mt-2 text-[12px] text-[var(--color-warn-500)]">
+        <p className="mt-2 text-tiny text-[var(--color-warn-500)]">
           {pageOnlyCount === armedCount
             ? 'These alerts can only appear while GO Tracker is open — the server did not accept them.'
             : `${pageOnlyCount} of these can only appear while GO Tracker is open.`}
@@ -238,21 +238,21 @@ function StopAlertBar({ state }: { state: ReturnType<typeof useStopAlerts> }) {
       ) : null}
 
       {blocked ? (
-        <p className="mt-2 text-[12px] text-[var(--color-warn-500)]">
+        <p className="mt-2 text-tiny text-[var(--color-warn-500)]">
           Notifications are blocked for this site, so alerts can only appear on screen. Turn them
           back on in your browser or iPhone settings.
         </p>
       ) : null}
 
       {unsupported && !installed ? (
-        <p className="mt-2 text-[12px] text-muted">
+        <p className="mt-2 text-tiny text-muted">
           On iPhone, add GO Tracker to your Home Screen first: tap Share, then{' '}
           <strong>Add to Home Screen</strong>. Notifications only work from the installed app.
         </p>
       ) : null}
 
       {permission === 'granted' ? (
-        <p className="mt-2 text-[12px] text-muted">
+        <p className="mt-2 text-tiny text-muted">
           These arrive even with the app closed and the phone locked. Add GO Tracker to your Home
           Screen if you have not already — on iPhone that is what allows notifications at all.
         </p>
@@ -279,12 +279,12 @@ function TripAlerts({ trip, alerts }: { trip: TripDetail; alerts: TransitAlert[]
 
   return (
     <section className="mt-3 space-y-2">
-      <h2 className="px-1 text-[11px] font-semibold tracking-wide text-faint uppercase">
+      <h2 className="px-1 text-mini font-semibold tracking-wide text-faint uppercase">
         Alerts for this trip
       </h2>
 
       {reason ? (
-        <div className="rounded-2xl border px-4 py-3 text-[13px] hairline bg-warn-500/10">
+        <div className="rounded-2xl border px-4 py-3 text-small hairline bg-warn-500/10">
           <p className="font-semibold text-warn-500">Reported on this train</p>
           <p className="mt-0.5 text-muted">{reason}</p>
         </div>
@@ -294,7 +294,7 @@ function TripAlerts({ trip, alerts }: { trip: TripDetail; alerts: TransitAlert[]
         <div
           key={alert.id}
           className={clsx(
-            'rounded-2xl border px-4 py-3 text-[13px] hairline',
+            'rounded-2xl border px-4 py-3 text-small hairline',
             alert.severity === 'severe' ? 'bg-alert-500/8' : 'bg-[var(--bg-elevated)]',
           )}
         >

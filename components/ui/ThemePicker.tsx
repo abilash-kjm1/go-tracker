@@ -9,7 +9,7 @@ export function ThemePicker() {
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
         <p className="font-medium">Theme</p>
-        <p className="text-[13px] text-muted">Remembered on this device.</p>
+        <p className="text-small text-muted">Remembered on this device.</p>
       </div>
       <Segmented<ThemePreference>
         value={preference}

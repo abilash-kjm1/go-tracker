@@ -36,7 +36,7 @@ export function RoutesScreen({ routes }: { routes: TransitRoute[] }) {
     <div className="mx-auto w-full max-w-2xl px-4 pt-safe">
       <header className="pt-6 pb-3">
         <h1 className="text-[28px] leading-tight font-semibold tracking-tight">Routes</h1>
-        <p className="mt-1 text-[13px] text-muted">
+        <p className="mt-1 text-small text-muted">
           {routes.filter((r) => r.type === 'train').length} train lines ·{' '}
           {routes.filter((r) => r.type === 'bus').length} bus routes
         </p>
@@ -67,7 +67,7 @@ export function RoutesScreen({ routes }: { routes: TransitRoute[] }) {
                 <RouteBadge code={route.code} color={route.color} type={route.type} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{route.name}</span>
-                  <span className="block text-[13px] text-muted">
+                  <span className="block text-small text-muted">
                     {route.type === 'train' ? 'GO Train' : 'GO Bus'}
                     {live > 0 ? ` · ${live} in service now` : ''}
                   </span>

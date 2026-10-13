@@ -17,7 +17,7 @@ export default function NotFound() {
 
       <div>
         <h1 className="text-[22px] font-semibold tracking-tight">Nothing here</h1>
-        <p className="mt-1.5 text-[14px] leading-relaxed text-muted">
+        <p className="mt-1.5 text-ui leading-relaxed text-muted">
           This page doesn&rsquo;t exist. A stop or line may have been renamed since the link was
           made.
         </p>
@@ -26,14 +26,14 @@ export default function NotFound() {
       <div className="mt-1 flex w-full flex-col gap-2">
         <Link
           href="/"
-          className="flex min-h-11 items-center justify-center rounded-2xl px-4 text-[14px] font-semibold"
+          className="flex min-h-11 items-center justify-center rounded-2xl px-4 text-ui font-semibold"
           style={{ background: 'var(--accent)', color: 'var(--accent-fg)' }}
         >
           Plan a trip
         </Link>
         <Link
           href="/stations"
-          className="flex min-h-11 items-center justify-center rounded-2xl border px-4 text-[14px] font-semibold text-muted hairline"
+          className="flex min-h-11 items-center justify-center rounded-2xl border px-4 text-ui font-semibold text-muted hairline"
         >
           Find a station
         </Link>

@@ -40,18 +40,18 @@ export function ActiveTripBar() {
       >
         <span className="live-dot size-2 shrink-0 rounded-full bg-[#7dfab8]" aria-hidden />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13px] font-bold">
+          <span className="block truncate text-small font-bold">
             {stopsLeft != null
               ? stopsLeft === 0
                 ? `Getting off at ${trip.destinationName.replace(/\s+GO$/i, '')}`
                 : `${stopsLeft} stop${stopsLeft === 1 ? '' : 's'} to ${trip.destinationName.replace(/\s+GO$/i, '')}`
               : `On your way to ${trip.destinationName.replace(/\s+GO$/i, '')}`}
           </span>
-          <span className="block truncate text-[11.5px] text-white/70">
+          <span className="block truncate text-mini text-white/70">
             {nextStop ? `Next stop ${nextStop}` : 'Waiting for a live position'}
           </span>
         </span>
-        <span aria-hidden className="shrink-0 text-[13px] font-bold text-[#7dfab8]">
+        <span aria-hidden className="shrink-0 text-small font-bold text-[#7dfab8]">
           My trip →
         </span>
       </Link>

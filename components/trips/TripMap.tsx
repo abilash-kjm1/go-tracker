@@ -255,13 +255,13 @@ export function TripMap({ trip }: { trip: TripDetail }) {
         <button
           type="button"
           onClick={() => setView((v) => (v === 'follow' ? 'route' : 'follow'))}
-          className="absolute top-2 right-2 rounded-full px-3 py-1.5 text-[11px] font-semibold surface"
+          className="absolute top-2 right-2 rounded-full px-3 py-1.5 text-mini font-semibold surface"
         >
           {view === 'follow' ? 'Whole route' : 'Follow train'}
         </button>
       ) : null}
       {!hasVehicle ? (
-        <p className="absolute inset-x-2 bottom-2 rounded-lg px-2 py-1.5 text-center text-[11px] surface">
+        <p className="absolute inset-x-2 bottom-2 rounded-lg px-2 py-1.5 text-center text-mini surface">
           No live position for this trip — the route is shown from the schedule.
         </p>
       ) : null}

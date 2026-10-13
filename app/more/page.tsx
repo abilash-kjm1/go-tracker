@@ -21,7 +21,7 @@ export default function MorePage() {
       </header>
 
       <section className="mb-6">
-        <h2 className="px-1 pb-2 text-[11px] font-semibold tracking-wide text-faint uppercase">
+        <h2 className="px-1 pb-2 text-mini font-semibold tracking-wide text-faint uppercase">
           Appearance
         </h2>
         <div className="rounded-2xl border px-4 py-4 hairline bg-[var(--bg-elevated)]">
@@ -30,7 +30,7 @@ export default function MorePage() {
       </section>
 
       <section className="mb-6">
-        <h2 className="px-1 pb-2 text-[11px] font-semibold tracking-wide text-faint uppercase">
+        <h2 className="px-1 pb-2 text-mini font-semibold tracking-wide text-faint uppercase">
           Signal shortcut
         </h2>
         <div className="rounded-2xl border px-4 py-4 hairline bg-[var(--bg-elevated)]">
@@ -47,7 +47,7 @@ export default function MorePage() {
             >
               <span className="min-w-0 flex-1">
                 <span className="block font-medium">{link.title}</span>
-                <span className="block truncate text-[13px] text-muted">{link.body}</span>
+                <span className="block truncate text-small text-muted">{link.body}</span>
               </span>
               <span aria-hidden className="text-[var(--fg-faint)]">
                 ›
@@ -63,7 +63,7 @@ export default function MorePage() {
             >
               <span className="min-w-0 flex-1">
                 <span className="block font-medium">Developer diagnostics</span>
-                <span className="block truncate text-[13px] text-muted">
+                <span className="block truncate text-small text-muted">
                   Provider status and raw upstream responses.
                 </span>
               </span>

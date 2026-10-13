@@ -92,13 +92,13 @@ export function LineDiagram({
         className="flex items-center justify-between gap-3 px-4 py-3"
         style={{ background: `color-mix(in srgb, ${color} 10%, transparent)` }}
       >
-        <p className="flex min-w-0 items-center gap-2 text-[13px] font-bold">
+        <p className="flex min-w-0 items-center gap-2 text-small font-bold">
           <span aria-hidden style={{ color }}>
             ↓
           </span>
           <span className="truncate">towards {tidy(headsign ?? stops.at(-1)?.name ?? '')}</span>
         </p>
-        <p className="tabular shrink-0 text-[12px] font-semibold" style={{ color }}>
+        <p className="tabular shrink-0 text-tiny font-semibold" style={{ color }}>
           {running} running
         </p>
       </div>
@@ -145,7 +145,7 @@ export function LineDiagram({
                       }}
                     />
                     <span
-                      className={`min-w-0 flex-1 truncate ${terminus ? 'text-[15.5px] font-bold' : 'text-[14.5px] font-medium'}`}
+                      className={`min-w-0 flex-1 truncate ${terminus ? 'text-body font-bold' : 'text-ui font-medium'}`}
                     >
                       {tidy(stop.name)}
                     </span>
@@ -158,7 +158,7 @@ export function LineDiagram({
       </div>
 
       {running === 0 ? (
-        <p className="border-t px-4 py-3 text-center text-[12.5px] text-muted hairline">
+        <p className="border-t px-4 py-3 text-center text-tiny text-muted hairline">
           No trains are reporting a position in this direction right now.
         </p>
       ) : null}
@@ -203,10 +203,10 @@ function TrainRow({
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className="tabular block text-[13px] leading-tight font-bold">
+        <span className="tabular block text-small leading-tight font-bold">
           {vehicle.tripNumber ?? 'Train'}
         </span>
-        <span className="block truncate text-[11.5px] text-muted">
+        <span className="block truncate text-mini text-muted">
           {stopped && atStopName
             ? `at ${tidy(atStopName)}`
             : stopped
@@ -216,7 +216,7 @@ function TrainRow({
       </span>
 
       <span
-        className="tabular shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold"
+        className="tabular shrink-0 rounded-full px-2 py-0.5 text-mini font-bold"
         style={{ background: tone, color: '#fff' }}
       >
         {late ? `+${delayMin}` : 'on time'}

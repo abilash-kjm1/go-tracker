@@ -56,13 +56,13 @@ export function DevConsole({ initialHealth }: { initialHealth: ProviderHealth })
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pt-safe">
       <header className="pt-6 pb-4">
-        <p className="text-[11px] font-semibold tracking-wide text-faint uppercase">
+        <p className="text-mini font-semibold tracking-wide text-faint uppercase">
           Developer only
         </p>
         <h1 className="mt-1 text-[28px] leading-tight font-semibold tracking-tight">
           Transit diagnostics
         </h1>
-        <p className="mt-1 text-[13px] text-muted">
+        <p className="mt-1 text-small text-muted">
           Blocked in production unless ENABLE_DEV_TRANSIT_PAGE is set.
         </p>
       </header>
@@ -86,14 +86,14 @@ export function DevConsole({ initialHealth }: { initialHealth: ProviderHealth })
       </dl>
 
       {health.lastError ? (
-        <p className="mt-3 rounded-xl bg-alert-500/10 px-3 py-2 text-[13px] text-alert-500">
+        <p className="mt-3 rounded-xl bg-alert-500/10 px-3 py-2 text-small text-alert-500">
           Last error: {health.lastError}
           {health.lastErrorAt ? ` (${formatAge(health.lastErrorAt, now)})` : ''}
         </p>
       ) : null}
 
       {health.staticData ? (
-        <p className="mt-3 rounded-xl bg-[var(--bg-sunken)] px-3 py-2 text-[13px] text-muted">
+        <p className="mt-3 rounded-xl bg-[var(--bg-sunken)] px-3 py-2 text-small text-muted">
           Static data: {health.staticData.source}, feed {health.staticData.feedVersion ?? '?'},{' '}
           {health.staticData.datesAvailable.length} days from{' '}
           {health.staticData.datesAvailable[0] ?? '—'}.
@@ -124,25 +124,25 @@ export function DevConsole({ initialHealth }: { initialHealth: ProviderHealth })
                 ) : null}
                 {result && result !== 'loading' ? (
                   <span
-                    className={`text-[13px] font-medium ${result.ok ? 'text-signal-600 dark:text-signal-300' : 'text-alert-500'}`}
+                    className={`text-small font-medium ${result.ok ? 'text-signal-600 dark:text-signal-300' : 'text-alert-500'}`}
                   >
                     {result.ok ? 'OK' : 'FAILED'}
                     {result.latencyMs != null ? ` · ${result.latencyMs} ms` : ''}
                   </span>
                 ) : result === 'loading' ? (
-                  <span className="text-[13px] text-muted">running…</span>
+                  <span className="text-small text-muted">running…</span>
                 ) : null}
               </div>
 
               {result && result !== 'loading' ? (
                 <div className="mt-2 space-y-2">
                   {result.summary ? (
-                    <pre className="overflow-x-auto rounded-lg bg-[var(--bg-sunken)] p-2 text-[12px]">
+                    <pre className="overflow-x-auto rounded-lg bg-[var(--bg-sunken)] p-2 text-tiny">
                       {JSON.stringify(result.summary, null, 2)}
                     </pre>
                   ) : null}
                   {result.error ? (
-                    <p className="text-[13px] text-alert-500">{result.error}</p>
+                    <p className="text-small text-alert-500">{result.error}</p>
                   ) : null}
                   {result.raw ? (
                     <details
@@ -151,10 +151,10 @@ export function DevConsole({ initialHealth }: { initialHealth: ProviderHealth })
                         setExpanded((e.currentTarget as HTMLDetailsElement).open ? probe.kind : null)
                       }
                     >
-                      <summary className="cursor-pointer text-[13px] font-medium text-muted">
+                      <summary className="cursor-pointer text-small font-medium text-muted">
                         Raw upstream response
                       </summary>
-                      <pre className="mt-2 max-h-80 overflow-auto rounded-lg bg-[var(--bg-sunken)] p-2 text-[11px] break-all whitespace-pre-wrap">
+                      <pre className="mt-2 max-h-80 overflow-auto rounded-lg bg-[var(--bg-sunken)] p-2 text-mini break-all whitespace-pre-wrap">
                         {result.raw}
                       </pre>
                     </details>
@@ -172,7 +172,7 @@ export function DevConsole({ initialHealth }: { initialHealth: ProviderHealth })
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-[var(--bg-elevated)] px-3 py-3">
-      <dt className="text-[11px] font-semibold tracking-wide text-faint uppercase">{label}</dt>
+      <dt className="text-mini font-semibold tracking-wide text-faint uppercase">{label}</dt>
       <dd className="mt-0.5 truncate font-medium">{value}</dd>
     </div>
   );

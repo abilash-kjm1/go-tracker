@@ -45,7 +45,7 @@ export function RouteScreen({
       <div className="flex items-center justify-between gap-2 pt-3">
         <Link
           href="/routes"
-          className="-ml-2 flex min-h-10 items-center gap-1 rounded-xl px-2 text-[13px] font-medium text-muted"
+          className="-ml-2 flex min-h-10 items-center gap-1 rounded-xl px-2 text-small font-medium text-muted"
         >
           <span aria-hidden>←</span> Routes
         </Link>
@@ -71,14 +71,14 @@ export function RouteScreen({
 
       <section className="mb-5">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h2 className="text-[11px] font-semibold tracking-wide text-faint uppercase">
+          <h2 className="text-mini font-semibold tracking-wide text-faint uppercase">
             In service now
           </h2>
           <LiveIndicator freshness={freshness} updatedAt={meta?.updatedAt ?? null} compact />
         </div>
 
         {live.length === 0 ? (
-          <p className="rounded-2xl border border-dashed px-4 py-4 text-center text-[13px] text-muted hairline">
+          <p className="rounded-2xl border border-dashed px-4 py-4 text-center text-small text-muted hairline">
             {route.type === 'bus'
               ? 'No buses on this route are reporting a position right now.'
               : 'Nothing is reporting a position on this line right now.'}
@@ -98,7 +98,7 @@ export function RouteScreen({
                         <span className="font-normal text-faint">to </span>
                         {vehicle.destination ?? 'GO service'}
                       </span>
-                      <span className="mt-0.5 block truncate text-[13px] text-muted">
+                      <span className="mt-0.5 block truncate text-small text-muted">
                         {vehicle.nextStopName ? `Next stop ${vehicle.nextStopName}` : 'In service'}
                         {vehicle.tripNumber ? ` · ${vehicle.tripNumber}` : ''}
                       </span>
@@ -119,7 +119,7 @@ export function RouteScreen({
       {pattern ? (
         <section className="pb-8">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-[11px] font-semibold tracking-wide text-faint uppercase">
+            <h2 className="text-mini font-semibold tracking-wide text-faint uppercase">
               The line right now
             </h2>
             {patterns.length > 1 ? (
@@ -135,7 +135,7 @@ export function RouteScreen({
             ) : null}
           </div>
 
-          <p className="mb-2 text-[12px] text-faint">
+          <p className="mb-2 text-tiny text-faint">
             {pattern.stops.length} stops · {pattern.tripCount} trips today
           </p>
 
@@ -147,7 +147,7 @@ export function RouteScreen({
           />
         </section>
       ) : (
-        <p className="pb-8 text-[13px] text-muted">
+        <p className="pb-8 text-small text-muted">
           No trips are scheduled on this route today, so its stops cannot be listed.
         </p>
       )}

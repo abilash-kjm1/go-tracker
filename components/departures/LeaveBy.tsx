@@ -37,7 +37,7 @@ export function LeaveBy({
       <button
         type="button"
         onClick={walk.request}
-        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border text-[13px] font-semibold text-muted transition-colors hairline hover:bg-[var(--bg-sunken)]"
+        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border text-small font-semibold text-muted transition-colors hairline hover:bg-[var(--bg-sunken)]"
       >
         <WalkGlyph className="size-4" />
         Work out when I need to leave
@@ -47,7 +47,7 @@ export function LeaveBy({
 
   if (walk.status === 'prompting' || walk.km == null) {
     return (
-      <p className="flex min-h-11 items-center justify-center gap-2 rounded-2xl border text-[13px] text-faint hairline">
+      <p className="flex min-h-11 items-center justify-center gap-2 rounded-2xl border text-small text-faint hairline">
         <WalkGlyph className="size-4" />
         Finding you…
       </p>
@@ -120,7 +120,7 @@ export function LeaveBy({
           for the {clock(new Date(Date.parse(catchable.estimatedTime ?? catchable.scheduledTime)))}
           {catchable.destination ? ` to ${tidy(catchable.destination)}` : ''}
         </span>
-        <span className="block text-[11.5px] text-faint">{walkLabel} — estimated</span>
+        <span className="block text-mini text-faint">{walkLabel} — estimated</span>
       </span>
     </Strip>
   );
@@ -147,7 +147,7 @@ function Strip({
 
   return (
     <p
-      className="flex items-start gap-2.5 rounded-2xl border px-3.5 py-2.5 text-[13px] leading-snug hairline"
+      className="flex items-start gap-2.5 rounded-2xl border px-3.5 py-2.5 text-small leading-snug hairline"
       style={style}
     >
       {children}

@@ -42,7 +42,7 @@ export function LiveIndicator({
 
   return (
     <span
-      className={clsx('inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-wide', tone, className)}
+      className={clsx('inline-flex items-center gap-1.5 text-mini font-semibold tracking-wide', tone, className)}
       aria-live="polite"
     >
       <span

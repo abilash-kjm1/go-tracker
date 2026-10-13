@@ -110,13 +110,13 @@ export function DepartureBoard({
       {kind === 'departures' ? <LeaveBy origin={origin} departures={rows} /> : null}
 
       {meta?.degraded ? (
-        <p className="rounded-xl bg-[var(--bg-sunken)] px-3 py-2 text-[12px] text-muted">
+        <p className="rounded-xl bg-[var(--bg-sunken)] px-3 py-2 text-tiny text-muted">
           {meta.degraded}
         </p>
       ) : null}
 
       {rows.some((r) => r.platformNote) && !rows.some((r) => r.platform) ? (
-        <p className="text-[12px] text-faint">
+        <p className="text-tiny text-faint">
           {rows.find((r) => r.platformNote)?.platformNote} &mdash; GO posts it to the station
           screens a few minutes before departure.
         </p>
@@ -168,7 +168,7 @@ export function DepartureBoard({
                 type="button"
                 onClick={() => setActiveKey(group.key)}
                 aria-pressed={active}
-                className="flex min-h-10 min-w-0 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-semibold whitespace-nowrap transition-colors"
+                className="flex min-h-10 min-w-0 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-small font-semibold whitespace-nowrap transition-colors"
                 style={
                   active
                     ? { background: colors.surface, borderColor: colors.border, color: colors.fg }
@@ -176,7 +176,7 @@ export function DepartureBoard({
                 }
               >
                 {group.shortLabel}
-                <span className="tabular text-[11px] opacity-70">{group.departures.length}</span>
+                <span className="tabular text-mini opacity-70">{group.departures.length}</span>
               </button>
             );
           })}
@@ -202,13 +202,13 @@ export function DepartureBoard({
                   style={{ background: colors.fg }}
                 />
                 <span
-                  className="text-[13px] leading-snug font-semibold tracking-tight text-balance"
+                  className="text-small leading-snug font-semibold tracking-tight text-balance"
                   style={{ color: colors.fg }}
                 >
                   {group.label}
                 </span>
                 <span
-                  className="tabular mt-px shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                  className="tabular mt-px shrink-0 rounded-full px-2 py-0.5 text-mini font-semibold"
                   style={{ background: colors.surface, color: colors.fg }}
                 >
                   {group.departures.length}

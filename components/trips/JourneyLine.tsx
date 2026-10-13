@@ -94,14 +94,14 @@ export function JourneyLine({
       <div className="overflow-hidden rounded-2xl border hairline bg-[var(--bg-elevated)]">
         <div className="flex items-center justify-between gap-3 border-b px-4 py-3 hairline">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold tracking-[0.12em] text-faint uppercase">All stops</p>
-            <p className="truncate text-[14px] font-semibold">
+            <p className="text-mini font-semibold tracking-[0.12em] text-faint uppercase">All stops</p>
+            <p className="truncate text-ui font-semibold">
               {tidy(stops[0]?.stopName ?? '')} <span className="text-faint">to</span>{' '}
               {tidy(stops.at(-1)?.stopName ?? '')}
             </p>
           </div>
           <span
-            className="tabular shrink-0 rounded-full px-2.5 py-1 text-[12px] font-bold text-white"
+            className="tabular shrink-0 rounded-full px-2.5 py-1 text-tiny font-bold text-white"
             style={{ background: color }}
           >
             {stops.length} stops
@@ -112,7 +112,7 @@ export function JourneyLine({
             <button
               type="button"
               onClick={() => setShowPassed(true)}
-              className="mt-2 flex w-full items-center gap-2 rounded-xl bg-[var(--bg-sunken)] px-3 py-2 text-[12px] font-semibold text-muted"
+              className="mt-2 flex w-full items-center gap-2 rounded-xl bg-[var(--bg-sunken)] px-3 py-2 text-tiny font-semibold text-muted"
             >
               <span aria-hidden>▾</span>
               {hiddenCount} stop{hiddenCount === 1 ? '' : 's'} already passed
@@ -177,9 +177,9 @@ function Stat({ label, value, sub, hue }: { label: string; value: string; sub?: 
       className="min-w-0 rounded-2xl px-3 py-2.5"
       style={{ background: `var(--tile-${hue}-bg)`, color: `var(--tile-${hue}-fg)` }}
     >
-      <p className="text-[10px] font-bold tracking-[0.12em] uppercase opacity-75">{label}</p>
+      <p className="text-micro font-bold tracking-[0.12em] uppercase opacity-75">{label}</p>
       <p className="tabular mt-0.5 truncate text-[17px] leading-tight font-extrabold">{value}</p>
-      {sub ? <p className="mt-0.5 truncate text-[11px] font-medium opacity-80">{sub}</p> : null}
+      {sub ? <p className="mt-0.5 truncate text-mini font-medium opacity-80">{sub}</p> : null}
     </div>
   );
 }
@@ -261,18 +261,18 @@ function NowPanel({
             <TrainIcon className="size-5" />
           </span>
           <div className="min-w-0">
-            <p className="truncate text-[14px] leading-tight font-bold">
+            <p className="truncate text-ui leading-tight font-bold">
               {trip.routeName ?? 'GO Train'}
               {trip.express ? <span className="ml-1.5 text-[var(--color-warn-500)]">Express</span> : null}
             </p>
-            <p className="text-[12px] text-muted">
+            <p className="text-tiny text-muted">
               Train {trip.tripNumber} to {tidy(trip.destination ?? '')}
             </p>
           </div>
         </div>
         <span
           className={clsx(
-            'shrink-0 rounded-full px-3 py-1 text-[12px] font-bold',
+            'shrink-0 rounded-full px-3 py-1 text-tiny font-bold',
             late
               ? 'bg-[var(--tile-amber-bg)] text-[var(--tile-amber-fg)]'
               : 'bg-[var(--tile-green-bg)] text-[var(--tile-green-fg)]',
@@ -286,11 +286,11 @@ function NowPanel({
       <div className="px-4 pt-5">
         <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold tracking-[0.12em] text-faint uppercase">
+            <p className="text-micro font-semibold tracking-[0.12em] text-faint uppercase">
               {atStation ? 'Now at' : 'Left'}
             </p>
             <p className="truncate text-[20px] leading-tight font-bold">{fromName}</p>
-            <p className="tabular text-[12px] text-muted">
+            <p className="tabular text-tiny text-muted">
               {atStation ? `Departs ${leftClock}` : leftClock}
             </p>
           </div>
@@ -298,12 +298,12 @@ function NowPanel({
             <p className="tabular text-[38px] leading-none font-black" style={{ color }}>
               {minutes ?? '–'}
             </p>
-            <p className="text-[10px] font-bold tracking-[0.14em] text-faint uppercase">min</p>
+            <p className="text-micro font-bold tracking-[0.14em] text-faint uppercase">min</p>
           </div>
           <div className="min-w-0 text-right">
-            <p className="text-[10px] font-semibold tracking-[0.12em] text-faint uppercase">Arriving</p>
+            <p className="text-micro font-semibold tracking-[0.12em] text-faint uppercase">Arriving</p>
             <p className="truncate text-[20px] leading-tight font-bold">{toName}</p>
-            <p className="tabular text-[12px] text-muted">{arriveAt ? formatClock(arriveAt) : ''}</p>
+            <p className="tabular text-tiny text-muted">{arriveAt ? formatClock(arriveAt) : ''}</p>
           </div>
         </div>
 
@@ -370,7 +370,7 @@ function NowPanel({
 
       {/* Whole-journey progress. */}
       <div className="px-4 pt-4 pb-4">
-        <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold text-muted">
+        <div className="mb-1.5 flex items-center justify-between text-mini font-semibold text-muted">
           <span className="truncate">{tidy(stops[0]?.stopName ?? '')}</span>
           <span className="tabular text-faint">{Math.round(doneFrac * 100)}% of journey</span>
           <span className="truncate">{tidy(final?.stopName ?? '')}</span>
@@ -386,7 +386,7 @@ function NowPanel({
           />
         </div>
         {vehicle ? (
-          <p className="mt-2.5 text-[11px] text-faint">
+          <p className="mt-2.5 text-mini text-faint">
             Live position updated {formatAge(vehicle.updatedAt, now)}
             {vehicle.delayReason ? ` · ${vehicle.delayReason}` : ''}
           </p>
@@ -506,7 +506,7 @@ function StopRow({
           <p
             className={clsx(
               'truncate leading-tight',
-              here || next || terminal ? 'text-[17px] font-bold' : 'text-[15px] font-medium',
+              here || next || terminal ? 'text-[17px] font-bold' : 'text-body font-medium',
               passed && 'text-[var(--fg-muted)]',
             )}
           >
@@ -515,7 +515,7 @@ function StopRow({
           <div className="mt-1 flex flex-wrap gap-1.5">
             {here ? (
               <span
-                className="rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase"
+                className="rounded-full px-2 py-0.5 text-micro font-bold tracking-wide text-white uppercase"
                 style={{ background: color }}
               >
                 Train is here
@@ -523,24 +523,24 @@ function StopRow({
             ) : null}
             {next ? (
               <span
-                className="rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase"
+                className="rounded-full border px-2 py-0.5 text-micro font-bold tracking-wide uppercase"
                 style={{ borderColor: color, color }}
               >
                 Next stop{minutes != null ? ` · ${minutes} min` : ''}
               </span>
             ) : null}
             {isFirst && !here ? (
-              <span className="rounded-full bg-[var(--bg-sunken)] px-2 py-0.5 text-[10px] font-bold tracking-wide text-muted uppercase">
+              <span className="rounded-full bg-[var(--bg-sunken)] px-2 py-0.5 text-micro font-bold tracking-wide text-muted uppercase">
                 Start
               </span>
             ) : null}
             {isLast ? (
-              <span className="rounded-full bg-[var(--bg-sunken)] px-2 py-0.5 text-[10px] font-bold tracking-wide text-muted uppercase">
+              <span className="rounded-full bg-[var(--bg-sunken)] px-2 py-0.5 text-micro font-bold tracking-wide text-muted uppercase">
                 Final stop
               </span>
             ) : null}
             {stop.platform ? (
-              <span className="rounded-full bg-[var(--bg-sunken)] px-2 py-0.5 text-[11px] font-semibold text-muted">
+              <span className="rounded-full bg-[var(--bg-sunken)] px-2 py-0.5 text-mini font-semibold text-muted">
                 {stop.platform}
               </span>
             ) : null}
@@ -573,7 +573,7 @@ function StopRow({
         <div className="text-right">
           <p
             className={clsx(
-              'tabular text-[14px]',
+              'tabular text-ui',
               passed ? 'text-[var(--fg-faint)]' : 'font-semibold',
               shifted && !passed && 'text-[var(--color-warn-500)]',
             )}
@@ -581,7 +581,7 @@ function StopRow({
             {clock}
           </p>
           {shifted && !passed ? (
-            <p className="tabular text-[11px] text-faint line-through">
+            <p className="tabular text-mini text-faint line-through">
               {formatClock(stop.scheduledDeparture)}
             </p>
           ) : null}

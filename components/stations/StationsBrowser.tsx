@@ -61,7 +61,7 @@ export function StationsBrowser({
     <div className="mx-auto w-full max-w-2xl px-4 pt-safe">
       <header className="pt-6 pb-3">
         <h1 className="text-[28px] leading-tight font-semibold tracking-tight">Stations &amp; stops</h1>
-        <p className="mt-1 text-[13px] text-muted">
+        <p className="mt-1 text-small text-muted">
           {stops.length} GO stations and bus stops in the schedule.
         </p>
       </header>
@@ -74,7 +74,7 @@ export function StationsBrowser({
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Filter by name"
             aria-label="Filter stations"
-            className="min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-[var(--fg-faint)]"
+            className="min-w-0 flex-1 bg-transparent text-body outline-none placeholder:text-[var(--fg-faint)]"
           />
         </label>
 
@@ -92,7 +92,7 @@ export function StationsBrowser({
 
       {pinned.length > 0 && !query ? (
         <section className="mb-5">
-          <h2 className="px-1 pb-2 text-[11px] font-semibold tracking-wide text-faint uppercase">
+          <h2 className="px-1 pb-2 text-mini font-semibold tracking-wide text-faint uppercase">
             Pinned
           </h2>
           <ul
@@ -121,7 +121,7 @@ export function StationsBrowser({
 
       {nearby.status === 'granted' && nearby.stops.length > 0 && !query ? (
         <section className="mb-5">
-          <h2 className="px-1 pb-2 text-[11px] font-semibold tracking-wide text-faint uppercase">
+          <h2 className="px-1 pb-2 text-mini font-semibold tracking-wide text-faint uppercase">
             Nearby
           </h2>
           <ul className="overflow-hidden rounded-2xl border hairline bg-[var(--bg-elevated)]">
@@ -168,7 +168,7 @@ export function StationsBrowser({
       </ul>
 
       {filtered.length > 250 ? (
-        <p className="pb-8 text-center text-[13px] text-muted">
+        <p className="pb-8 text-center text-small text-muted">
           Showing the first 250 of {filtered.length}. Keep typing to narrow it down.
         </p>
       ) : null}
@@ -266,10 +266,10 @@ function StopRow({
         </span>
 
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] font-semibold">
+          <span className="block truncate text-body font-semibold">
             <Marked text={stop.name.replace(/\s+GO(\s+Bus)?$/i, '')} match={match} />
           </span>
-          <span className="block truncate text-[12.5px] text-muted">
+          <span className="block truncate text-tiny text-muted">
             {routes
               ? `Routes ${routes}`
               : stop.modes.length
@@ -279,7 +279,7 @@ function StopRow({
         </span>
 
         {distanceKm != null ? (
-          <span className="tabular shrink-0 text-[12px] text-faint">
+          <span className="tabular shrink-0 text-tiny text-faint">
             {formatDistance(distanceKm)}
           </span>
         ) : null}

@@ -50,7 +50,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
           );
         })}
-        <div className="mt-auto px-3 text-[11px] leading-relaxed text-faint">
+        <div className="mt-auto px-3 text-mini leading-relaxed text-faint">
           Independent app. Not operated by Metrolinx or GO Transit.
         </div>
       </aside>
@@ -77,7 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   href={item.href}
                   aria-current={active ? 'page' : undefined}
                   className={clsx(
-                    'flex h-full flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors',
+                    'flex h-full flex-col items-center justify-center gap-1 text-micro font-medium transition-colors',
                     active ? 'text-[var(--accent)]' : 'text-[var(--fg-muted)]',
                   )}
                 >
@@ -105,7 +105,7 @@ export function Wordmark({ className }: { className?: string }) {
           <circle cx="15.5" cy="14" r="1.6" fill="currentColor" />
         </svg>
       </span>
-      <span className="text-[15px] font-semibold tracking-tight">GO Tracker</span>
+      <span className="text-body font-semibold tracking-tight">GO Tracker</span>
     </span>
   );
 }

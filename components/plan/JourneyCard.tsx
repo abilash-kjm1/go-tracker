@@ -33,14 +33,14 @@ export function JourneyCard({ journey, tone }: { journey: Journey; tone?: Direct
         <div className="min-w-0">
           <p className="tabular flex items-baseline gap-1.5 text-[21px] leading-none font-semibold tracking-tight">
             {depart.time}
-            <span className="text-[10px] font-semibold text-faint uppercase">
+            <span className="text-micro font-semibold text-faint uppercase">
               {depart.suffix.replace(/\./g, '')}
             </span>
             <span className="px-1 text-faint" aria-hidden>
               →
             </span>
             {arrive.time}
-            <span className="text-[10px] font-semibold text-faint uppercase">
+            <span className="text-micro font-semibold text-faint uppercase">
               {arrive.suffix.replace(/\./g, '')}
             </span>
           </p>
@@ -51,7 +51,7 @@ export function JourneyCard({ journey, tone }: { journey: Journey; tone?: Direct
             {journey.legs.map((leg, index) => (
               <span key={leg.id} className="flex items-center gap-1">
                 {index > 0 ? (
-                  <span aria-hidden className="text-[11px] text-faint">
+                  <span aria-hidden className="text-mini text-faint">
                     →
                   </span>
                 ) : null}
@@ -63,7 +63,7 @@ export function JourneyCard({ journey, tone }: { journey: Journey; tone?: Direct
               </span>
             ))}
           </p>
-          <p className="mt-1.5 text-[12px] text-muted">
+          <p className="mt-1.5 text-tiny text-muted">
             <span className="font-semibold text-[var(--fg)]">
               {formatDuration(journey.durationMinutes)}
             </span>{' '}
@@ -74,7 +74,7 @@ export function JourneyCard({ journey, tone }: { journey: Journey; tone?: Direct
 
         <span
           className={clsx(
-            'shrink-0 rounded-full px-2 py-1 text-[10px] font-bold tracking-wide uppercase',
+            'shrink-0 rounded-full px-2 py-1 text-micro font-bold tracking-wide uppercase',
             tight ? 'bg-warn-500/14 text-warn-500' : 'bg-[var(--bg-sunken)] text-[var(--fg-muted)]',
           )}
         >
@@ -104,22 +104,22 @@ export function JourneyCard({ journey, tone }: { journey: Journey; tone?: Direct
                       code={leg.serviceCode ?? leg.routeCode}
                       color={leg.routeColor}
                       type={leg.vehicleType}
-                      className="h-5 text-[11px]"
+                      className="h-5 text-mini"
                     />
                     {leg.express ? <ExpressBadge /> : null}
-                    <span className="min-w-0 truncate text-[12px] text-muted">{leg.routeName}</span>
+                    <span className="min-w-0 truncate text-tiny text-muted">{leg.routeName}</span>
                     {leg.platform ? (
-                      <span className="tabular ml-auto shrink-0 rounded-md bg-[var(--bg-sunken)] px-1.5 py-0.5 text-[11px] font-bold">
+                      <span className="tabular ml-auto shrink-0 rounded-md bg-[var(--bg-sunken)] px-1.5 py-0.5 text-mini font-bold">
                         {leg.platform.replace(/^platforms?\s*/i, 'Plat ')}
                       </span>
                     ) : null}
                   </div>
 
-                  <p className="mt-1 flex items-baseline gap-2 text-[13px]">
+                  <p className="mt-1 flex items-baseline gap-2 text-small">
                     <span className="tabular font-semibold">{legDepart.time}</span>
                     <span className="min-w-0 truncate text-muted">{leg.stopName}</span>
                   </p>
-                  <p className="mt-0.5 flex items-baseline gap-2 text-[13px]">
+                  <p className="mt-0.5 flex items-baseline gap-2 text-small">
                     <span className="tabular font-semibold">{legArrive.time}</span>
                     <span className="min-w-0 truncate text-muted">{leg.arrivalStopName}</span>
                   </p>
@@ -127,7 +127,7 @@ export function JourneyCard({ journey, tone }: { journey: Journey; tone?: Direct
                   {leg.tripId ? (
                     <Link
                       href={`/trips/${encodeURIComponent(leg.tripId)}`}
-                      className="mt-1 inline-block text-[12px] font-medium text-[var(--accent)]"
+                      className="mt-1 inline-block text-tiny font-medium text-[var(--accent)]"
                     >
                       Track this {leg.vehicleType === 'bus' ? 'bus' : 'train'} →
                     </Link>
@@ -136,7 +136,7 @@ export function JourneyCard({ journey, tone }: { journey: Journey; tone?: Direct
               </div>
 
               {wait != null ? (
-                <div className="my-1 flex items-center gap-2 rounded-lg bg-[var(--bg-sunken)] px-2.5 py-1.5 text-[12px]">
+                <div className="my-1 flex items-center gap-2 rounded-lg bg-[var(--bg-sunken)] px-2.5 py-1.5 text-tiny">
                   <span aria-hidden>⇄</span>
                   <span className={clsx('font-medium', wait <= 8 && 'text-warn-500')}>
                     {wait} min to change
