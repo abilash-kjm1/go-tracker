@@ -599,13 +599,21 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
         role="application"
       />
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 space-y-2 p-3 pt-safe">
-        <div className="pointer-events-auto flex items-center justify-between gap-2 rounded-2xl px-3 py-2 surface">
-          <LiveIndicator freshness={error && !vehicles ? 'unavailable' : freshness} updatedAt={meta?.updatedAt ?? null} />
-          <span className="tabular text-xs text-muted">{visible.length} shown</span>
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 space-y-1.5 p-3 pt-safe">
+        <div className="pointer-events-auto inline-flex items-center gap-2 rounded-full py-1.5 pr-3 pl-2.5 surface">
+          <LiveIndicator
+            freshness={error && !vehicles ? 'unavailable' : freshness}
+            updatedAt={meta?.updatedAt ?? null}
+            compact
+          />
+          <span aria-hidden className="h-3 w-px bg-[var(--border)]" />
+          <span className="tabular text-tiny font-semibold text-muted">
+            {visible.length} shown
+          </span>
         </div>
 
-        <div className="no-scrollbar pointer-events-auto flex gap-1.5 overflow-x-auto">
+        <div className="map-fade relative">
+        <div className="no-scrollbar pointer-events-auto flex gap-1.5 overflow-x-auto px-0.5 py-0.5">
           <FilterChip active={mode === 'all'} onClick={() => setMode('all')}>
             All
           </FilterChip>
@@ -630,7 +638,10 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
             Stations
           </FilterChip>
         </div>
+        </div>
       </div>
+
+      <MapLegend routes={activeRoutes} showStations={showStations} />
 
       {following ? (
         <div className="pointer-events-none absolute inset-x-0 bottom-6 z-10 flex justify-center px-4">
@@ -805,6 +816,76 @@ const TRAIN_PATH =
 const BUS_PATH =
   '<path d="M4.5 4.5h11a1.5 1.5 0 0 1 1.5 1.5v7.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1.5 1.5 0 0 1 1.5-1.5Z" stroke="currentColor" stroke-width="1.4"/><path d="M3 8.5h14" stroke="currentColor" stroke-width="1.4"/><circle cx="6.5" cy="12" r="1" fill="currentColor"/><circle cx="13.5" cy="12" r="1" fill="currentColor"/>';
 
+/**
+ * A key for the map, folded away by default.
+ *
+ * Open, it is the only place the map explains itself: which colour belongs to
+ * which line, what the bright ring around one marker means, and what the small
+ * dots are. Closed, it is a single button, because a legend permanently
+ * occupying a corner of a phone screen is worse than no legend.
+ */
+function MapLegend({
+  routes,
+  showStations,
+}: {
+  routes: TransitRoute[];
+  showStations: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const { trip } = useActiveTrip();
+
+  return (
+    <div className="pointer-events-none absolute bottom-24 left-3 z-10 flex flex-col items-start gap-1.5">
+      {open ? (
+        <div className="pointer-events-auto max-h-[46vh] w-[200px] overflow-y-auto rounded-2xl p-3 surface">
+          <p className="pb-2 text-micro font-bold tracking-wide text-faint uppercase">On this map</p>
+
+          <ul className="space-y-1.5">
+            {routes.slice(0, 9).map((route) => (
+              <li key={route.id} className="flex items-center gap-2 text-tiny">
+                <span
+                  aria-hidden
+                  className="size-2.5 shrink-0 rounded-full"
+                  style={{ background: route.color ?? '#64748b' }}
+                />
+                <span className="min-w-0 truncate">{route.name}</span>
+              </li>
+            ))}
+          </ul>
+
+          {trip ? (
+            <p className="mt-2.5 flex items-center gap-2 border-t pt-2.5 text-tiny hairline">
+              <span
+                aria-hidden
+                className="size-2.5 shrink-0 rounded-full"
+                style={{ background: 'transparent', boxShadow: '0 0 0 2px #7dfab8' }}
+              />
+              Your own service
+            </p>
+          ) : null}
+
+          {showStations ? (
+            <p className="mt-2 flex items-center gap-2 text-tiny">
+              <span aria-hidden className="size-2 shrink-0 rounded-full bg-[var(--fg-faint)]" />
+              Station or stop
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="pointer-events-auto flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-tiny font-bold surface"
+      >
+        <span aria-hidden>{open ? '\u00d7' : '\u25cf'}</span>
+        {open ? 'Close' : 'Key'}
+      </button>
+    </div>
+  );
+}
+
 function createMarkerEl(
   vehicle: LiveVehicle,
   compact: boolean,
@@ -850,6 +931,7 @@ function updateMarkerEl(
   // which service it is — but gains a bright ring and a label, so it is findable
   // among a hundred others without hunting.
   el.dataset.mine = mine ? 'true' : 'false';
+  el.dataset.mode = vehicle.vehicleType;
 
   // A train covers about a pixel per poll at regional zoom, so movement needs
   // to be stated, not just animated: an arrow points the way it is heading.
@@ -863,7 +945,7 @@ function updateMarkerEl(
       : '';
 
   el.innerHTML = `
-    <span style="position:relative;display:grid;place-items:center;width:20px;height:20px;border-radius:999px;background:${tint};color:#fff;flex:none">
+    <span class="gt-marker-icon" style="position:relative;display:grid;place-items:center;width:20px;height:20px;border-radius:999px;background:${tint};color:#fff;flex:none">
       <svg viewBox="0 0 20 20" width="13" height="13" fill="none" aria-hidden>${icon}</svg>
       ${arrow}
     </span>

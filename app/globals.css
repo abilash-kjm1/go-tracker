@@ -500,3 +500,122 @@ body {
 @utility text-field {
   font-size: 16px;
 }
+
+/* ---- Map controls --------------------------------------------------------
+   MapLibre ships 29px grey squares with hard corners, which sat on the map
+   looking like somebody else's software. These match the app's own surfaces:
+   same radius, same hairline, same elevated background, and 44px so they can
+   actually be hit with a thumb. The icons are background images with baked-in
+   dark strokes, so dark mode inverts them rather than tinting. */
+.maplibregl-ctrl-group {
+  background: color-mix(in oklab, var(--bg-elevated) 92%, transparent) !important;
+  border: 1px solid var(--border);
+  border-radius: 16px !important;
+  box-shadow: var(--shadow-card) !important;
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+}
+
+.maplibregl-ctrl-group button {
+  width: 44px !important;
+  height: 44px !important;
+  background-color: transparent !important;
+}
+
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid var(--border) !important;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background-color: var(--bg-sunken) !important;
+}
+
+.maplibregl-ctrl-group button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+:root[data-theme='dark'] .maplibregl-ctrl-group button .maplibregl-ctrl-icon,
+:root[data-theme='dark'] .maplibregl-ctrl-group button span {
+  filter: invert(1) brightness(1.6);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .maplibregl-ctrl-group button .maplibregl-ctrl-icon,
+  :root:not([data-theme='light']) .maplibregl-ctrl-group button span {
+    filter: invert(1) brightness(1.6);
+  }
+}
+
+/* The attribution is a legal requirement, not a headline: it keeps its own
+   corner instead of running the width of the screen. */
+.maplibregl-ctrl-bottom-left,
+.maplibregl-ctrl-bottom-right {
+  z-index: 5;
+}
+
+/* A filter row that scrolls sideways should look like it does. Without this a
+   pill cut off at the screen edge reads as a layout fault rather than as an
+   invitation to swipe. */
+.map-fade::before,
+.map-fade::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  pointer-events: none;
+  z-index: 1;
+}
+.map-fade::before {
+  left: -2px;
+  background: linear-gradient(to right, var(--bg), transparent);
+}
+.map-fade::after {
+  right: -2px;
+  background: linear-gradient(to left, var(--bg), transparent);
+}
+
+/* ---- Map marker density --------------------------------------------------
+   With the whole region on screen there are a hundred and fifty buses and a
+   couple of dozen trains, and at equal size the buses bury the trains — the
+   map becomes a field of identical orange discs. GTFS gives every bus route
+   the same colour, so there is not even hue to tell them apart at a glance.
+
+   So zoomed out a bus becomes a small coloured dot while a train keeps its
+   icon, and the trains read immediately. Zoom in and the buses come back at
+   full size, because by then there are few enough on screen to matter
+   individually. No clustering and no numbers — those hid the trains entirely. */
+.gt-marker[data-compact='true'][data-mode='bus'] {
+  padding: 2px !important;
+  opacity: 0.88;
+}
+.gt-marker[data-compact='true'][data-mode='bus'] .gt-marker-icon {
+  width: 11px !important;
+  height: 11px !important;
+}
+.gt-marker[data-compact='true'][data-mode='bus'] .gt-marker-icon svg {
+  display: none;
+}
+
+/* A train at regional zoom keeps its icon and sits above the buses. */
+.gt-marker[data-compact='true'][data-mode='train'] {
+  z-index: 2;
+}
+
+/* The rider's own vehicle outranks both, whatever it is. The [data-mode] is
+   carried only to match the specificity of the bus rule above — without it
+   that rule wins and the one marker the rider came to find shrinks to a dot
+   along with the other hundred and forty-six. */
+.gt-marker[data-mine='true'][data-mode] .gt-marker-icon {
+  width: 20px !important;
+  height: 20px !important;
+}
+.gt-marker[data-mine='true'][data-mode] .gt-marker-icon svg {
+  display: block !important;
+}
+.gt-marker[data-mine='true'][data-mode] {
+  padding: 3px !important;
+  opacity: 1 !important;
+  z-index: 4;
+}
