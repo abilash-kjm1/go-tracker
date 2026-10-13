@@ -426,13 +426,13 @@ function WhenPicker({ value, onChange }: { value: string | null; onChange: (v: s
 
       {open ? (
         <div
-          className="mt-2 flex flex-wrap items-end gap-2 rounded-2xl border p-3 text-[var(--fg)]"
+          className="mt-2 flex flex-col gap-2 rounded-2xl border p-3 text-[var(--fg)] sm:flex-row sm:flex-wrap sm:items-end"
           style={{
             background: 'color-mix(in srgb, var(--accent) 7%, var(--bg-elevated))',
             borderColor: 'color-mix(in srgb, var(--accent) 24%, transparent)',
           }}
         >
-          <label className="min-w-0 flex-1">
+          <label className="w-full min-w-0 sm:flex-1">
             <span className="block text-micro font-bold tracking-wide text-faint uppercase">Day</span>
             <input
               type="date"
@@ -440,16 +440,16 @@ function WhenPicker({ value, onChange }: { value: string | null; onChange: (v: s
               min={min}
               max={max}
               onChange={(e) => set(e.target.value, time)}
-              className="mt-1 min-h-11 w-full rounded-xl border px-2 text-field outline-none hairline bg-[var(--bg-elevated)]"
+              className="mt-1 min-h-11 w-full min-w-0 rounded-xl border px-2 text-field outline-none hairline bg-[var(--bg-elevated)]"
             />
           </label>
-          <label className="w-[124px]">
+          <label className="w-full min-w-0 sm:w-[132px]">
             <span className="block text-micro font-bold tracking-wide text-faint uppercase">Time</span>
             <input
               type="time"
               value={time}
               onChange={(e) => set(date, e.target.value)}
-              className="mt-1 min-h-11 w-full rounded-xl border px-2 text-field outline-none hairline bg-[var(--bg-elevated)]"
+              className="mt-1 min-h-11 w-full min-w-0 rounded-xl border px-2 text-field outline-none hairline bg-[var(--bg-elevated)]"
             />
           </label>
           {max ? (
