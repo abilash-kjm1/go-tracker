@@ -3,7 +3,7 @@
 import clsx from 'clsx';
 import { PlatformAlertButton } from './PlatformAlertButton';
 import Link from 'next/link';
-import { ModeIcon } from '@/components/ui/primitives';
+import { ModeIcon, badgeColors } from '@/components/ui/primitives';
 import { formatClockParts, formatCountdown } from '@/lib/transit/time';
 import { useTicker } from '@/lib/client/useTransit';
 import { directionColors, type Compass, type DirectionTone } from './directions';
@@ -123,7 +123,7 @@ export function DepartureCard({
           <ModeIcon type={vehicleType} className="size-4 shrink-0 text-[var(--fg-faint)]" />
           <span
             className="inline-flex h-[18px] shrink-0 items-center rounded px-1.5 text-mini leading-none font-bold whitespace-nowrap text-white"
-            style={{ background: cancelled ? 'var(--color-ink-500)' : (routeColor ?? 'var(--color-ink-600)') }}
+            style={badgeColors(cancelled ? '#6e7768' : (routeColor ?? '#565e51'))}
           >
             {serviceCode ?? routeCode}
           </span>

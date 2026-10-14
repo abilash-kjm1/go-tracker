@@ -108,7 +108,7 @@ export function SignalShortcutSettings() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Add a station or stop"
                 aria-label="Add a station to the signal lamp"
-                className="min-h-12 w-full rounded-xl border px-3.5 text-field outline-none hairline bg-[var(--bg-elevated)] focus:border-[var(--accent)]"
+                className="min-h-12 w-full rounded-xl border px-3.5 text-field outline-none hairline bg-[var(--bg-elevated)] focus:border-[var(--accent-ink)]"
               />
               {matches.length > 0 ? (
                 <ul className="absolute inset-x-0 top-full z-20 mt-1 overflow-hidden rounded-xl p-1 surface">

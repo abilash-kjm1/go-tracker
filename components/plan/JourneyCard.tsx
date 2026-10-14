@@ -3,7 +3,7 @@
 import clsx from 'clsx';
 import Link from 'next/link';
 import { DepartureCard } from '@/components/departures/DepartureCard';
-import { ExpressBadge, ModeIcon, RouteBadge } from '@/components/ui/primitives';
+import { ExpressBadge, ModeIcon, RouteBadge, badgeColors } from '@/components/ui/primitives';
 import { formatClockParts, formatCountdown } from '@/lib/transit/time';
 import { useTicker } from '@/lib/client/useTransit';
 import type { DirectionTone } from '@/components/departures/directions';
@@ -95,7 +95,11 @@ export function JourneyCard({ journey, tone }: { journey: Journey; tone?: Direct
                 <span
                   aria-hidden
                   className="mt-1.5 w-1 shrink-0 rounded-full"
-                  style={{ background: leg.express ? 'var(--express)' : (leg.routeColor ?? 'var(--accent)') }}
+                  style={
+                    leg.express
+                      ? { background: 'var(--express)', color: '#ffffff' }
+                      : badgeColors(leg.routeColor ?? '#adc178')
+                  }
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
@@ -127,7 +131,7 @@ export function JourneyCard({ journey, tone }: { journey: Journey; tone?: Direct
                   {leg.tripId ? (
                     <Link
                       href={`/trips/${encodeURIComponent(leg.tripId)}`}
-                      className="mt-1 inline-block text-tiny font-medium text-[var(--accent)]"
+                      className="mt-1 inline-block text-tiny font-medium text-[var(--accent-ink)]"
                     >
                       Track this {leg.vehicleType === 'bus' ? 'bus' : 'train'} →
                     </Link>

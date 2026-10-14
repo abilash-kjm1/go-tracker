@@ -218,7 +218,7 @@ export function PlannerResults({ planner }: { planner: TripPlannerState }) {
               className="mt-1.5 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border text-small font-bold transition-colors hairline bg-[var(--bg-elevated)] hover:bg-[var(--bg-sunken)]"
             >
               {active?.id === journey.id ? (
-                <span className="text-[var(--accent)]">Following this trip</span>
+                <span className="text-[var(--accent-ink)]">Following this trip</span>
               ) : (
                 <>Start this trip</>
               )}
@@ -273,7 +273,7 @@ function StopPicker({
       <label className="flex min-h-14 items-center gap-3 px-4 focus-within:bg-[var(--bg-sunken)] rounded-2xl">
         <span aria-hidden className="grid w-3 place-items-center">
           {dot === 'from' ? (
-            <span className="size-3 rounded-full border-[3px] border-[var(--accent)] bg-transparent" />
+            <span className="size-3 rounded-full border-[3px] border-[var(--accent-ink)] bg-transparent" />
           ) : (
             <span className="size-3 rounded-full bg-[var(--accent)]" />
           )}

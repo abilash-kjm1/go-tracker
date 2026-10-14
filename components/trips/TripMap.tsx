@@ -86,7 +86,7 @@ export function TripMap({ trip }: { trip: TripDetail }) {
         source: 'journey',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': trip.routeColor ?? '#10b981',
+          'line-color': trip.routeColor ?? '#4f6939',
           'line-width': 4,
           'line-opacity': 0.9,
         },
@@ -95,7 +95,7 @@ export function TripMap({ trip }: { trip: TripDetail }) {
         type: 'geojson',
         data: { type: 'FeatureCollection', features: stopFeaturesRef.current },
       });
-      const lineColor = trip.routeColor ?? '#10b981';
+      const lineColor = trip.routeColor ?? '#4f6939';
       map.addLayer({
         id: 'journey-stops',
         type: 'circle',
@@ -105,8 +105,8 @@ export function TripMap({ trip }: { trip: TripDetail }) {
           'circle-color': [
             'match', ['get', 'state'],
             'past', '#9aa4b5',
-            'next', '#f59e0b',
-            resolved === 'dark' ? '#0b0f17' : '#ffffff',
+            'next', '#8a5a08',
+            resolved === 'dark' ? '#171a16' : '#ffffff',
           ],
           'circle-stroke-color': ['match', ['get', 'state'], 'past', '#9aa4b5', 'next', '#ffffff', lineColor],
           'circle-stroke-width': ['match', ['get', 'state'], 'next', 2.5, 2],
@@ -127,7 +127,7 @@ export function TripMap({ trip }: { trip: TripDetail }) {
         },
         paint: {
           'text-color': resolved === 'dark' ? '#eceff4' : '#1f2735',
-          'text-halo-color': resolved === 'dark' ? '#0b0f17' : '#ffffff',
+          'text-halo-color': resolved === 'dark' ? '#171a16' : '#ffffff',
           'text-halo-width': 1.6,
         },
       });

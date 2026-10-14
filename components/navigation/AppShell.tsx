@@ -84,7 +84,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   aria-current={active ? 'page' : undefined}
                   className={clsx(
                     'flex h-full flex-col items-center justify-center gap-1 text-micro font-medium transition-colors',
-                    active ? 'text-[var(--accent)]' : 'text-[var(--fg-muted)]',
+                    active ? 'text-[var(--accent-ink)]' : 'text-[var(--fg-muted)]',
                   )}
                 >
                   <item.icon className="size-6" />

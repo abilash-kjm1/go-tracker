@@ -91,7 +91,7 @@ function useBits(d: Departure) {
       ? `${Math.floor(d.durationMinutes / 60)}h ${d.durationMinutes % 60}m`
       : `${d.durationMinutes} min`
     : null;
-  return { late, depart, arrive, countdown, status, plat, dur, color: d.routeColor ?? '#10b981' };
+  return { late, depart, arrive, countdown, status, plat, dur, color: d.routeColor ?? '#4f6939' };
 }
 
 const statusColor = (late: boolean, realtime: boolean) =>

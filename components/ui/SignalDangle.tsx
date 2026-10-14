@@ -26,7 +26,7 @@ const ANCHOR_RIGHT = 32;
 const FALLBACK = [{ id: 'UN', name: 'Union Station GO' }];
 
 /** Signal aspects, in the order a lamp steps through them. */
-const ASPECTS = ['#22c55e', '#ffb81c', '#ef4444', '#38bdf8'];
+const ASPECTS = ['#3da863', '#ffb81c', '#ef4444', '#38bdf8'];
 
 interface Vec {
   x: number;
@@ -190,7 +190,7 @@ export function SignalDangle() {
   const dist = Math.hypot(pos.x, pos.y);
   // A slack cord bows; a stretched one pulls straight.
   const sag = Math.max(0, REST_LENGTH - dist) * 0.7;
-  const lit = blinking ? '#2b3138' : aspect;
+  const lit = blinking ? '#2b3029' : aspect;
 
   return (
     <div
@@ -203,11 +203,11 @@ export function SignalDangle() {
       <svg className="absolute inset-0 size-full" fill="none" aria-hidden>
         <path
           d={`M${170 - ANCHOR_RIGHT - 1} 0 Q ${170 - ANCHOR_RIGHT - 1 + pos.x / 2 + sag} ${pos.y / 2} ${170 - ANCHOR_RIGHT - 1 + pos.x} ${pos.y}`}
-          stroke="#54606f"
+          stroke="#565e51"
           strokeWidth="2"
           strokeLinecap="round"
         />
-        <circle cx={170 - ANCHOR_RIGHT - 1} cy="2" r="3.5" fill="#54606f" />
+        <circle cx={170 - ANCHOR_RIGHT - 1} cy="2" r="3.5" fill="#565e51" />
       </svg>
 
       <button
@@ -290,10 +290,10 @@ function SignalLamp({
     <svg viewBox="0 0 100 100" className="drop-shadow-lg" style={{ width: size, height: size }} aria-hidden>
       <defs>
         <linearGradient id="sd-iron" x1="0.2" y1="0" x2="0.8" y2="1">
-          <stop offset="0" stopColor="#5b6472" />
-          <stop offset="0.35" stopColor="#2f3641" />
-          <stop offset="0.7" stopColor="#1a1f27" />
-          <stop offset="1" stopColor="#0c0f14" />
+          <stop offset="0" stopColor="#5e6657" />
+          <stop offset="0.35" stopColor="#2f352c" />
+          <stop offset="0.7" stopColor="#1b1f19" />
+          <stop offset="1" stopColor="#0d100c" />
         </linearGradient>
         <radialGradient id="sd-lens" cx="0.4" cy="0.35" r="0.75">
           <stop offset="0" stopColor="#ffffff" />
@@ -311,10 +311,10 @@ function SignalLamp({
 
       <rect x="44" y="0" width="12" height="9" rx="3" fill="url(#sd-iron)" />
       <rect x="18" y="21" width="64" height="66" rx="16" fill="url(#sd-iron)" />
-      <path d="M14 31a36 20 0 0 1 72 0l-6 4a30 15 0 0 0-60 0Z" fill="#171c23" />
-      <path d="M14 31a36 20 0 0 1 72 0" fill="none" stroke="#6b7482" strokeWidth="1.4" opacity="0.7" />
+      <path d="M14 31a36 20 0 0 1 72 0l-6 4a30 15 0 0 0-60 0Z" fill="#181c16" />
+      <path d="M14 31a36 20 0 0 1 72 0" fill="none" stroke="#6e7768" strokeWidth="1.4" opacity="0.7" />
       {[[26, 37], [74, 37], [26, 75], [74, 75]].map(([cx, cy]) => (
-        <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="2.4" fill="#0a0d12" stroke="#6b7482" strokeWidth="0.9" />
+        <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="2.4" fill="#0b0e0a" stroke="#6e7768" strokeWidth="0.9" />
       ))}
 
       {/* The lamp itself: a glow that breathes, and flares while held. */}
@@ -336,7 +336,7 @@ function SignalLamp({
       <g clipPath="url(#sd-lensclip)">
         <rect className="sd-glint" x="-40" y="28" width="18" height="60" fill="#fff" opacity="0.5" transform="rotate(18 50 56)" />
       </g>
-      <circle cx="50" cy="56" r="23" fill="none" stroke="#0a0d12" strokeWidth="2.6" />
+      <circle cx="50" cy="56" r="23" fill="none" stroke="#0b0e0a" strokeWidth="2.6" />
       <path d="M36 45a23 23 0 0 1 12-6" stroke="#fff" strokeWidth="3" opacity="0.6" fill="none" strokeLinecap="round" />
 
       <text

@@ -71,6 +71,66 @@ export function Pill({
   );
 }
 
+
+/**
+ * A readable label on a line's own colour.
+ *
+ * Route colours come from the GTFS feed and belong to the railway. The text on
+ * top is ours, so that gives way first: white on Lakeshore West's deep
+ * burgundy, near-black on a pale bus route.
+ *
+ * A handful of lines defeat both. Lakeshore East is rgb(255,13,0), where white
+ * reaches 3.96:1 and black 3.79:1 — there is no ink that passes on it, so the
+ * fill itself has to move. It is darkened in its own hue by the smallest step
+ * that lets white clear 4.5:1, which for LE is a few percent: still plainly
+ * the Lakeshore East red, and now with a line code that can be read. Nothing
+ * is recoloured beyond that, and most lines are not touched at all.
+ */
+function luminanceOf(hex: string): number {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const ch = (i: number) => {
+    const v = parseInt(full.slice(i, i + 2), 16) / 255;
+    return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * ch(0) + 0.7152 * ch(2) + 0.0722 * ch(4);
+}
+
+const contrast = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+
+const INK = '#13170f';
+const INK_LUM = luminanceOf(INK);
+
+export function readableOn(background: string): string {
+  const hex = background.trim();
+  if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex)) return '#ffffff';
+  const l = luminanceOf(hex);
+  return contrast(l, INK_LUM) >= contrast(l, 1) ? INK : '#ffffff';
+}
+
+/** The fill and the ink together, with the fill adjusted only if it must be. */
+export function badgeColors(background: string): { background: string; color: string } {
+  const hex = background.trim();
+  if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex)) {
+    return { background, color: '#ffffff' };
+  }
+
+  const ink = readableOn(hex);
+  const inkLum = ink === INK ? INK_LUM : 1;
+  if (contrast(luminanceOf(hex), inkLum) >= 4.5) return { background: hex, color: ink };
+
+  // Step the fill toward black in its own hue until the chosen ink clears AA.
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const rgb = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16));
+  for (let f = 0.97; f >= 0.3; f -= 0.03) {
+    const next =
+      '#' + rgb.map((v) => Math.round(v * f).toString(16).padStart(2, '0')).join('');
+    if (contrast(luminanceOf(next), 1) >= 4.5) return { background: next, color: '#ffffff' };
+  }
+  return { background: hex, color: ink };
+}
+
 export function RouteBadge({
   code,
   color,
@@ -86,12 +146,14 @@ export function RouteBadge({
   return (
     <span
       className={clsx(
-        'inline-flex h-6 min-w-6 items-center justify-center rounded-md px-1.5 font-bold whitespace-nowrap text-white',
+        'inline-flex h-6 min-w-6 items-center justify-center rounded-md px-1.5 font-bold whitespace-nowrap',
         // A variant like "12B" needs to fit without shrinking the badge.
         code.length > 3 ? 'text-micro' : 'text-xs',
         className,
       )}
-      style={{ background: color ?? 'var(--color-ink-600)' }}
+      // Fill and ink decided together: GO's line colour is kept as it is
+      // wherever an ink can be read on it, which is every current line.
+      style={badgeColors(color ?? '#565e51')}
       title={type === 'bus' ? `GO Bus route ${code}` : `GO Train line ${code}`}
     >
       {code}

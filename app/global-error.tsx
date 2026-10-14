@@ -22,8 +22,8 @@ export default function GlobalError({
           display: 'grid',
           placeItems: 'center',
           padding: '24px',
-          background: '#0b0f17',
-          color: '#e8edf5',
+          background: '#171a16',
+          color: '#ecefe6',
           fontFamily:
             'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
           textAlign: 'center',
@@ -36,7 +36,7 @@ export default function GlobalError({
           <h1 style={{ fontSize: '20px', fontWeight: 600, margin: '12px 0 6px' }}>
             GO Tracker failed to start
           </h1>
-          <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#9aa7b8', margin: 0 }}>
+          <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#afb7a8', margin: 0 }}>
             Something went wrong before the app could load. Reloading usually fixes it.
           </p>
           <button
@@ -48,8 +48,8 @@ export default function GlobalError({
               padding: '0 20px',
               borderRadius: '14px',
               border: 0,
-              background: '#06b06f',
-              color: '#04120b',
+              background: '#adc178',
+              color: '#19200f',
               fontSize: '14px',
               fontWeight: 600,
               cursor: 'pointer',
@@ -58,7 +58,7 @@ export default function GlobalError({
             Reload
           </button>
           {error.digest ? (
-            <p style={{ fontSize: '11px', color: '#6b7a8d', marginTop: '16px' }}>
+            <p style={{ fontSize: '11px', color: '#949c8d', marginTop: '16px' }}>
               Reference {error.digest}
             </p>
           ) : null}

@@ -34,11 +34,11 @@ export default async function AboutPage() {
         </p>
         <p>
           Map tiles &copy;{' '}
-          <a className="text-[var(--accent)]" href="https://carto.com/attributions">
+          <a className="text-[var(--accent-ink)]" href="https://carto.com/attributions">
             CARTO
           </a>
           , map data &copy;{' '}
-          <a className="text-[var(--accent)]" href="https://www.openstreetmap.org/copyright">
+          <a className="text-[var(--accent-ink)]" href="https://www.openstreetmap.org/copyright">
             OpenStreetMap
           </a>{' '}
           contributors.

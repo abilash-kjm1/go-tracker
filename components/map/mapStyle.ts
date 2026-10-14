@@ -20,7 +20,7 @@ export function basemapStyleUrl(theme: 'light' | 'dark'): string {
 
 /** Painted behind the tiles so the pane never flashes white in dark mode. */
 export const basemapBackground = (theme: 'light' | 'dark') =>
-  theme === 'dark' ? '#0b0f17' : '#eef1f6';
+  theme === 'dark' ? '#171a16' : '#f7f8f0';
 
 /** Greater Toronto and Hamilton Area, where GO operates. */
 export const GTHA_CENTER: [number, number] = [-79.55, 43.71];

@@ -13,90 +13,127 @@
     ui-sans-serif, system-ui, -apple-system, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI',
     Roboto, sans-serif;
 
-  --color-ink-50: #f6f8fa;
-  --color-ink-100: #eceff4;
-  --color-ink-200: #d7dde6;
-  --color-ink-300: #b3bdcc;
-  --color-ink-400: #7f8b9e;
-  --color-ink-500: #5a6579;
-  --color-ink-600: #3d4657;
-  --color-ink-700: #2a3140;
-  --color-ink-800: #1b2130;
-  --color-ink-900: #121722;
-  --color-ink-950: #0b0f17;
+  /*
+   * Neutrals are warm, not blue. A page of transit information is mostly
+   * neutral surface, so the neutral is what the app actually feels like — and
+   * a warm ivory reads as paper where the old slate read as a dashboard.
+   */
+  --color-ink-50: #f7f8f0;
+  --color-ink-100: #eff1e6;
+  --color-ink-200: #e5ebd8;
+  --color-ink-300: #cbd3bc;
+  --color-ink-400: #9aa390;
+  --color-ink-500: #6e7768;
+  --color-ink-600: #565e51;
+  --color-ink-700: #454c41;
+  --color-ink-800: #30372d;
+  --color-ink-900: #252a22;
+  --color-ink-950: #171a16;
 
-  --color-signal-300: #6ee7b7;
-  --color-signal-400: #34d399;
-  --color-signal-500: #10b981;
-  --color-signal-600: #059669;
+  /*
+   * The brand, in two roles. 400 is the sage everyone sees — a surface colour
+   * that carries dark text. 600 is the same hue taken deep enough to BE text:
+   * #adc178 against ivory is 2.3:1, so a sage link or a sage label has to use
+   * the ink, never the surface. Keeping both in one scale is what stops that
+   * being got wrong.
+   */
+  --color-signal-300: #c2f8cb;
+  --color-signal-400: #adc178;
+  --color-signal-500: #4f6939;
+  --color-signal-600: #40572e;
 
-  --color-warn-400: #fbbf24;
-  --color-warn-500: #f59e0b;
-  --color-alert-400: #f87171;
-  --color-alert-500: #ef4444;
+  /*
+   * Status hues, each verified as text on the light surfaces and again on the
+   * dark ones. The values they replace were failing badly: amber text was
+   * 2.15:1 on white and the live green 2.54:1, both well under the 4.5 a
+   * delay or a platform change needs to be readable at.
+   */
+  --color-warn-400: #fbe8b4;
+  --color-warn-500: #8a5a08;
+  --color-alert-400: #f6dad7;
+  --color-alert-500: #9b2c25;
 
   --radius-sheet: 1.75rem;
 }
 
 :root {
+  /* ---- surfaces ---- */
   --bg: var(--color-ink-50);
   --bg-elevated: #ffffff;
-  --bg-sunken: #eef1f6;
-  --fg: var(--color-ink-900);
-  --fg-muted: var(--color-ink-500);
-  /* ink-400 was only ~3.6:1 on the light background. */
-  --fg-faint: #67728a;
-  --border: rgb(15 23 42 / 0.09);
-  --border-strong: rgb(15 23 42 / 0.16);
-  --accent: var(--color-signal-600);
-  --accent-fg: #ffffff;
-  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06), 0 8px 24px -16px rgb(15 23 42 / 0.25);
+  --bg-sunken: var(--color-ink-200);
+
+  /* ---- type ---- */
+  --fg: var(--color-ink-800);
+  --fg-muted: #4e5649;
+  --fg-faint: #5c6457;
+
+  /* ---- structure ---- */
+  --border: rgb(48 55 45 / 0.10);
+  --border-strong: rgb(48 55 45 / 0.22);
+
+  /*
+   * Brand. --accent is the sage surface and --accent-fg the ink that sits on
+   * it; --accent-ink is the same hue for text and icons on a pale background,
+   * where the surface tone would be invisible.
+   */
+  --accent: var(--color-signal-400);
+  --accent-fg: #2a3127;
+  --accent-ink: var(--color-signal-500);
+  --focus-ring: var(--color-signal-500);
+
+  --shadow-card: 0 1px 2px rgb(48 55 45 / 0.05), 0 10px 28px -20px rgb(48 55 45 / 0.28);
+
+  /* ---- transit status ---- */
+  --status-live-bg: #c2f8cb;
+  --status-live-fg: #156137;
+  --status-expected-bg: #dceaf7;
+  --status-expected-fg: #1c4c72;
+  --status-delayed-bg: #fbe8b4;
+  --status-delayed-fg: #7a4a06;
+  --status-disruption-bg: #f6dad7;
+  --status-disruption-fg: #8c2420;
+  /* Solid attention pill — a count, not a surface. */
+  --count-bg: #9b2c25;
+  --count-fg: #ffffff;
 
   /*
    * Direction colours. Deliberately outside the status palette (green / amber
-   * / red) so "which way is it going" never reads as "is it late".
+   * / red) and outside the brand hue, so "which way is it going" never reads
+   * as "is it late" nor as "this is selected".
    */
-  --dir-a: #3b6fe0;
-  --dir-a-surface: rgb(59 111 224 / 0.1);
-  --dir-a-border: rgb(59 111 224 / 0.28);
-  --dir-b: #8b46d6;
-  --dir-b-surface: rgb(139 70 214 / 0.1);
-  --dir-b-border: rgb(139 70 214 / 0.28);
+  --dir-a: #27508f;
+  --dir-a-surface: rgb(47 95 168 / 0.10);
+  --dir-a-border: rgb(47 95 168 / 0.28);
+  --dir-b: #5d3680;
+  --dir-b-surface: rgb(111 65 150 / 0.10);
+  --dir-b-border: rgb(111 65 150 / 0.28);
+  --spine-a: #2f5fa8;
+  --spine-b: #6f4196;
+  --dir-c: #555d50;
+  --dir-c-surface: rgb(110 119 104 / 0.12);
+  --dir-c-border: rgb(110 119 104 / 0.30);
+  --dir-d: #7a4f06;
+  --dir-d-surface: rgb(138 90 8 / 0.10);
+  --dir-d-border: rgb(138 90 8 / 0.28);
 
-  /*
-   * Spine colours: the deep, saturated end of the direction hues, so white
-   * glyphs read on them in either theme. Direction owns the card's biggest
-   * block; the line (LW, GT...) is only a small pill, so the line's own colour
-   * never has to harmonise with the direction hue.
-   */
-  --spine-a: #2f5fd0;
-  --spine-b: #7a3fc2;
-  --dir-c: #64748b;
-  --dir-c-surface: rgb(100 116 139 / 0.1);
-  --dir-c-border: rgb(100 116 139 / 0.28);
-  --dir-d: #a16207;
-  --dir-d-surface: rgb(161 98 7 / 0.1);
-  --dir-d-border: rgb(161 98 7 / 0.28);
+  /* Express: a property of the service, never a status or a direction. */
+  --express: #1f6f7f;
+  --express-surface: rgb(31 111 127 / 0.12);
+  --express-border: rgb(31 111 127 / 0.30);
 
-  /* Express. Teal, so it reads as a property of the service and can never be
-     mistaken for a status (green/amber/red) or a direction (blue/purple). */
-  --express: #0e7490;
-  --express-surface: rgb(14 116 144 / 0.12);
-  --express-border: rgb(14 116 144 / 0.3);
-
-  /* Journey palette: pastel tints with deep text on light backgrounds. */
-  --tile-blue-bg: #e4edff;
-  --tile-blue-fg: #1e40af;
-  --tile-violet-bg: #efe7ff;
-  --tile-violet-fg: #5b21b6;
-  --tile-amber-bg: #fff0cf;
-  --tile-amber-fg: #a04a08;
-  --tile-teal-bg: #d6f4ef;
-  --tile-teal-fg: #0b6b62;
-  --tile-rose-bg: #ffe3ea;
-  --tile-rose-fg: #b0123e;
-  --tile-green-bg: #d9f6e4;
-  --tile-green-fg: #0f6b35;
+  /* Journey palette: pastel grounds with text dark enough to read on them. */
+  --tile-blue-bg: #dceaf7;
+  --tile-blue-fg: #1c4c72;
+  --tile-violet-bg: #e9e2f4;
+  --tile-violet-fg: #553281;
+  --tile-amber-bg: #fbe8b4;
+  --tile-amber-fg: #7a4a06;
+  --tile-teal-bg: #d6ece9;
+  --tile-teal-fg: #16605a;
+  --tile-rose-bg: #f6dad7;
+  --tile-rose-fg: #8c2420;
+  --tile-green-bg: #c2f8cb;
+  --tile-green-fg: #156137;
   --hero-a: 18%;
   --hero-b: 5%;
   --lift: 0%;
@@ -104,48 +141,73 @@
   color-scheme: light;
 }
 
+/*
+ * Dark is its own design, not the light theme inverted. The page is a warm
+ * charcoal rather than near-black, surfaces lift by a few points instead of
+ * relying on borders, and the brand appears as the pale sage — the deep ink
+ * that carries text on ivory would disappear here.
+ */
 :root[data-theme='dark'],
 :root:not([data-theme='light']) {
   @media (prefers-color-scheme: dark) {
+
     --bg: var(--color-ink-950);
-    --bg-elevated: var(--color-ink-900);
-    --bg-sunken: #070a10;
-    --fg: var(--color-ink-50);
-    --fg-muted: var(--color-ink-300);
-    --fg-faint: #8d98ab;
-    --border: rgb(148 163 184 / 0.14);
-    --border-strong: rgb(148 163 184 / 0.26);
+    --bg-elevated: #1f231d;
+    --bg-sunken: #121511;
+    --fg: #ecefe6;
+    --fg-muted: #afb7a8;
+    --fg-faint: #949c8d;
+    --border: rgb(236 239 230 / 0.12);
+    --border-strong: rgb(236 239 230 / 0.24);
+
     --accent: var(--color-signal-400);
-    --accent-fg: #06110c;
-    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -20px rgb(0 0 0 / 0.9);
-    --dir-a: #7aa2ff;
-    --dir-a-surface: rgb(122 162 255 / 0.14);
-    --dir-a-border: rgb(122 162 255 / 0.34);
-    --dir-b: #c48bff;
-    --dir-b-surface: rgb(196 139 255 / 0.14);
-    --dir-b-border: rgb(196 139 255 / 0.34);
-    --dir-c: #94a3b8;
-    --dir-c-surface: rgb(148 163 184 / 0.14);
-    --dir-c-border: rgb(148 163 184 / 0.32);
-    --dir-d: #d9a441;
-    --dir-d-surface: rgb(217 164 65 / 0.14);
-    --dir-d-border: rgb(217 164 65 / 0.32);
-    --express: #22d3ee;
-    --express-surface: rgb(34 211 238 / 0.14);
-    --express-border: rgb(34 211 238 / 0.32);
-    /* Journey palette: glowing translucent tints with bright text on dark. */
-    --tile-blue-bg: rgb(96 165 250 / 0.16);
-    --tile-blue-fg: #9cc4ff;
-    --tile-violet-bg: rgb(167 139 250 / 0.17);
-    --tile-violet-fg: #cdbcff;
-    --tile-amber-bg: rgb(251 191 36 / 0.15);
-    --tile-amber-fg: #fdd870;
-    --tile-teal-bg: rgb(45 212 191 / 0.15);
-    --tile-teal-fg: #6ee7d6;
-    --tile-rose-bg: rgb(251 113 133 / 0.17);
-    --tile-rose-fg: #ffb0bf;
-    --tile-green-bg: rgb(74 222 128 / 0.15);
-    --tile-green-fg: #8ff0b0;
+    --accent-fg: #19200f;
+    --accent-ink: #bfd38c;
+    --focus-ring: #bfd38c;
+
+    --color-signal-500: #bfd38c;
+    --color-warn-500: #f0c96a;
+    --color-alert-500: #f3a49d;
+
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.42), 0 14px 34px -22px rgb(0 0 0 / 0.9);
+
+    --status-live-bg: rgb(173 193 120 / 0.18);
+    --status-live-fg: #cfe3a0;
+    --status-expected-bg: rgb(125 176 221 / 0.16);
+    --status-expected-fg: #a8cdec;
+    --status-delayed-bg: rgb(240 201 106 / 0.16);
+    --status-delayed-fg: #f0c96a;
+    --status-disruption-bg: rgb(243 164 157 / 0.16);
+    --status-disruption-fg: #f3a49d;
+
+    --dir-a: #8fb4ee;
+    --dir-a-surface: rgb(143 180 238 / 0.14);
+    --dir-a-border: rgb(143 180 238 / 0.32);
+    --dir-b: #c3a2e4;
+    --dir-b-surface: rgb(195 162 228 / 0.14);
+    --dir-b-border: rgb(195 162 228 / 0.32);
+    --dir-c: #9aa390;
+    --dir-c-surface: rgb(154 163 144 / 0.14);
+    --dir-c-border: rgb(154 163 144 / 0.30);
+    --dir-d: #e0bd74;
+    --dir-d-surface: rgb(224 189 116 / 0.14);
+    --dir-d-border: rgb(224 189 116 / 0.32);
+    --express: #7fd3e3;
+    --express-surface: rgb(127 211 227 / 0.14);
+    --express-border: rgb(127 211 227 / 0.32);
+
+    --tile-blue-bg: rgb(143 180 238 / 0.16);
+    --tile-blue-fg: #a8cdec;
+    --tile-violet-bg: rgb(195 162 228 / 0.17);
+    --tile-violet-fg: #d3bdee;
+    --tile-amber-bg: rgb(240 201 106 / 0.15);
+    --tile-amber-fg: #f0c96a;
+    --tile-teal-bg: rgb(127 211 227 / 0.15);
+    --tile-teal-fg: #8fdbe8;
+    --tile-rose-bg: rgb(243 164 157 / 0.17);
+    --tile-rose-fg: #f3a49d;
+    --tile-green-bg: rgb(173 193 120 / 0.17);
+    --tile-green-fg: #cfe3a0;
     --hero-a: 34%;
     --hero-b: 10%;
     --lift: 38%;
@@ -154,45 +216,66 @@
 }
 
 :root[data-theme='dark'] {
+
   --bg: var(--color-ink-950);
-  --bg-elevated: var(--color-ink-900);
-  --bg-sunken: #070a10;
-  --fg: var(--color-ink-50);
-  --fg-muted: var(--color-ink-300);
-  --fg-faint: #8d98ab;
-  --border: rgb(148 163 184 / 0.14);
-  --border-strong: rgb(148 163 184 / 0.26);
+  --bg-elevated: #1f231d;
+  --bg-sunken: #121511;
+  --fg: #ecefe6;
+  --fg-muted: #afb7a8;
+  --fg-faint: #949c8d;
+  --border: rgb(236 239 230 / 0.12);
+  --border-strong: rgb(236 239 230 / 0.24);
+
   --accent: var(--color-signal-400);
-  --accent-fg: #06110c;
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -20px rgb(0 0 0 / 0.9);
-  --dir-a: #7aa2ff;
-  --dir-a-surface: rgb(122 162 255 / 0.14);
-  --dir-a-border: rgb(122 162 255 / 0.34);
-  --dir-b: #c48bff;
-  --dir-b-surface: rgb(196 139 255 / 0.14);
-  --dir-b-border: rgb(196 139 255 / 0.34);
-  --dir-c: #94a3b8;
-  --dir-c-surface: rgb(148 163 184 / 0.14);
-  --dir-c-border: rgb(148 163 184 / 0.32);
-  --dir-d: #d9a441;
-  --dir-d-surface: rgb(217 164 65 / 0.14);
-  --dir-d-border: rgb(217 164 65 / 0.32);
-  --express: #22d3ee;
-  --express-surface: rgb(34 211 238 / 0.14);
-  --express-border: rgb(34 211 238 / 0.32);
-  /* Journey palette: glowing translucent tints with bright text on dark. */
-  --tile-blue-bg: rgb(96 165 250 / 0.16);
-  --tile-blue-fg: #9cc4ff;
-  --tile-violet-bg: rgb(167 139 250 / 0.17);
-  --tile-violet-fg: #cdbcff;
-  --tile-amber-bg: rgb(251 191 36 / 0.15);
-  --tile-amber-fg: #fdd870;
-  --tile-teal-bg: rgb(45 212 191 / 0.15);
-  --tile-teal-fg: #6ee7d6;
-  --tile-rose-bg: rgb(251 113 133 / 0.17);
-  --tile-rose-fg: #ffb0bf;
-  --tile-green-bg: rgb(74 222 128 / 0.15);
-  --tile-green-fg: #8ff0b0;
+  --accent-fg: #19200f;
+  --accent-ink: #bfd38c;
+  --focus-ring: #bfd38c;
+
+  --color-signal-500: #bfd38c;
+  --color-warn-500: #f0c96a;
+  --color-alert-500: #f3a49d;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.42), 0 14px 34px -22px rgb(0 0 0 / 0.9);
+
+  --status-live-bg: rgb(173 193 120 / 0.18);
+  --status-live-fg: #cfe3a0;
+  --status-expected-bg: rgb(125 176 221 / 0.16);
+  --status-expected-fg: #a8cdec;
+  --status-delayed-bg: rgb(240 201 106 / 0.16);
+  --status-delayed-fg: #f0c96a;
+  --status-disruption-bg: rgb(243 164 157 / 0.16);
+  --status-disruption-fg: #f3a49d;
+  --count-bg: #f3a49d;
+  --count-fg: #2a110f;
+
+  --dir-a: #8fb4ee;
+  --dir-a-surface: rgb(143 180 238 / 0.14);
+  --dir-a-border: rgb(143 180 238 / 0.32);
+  --dir-b: #c3a2e4;
+  --dir-b-surface: rgb(195 162 228 / 0.14);
+  --dir-b-border: rgb(195 162 228 / 0.32);
+  --dir-c: #9aa390;
+  --dir-c-surface: rgb(154 163 144 / 0.14);
+  --dir-c-border: rgb(154 163 144 / 0.30);
+  --dir-d: #e0bd74;
+  --dir-d-surface: rgb(224 189 116 / 0.14);
+  --dir-d-border: rgb(224 189 116 / 0.32);
+  --express: #7fd3e3;
+  --express-surface: rgb(127 211 227 / 0.14);
+  --express-border: rgb(127 211 227 / 0.32);
+
+  --tile-blue-bg: rgb(143 180 238 / 0.16);
+  --tile-blue-fg: #a8cdec;
+  --tile-violet-bg: rgb(195 162 228 / 0.17);
+  --tile-violet-fg: #d3bdee;
+  --tile-amber-bg: rgb(240 201 106 / 0.15);
+  --tile-amber-fg: #f0c96a;
+  --tile-teal-bg: rgb(127 211 227 / 0.15);
+  --tile-teal-fg: #8fdbe8;
+  --tile-rose-bg: rgb(243 164 157 / 0.17);
+  --tile-rose-fg: #f3a49d;
+  --tile-green-bg: rgb(173 193 120 / 0.17);
+  --tile-green-fg: #cfe3a0;
   --hero-a: 34%;
   --hero-b: 10%;
   --lift: 38%;
@@ -426,14 +509,14 @@ body {
    the accent so it reads in both themes, and :focus-visible so a mouse click
    never draws it. */
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: 6px;
 }
 
 /* A dark map canvas needs the ring lifted off the tiles to stay visible. */
 .maplibregl-canvas:focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 3px solid var(--focus-ring);
   outline-offset: -3px;
 }
 
@@ -531,7 +614,7 @@ body {
 }
 
 .maplibregl-ctrl-group button:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus-ring);
   outline-offset: -2px;
 }
 

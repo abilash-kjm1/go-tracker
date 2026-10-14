@@ -6,7 +6,7 @@ import { SearchIcon, SearchOverlay } from '@/components/search/SearchOverlay';
 import { PlannerForm, PlannerResults, useTripPlanner } from '@/components/plan/TripPlanner';
 import { StationSummaryCard } from '@/components/stations/StationSummaryCard';
 import { LiveIndicator } from '@/components/ui/LiveIndicator';
-import { ModeIcon, Skeleton } from '@/components/ui/primitives';
+import { ModeIcon, Skeleton, badgeColors } from '@/components/ui/primitives';
 import { useFavorites, useRecentStops } from '@/lib/client/favorites';
 import { useNearbyStops } from '@/lib/client/useNearby';
 import { useTransit } from '@/lib/client/useTransit';
@@ -183,7 +183,7 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
       {nearby.status === 'denied' ? (
         <p className="mt-3 text-tiny text-faint">
           Location is blocked, so nearby stops are unavailable.{' '}
-          <Link href="/stations" className="font-medium text-[var(--accent)]">
+          <Link href="/stations" className="font-medium text-[var(--accent-ink)]">
             Browse stations
           </Link>
           .
@@ -249,13 +249,13 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
                     style={{
                       boxShadow:
                         liveView.kind === 'line' && liveView.routeId === route.id
-                          ? `inset 0 0 0 2px ${route.color ?? '#64748b'}`
+                          ? `inset 0 0 0 2px ${route.color ?? '#565e51'}`
                           : 'inset 0 0 0 1px var(--border-strong)',
                     }}
                   >
                     <span
                       className="grid h-5 min-w-7 place-items-center rounded-full px-1.5 text-micro font-extrabold text-white"
-                      style={{ background: route.color ?? '#64748b' }}
+                      style={badgeColors(route.color ?? '#565e51')}
                     >
                       {route.code}
                     </span>
@@ -285,7 +285,7 @@ export function HomeScreen({ featured = [] }: { featured?: TransitStop[] }) {
 
         <Link
           href="/map"
-          className="mt-2 flex min-h-11 items-center justify-center rounded-2xl border text-small font-semibold text-[var(--accent)] hairline"
+          className="mt-2 flex min-h-11 items-center justify-center rounded-2xl border text-small font-semibold text-[var(--accent-ink)] hairline"
         >
           Open the live map
         </Link>
@@ -357,7 +357,10 @@ function Shortcut({
       <span className="grid size-5 place-items-center">{icon}</span>
       {label}
       {badge ? (
-        <span className="tabular absolute top-1 right-2 grid h-[17px] min-w-[17px] place-items-center rounded-full bg-[var(--color-alert-500)] px-1 text-micro font-extrabold text-white">
+        <span
+          className="tabular absolute top-1 right-2 grid h-[17px] min-w-[17px] place-items-center rounded-full px-1 text-micro font-extrabold"
+          style={{ background: 'var(--count-bg)', color: 'var(--count-fg)' }}
+        >
           {badge}
         </span>
       ) : null}
@@ -501,7 +504,7 @@ function LiveList({
               >
                 <span
                   className="grid h-7 min-w-9 place-items-center rounded-full px-2 text-mini font-extrabold text-white"
-                  style={{ background: route.color ?? '#64748b' }}
+                  style={badgeColors(route.color ?? '#565e51')}
                 >
                   {route.code}
                 </span>
@@ -547,7 +550,7 @@ function TrainRowItem({ vehicle: v, route }: { vehicle: LiveVehicle; route?: Tra
         >
           <span
             className="grid h-7 min-w-9 shrink-0 place-items-center rounded-full px-2 text-mini font-extrabold text-white"
-            style={{ background: route?.color ?? '#64748b' }}
+            style={{ background: route?.color ?? '#565e51' }}
           >
             {route?.code ?? '?'}
           </span>
@@ -583,7 +586,7 @@ function TrainRowItem({ vehicle: v, route }: { vehicle: LiveVehicle; route?: Tra
           <Link
             href={`/map?trip=${encodeURIComponent(v.tripId)}`}
             aria-label="Show this train on the map"
-            className="grid w-11 shrink-0 place-items-center border-l text-[var(--accent)] hairline"
+            className="grid w-11 shrink-0 place-items-center border-l text-[var(--accent-ink)] hairline"
           >
             <MapGlyph />
           </Link>

@@ -213,8 +213,8 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
         filter: ['==', ['get', 'isStation'], isStation],
         paint: {
           'circle-radius': isStation ? 5.5 : 3.5,
-          'circle-color': isStation ? '#10b981' : resolved === 'dark' ? '#7f8b9e' : '#5a6579',
-          'circle-stroke-color': resolved === 'dark' ? '#0b0f17' : '#ffffff',
+          'circle-color': isStation ? '#4f6939' : resolved === 'dark' ? '#7f8b9e' : '#5a6579',
+          'circle-stroke-color': resolved === 'dark' ? '#171a16' : '#ffffff',
           'circle-stroke-width': 1.5,
         },
       });
@@ -238,7 +238,7 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
       },
       paint: {
         'text-color': resolved === 'dark' ? '#eceff4' : '#1f2735',
-        'text-halo-color': resolved === 'dark' ? '#0b0f17' : '#ffffff',
+        'text-halo-color': resolved === 'dark' ? '#171a16' : '#ffffff',
         'text-halo-width': 1.8,
       },
     });
@@ -258,7 +258,7 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
       },
       paint: {
         'text-color': resolved === 'dark' ? '#b7c0cf' : '#3a4557',
-        'text-halo-color': resolved === 'dark' ? '#0b0f17' : '#ffffff',
+        'text-halo-color': resolved === 'dark' ? '#171a16' : '#ffffff',
         'text-halo-width': 1.5,
       },
     });
@@ -311,7 +311,7 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
       located.findIndex((st) => st.status === 'current'),
       located.findIndex((st) => st.status !== 'departed'),
     );
-    const color = trip?.routeColor ?? '#10b981';
+    const color = trip?.routeColor ?? '#4f6939';
     const line = {
       type: 'Feature' as const,
       properties: {},
@@ -347,7 +347,7 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
         source: 'focus-line',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': resolved === 'dark' ? '#0b0f17' : '#ffffff',
+          'line-color': resolved === 'dark' ? '#171a16' : '#ffffff',
           'line-width': 9,
           'line-opacity': 0.9,
         },
@@ -371,8 +371,8 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
             'past',
             '#9aa4b5',
             'next',
-            '#f59e0b',
-            resolved === 'dark' ? '#0b0f17' : '#ffffff',
+            '#8a5a08',
+            resolved === 'dark' ? '#171a16' : '#ffffff',
           ],
           'circle-stroke-color': [
             'match',
@@ -400,7 +400,7 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
         },
         paint: {
           'text-color': resolved === 'dark' ? '#ffffff' : '#111827',
-          'text-halo-color': resolved === 'dark' ? '#0b0f17' : '#ffffff',
+          'text-halo-color': resolved === 'dark' ? '#171a16' : '#ffffff',
           'text-halo-width': 2,
         },
       });
@@ -853,7 +853,7 @@ function MapLegend({
                 <span
                   aria-hidden
                   className="size-2.5 shrink-0 rounded-full"
-                  style={{ background: route.color ?? '#64748b' }}
+                  style={{ background: route.color ?? '#565e51' }}
                 />
                 <span className="min-w-0 truncate">{route.name}</span>
               </li>

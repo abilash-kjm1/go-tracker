@@ -252,7 +252,7 @@ function StopRow({
               ? {
                   background:
                     'linear-gradient(145deg, color-mix(in srgb, var(--accent) 20%, transparent), color-mix(in srgb, var(--accent) 8%, transparent))',
-                  color: 'var(--accent)',
+                  color: 'var(--accent-ink)',
                   boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent)',
                 }
               : {
