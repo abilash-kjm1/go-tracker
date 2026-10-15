@@ -99,8 +99,33 @@ export function PlannerForm({
   loadingStops?: boolean;
 }) {
   const { from, to, setFrom, setTo, swap, ready, at, setAt, recent, pick } = planner;
+  const [problem, setProblem] = useState<string | null>(null);
+  const resultsAnchor = 'planner-results';
+
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!from && !to) {
+      setProblem('Choose where you are starting from and where you are going.');
+      return;
+    }
+    if (!from) {
+      setProblem('Choose where you are starting from.');
+      return;
+    }
+    if (!to) {
+      setProblem('Choose where you are going.');
+      return;
+    }
+    if (from.id === to.id) {
+      setProblem('Those are the same stop. Pick a different destination.');
+      return;
+    }
+    setProblem(null);
+    document.getElementById(resultsAnchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
-    <div>
+    <form onSubmit={submit} noValidate>
       <div className="relative">
         <div className="overflow-visible rounded-2xl border bg-[var(--bg-elevated)] text-[var(--fg)] shadow-[var(--shadow-card)] hairline">
           <StopPicker
@@ -152,6 +177,26 @@ export function PlannerForm({
 
       <WhenPicker value={at} onChange={setAt} />
 
+      <button
+        type="submit"
+        className="mt-2.5 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl text-ui font-bold shadow-sm transition-colors"
+        style={{ background: 'var(--accent)', color: 'var(--accent-fg)' }}
+      >
+        <SearchGlyph />
+        {ready ? 'Show journeys' : 'Search'}
+      </button>
+
+      {problem ? (
+        <p
+          role="alert"
+          className="mt-2 flex items-start gap-2 rounded-xl px-3 py-2 text-small"
+          style={{ background: 'var(--status-delayed-bg)', color: 'var(--status-delayed-fg)' }}
+        >
+          <span aria-hidden className="mt-px font-bold">!</span>
+          {problem}
+        </p>
+      ) : null}
+
       {!ready && recent.length > 0 ? (
         <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-0.5">
           {recent.map((journey) => (
@@ -166,7 +211,16 @@ export function PlannerForm({
           ))}
         </div>
       ) : null}
-    </div>
+    </form>
+  );
+}
+
+function SearchGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none" aria-hidden>
+      <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="2" />
+      <path d="m16 16 4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
   );
 }
 
@@ -174,10 +228,12 @@ export function PlannerForm({
 export function PlannerResults({ planner }: { planner: TripPlannerState }) {
   const { from, to, ready, at, data, meta, error, loading, freshness } = planner;
   const { trip: active, start } = useActiveTrip();
-  if (!ready) return null;
+  // The anchor the planner's button scrolls to, present whether or not there
+  // are results yet.
+  if (!ready) return <div id="planner-results" />;
 
   return (
-    <section className="mt-5" aria-label="Journeys">
+    <section id="planner-results" className="mt-5" aria-label="Journeys">
       <div className="mb-2 flex items-center justify-between gap-2">
         <h2 className="text-tiny font-bold tracking-[0.12em] text-faint uppercase">
           {from!.name.replace(/\s+GO$/i, '')} → {to!.name.replace(/\s+GO$/i, '')}

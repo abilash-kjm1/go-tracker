@@ -116,29 +116,22 @@ export function DepartureCard({
           as hazard tape and took a sixth of the card from the words that matter. */}
       <span aria-hidden className="w-[6px] shrink-0 rounded-l-[15px]" style={{ background: spine }} />
 
-      {/* Body: which service, when it leaves, where it goes. */}
-      <span className="min-w-0 flex-1 px-3.5 py-3 @max-[340px]:px-2.5">
-        <span className="flex items-center gap-1.5">
-          {heading && directional ? <Arrow heading={heading} /> : null}
-          <ModeIcon type={vehicleType} className="size-4 shrink-0 text-[var(--fg-faint)]" />
-          <span
-            className="inline-flex h-[18px] shrink-0 items-center rounded px-1.5 text-mini leading-none font-bold whitespace-nowrap text-white"
-            style={badgeColors(cancelled ? '#6e7768' : (routeColor ?? '#565e51'))}
-          >
-            {serviceCode ?? routeCode}
-          </span>
-          {express ? (
-            <span
-              className="shrink-0 rounded px-1 py-px text-[9px] font-bold tracking-wide uppercase"
-              style={{ background: 'var(--express-surface)', color: 'var(--express)' }}
-            >
-              Exp
-            </span>
-          ) : null}
-          <span className="min-w-0 truncate text-tiny text-faint">{routeName}</span>
-        </span>
+      {/*
+        Body: three lines, not four. The departure time and the line's identity
+        share the top line — the time stays the biggest thing on the card and
+        still sits at a fixed left edge, so a column of them scans straight
+        down, while the badge rides the right of the same line instead of
+        costing a line of its own. The route's full name moves to the status
+        line, where it is context rather than a heading: the badge already says
+        which line this is.
 
-        <span className="mt-2 flex items-baseline gap-2">
+        The destination keeps the full width of the body. Pulling the time out
+        into its own column would have aligned it more strictly and taken
+        seventy pixels off names like "Durham College Oshawa GO", which is a
+        bad trade on a 375px phone.
+      */}
+      <span className="min-w-0 flex-1 px-3.5 py-2.5 @max-[340px]:px-2.5">
+        <span className="flex items-baseline gap-2">
           <span
             className={clsx(
               'tabular text-[25px] leading-none font-semibold tracking-tight @max-[340px]:text-[20px]',
@@ -155,24 +148,44 @@ export function DepartureCard({
               {actual.time}
             </span>
           ) : null}
+
+          <span className="ml-auto flex shrink-0 items-center gap-1.5 self-center">
+            {heading && directional ? <Arrow heading={heading} /> : null}
+            <ModeIcon type={vehicleType} className="size-4 shrink-0 text-[var(--fg-faint)]" />
+            {express ? (
+              <span
+                className="shrink-0 rounded px-1 py-px text-[9px] font-bold tracking-wide uppercase"
+                style={{ background: 'var(--express-surface)', color: 'var(--express)' }}
+              >
+                Exp
+              </span>
+            ) : null}
+            <span
+              className="inline-flex h-[18px] shrink-0 items-center rounded px-1.5 text-mini leading-none font-bold whitespace-nowrap"
+              style={badgeColors(cancelled ? '#6e7768' : (routeColor ?? '#565e51'))}
+            >
+              {serviceCode ?? routeCode}
+            </span>
+          </span>
         </span>
 
         <span className="mt-1.5 block truncate text-body leading-tight font-semibold @max-[340px]:text-small">
           {arrivalStopName ?? destination ?? routeName}
         </span>
 
-        <span className="mt-1.5 flex items-center gap-1.5 text-tiny text-muted">
+        <span className="mt-1 flex items-center gap-1.5 text-tiny text-muted">
           <span
             aria-hidden
             className="size-1.5 shrink-0 rounded-full"
             style={{ background: statusColor }}
           />
-          <span className="font-medium whitespace-nowrap" style={{ color: statusColor }}>
+          <span className="shrink-0 font-medium whitespace-nowrap" style={{ color: statusColor }}>
             {statusLabel}
           </span>
-          {arrivalTime && !cancelled ? (
-            <span className="min-w-0 truncate text-faint">· arrives {arrive.time}</span>
-          ) : null}
+          <span className="min-w-0 truncate text-faint">
+            {routeName ? `· ${routeName}` : ''}
+            {arrivalTime && !cancelled ? ` · arrives ${arrive.time}` : ''}
+          </span>
         </span>
       </span>
 

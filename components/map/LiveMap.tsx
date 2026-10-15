@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { basemapBackground, basemapStyleUrl, GTHA_BOUNDS, GTHA_CENTER } from './mapStyle';
 import { VehicleSheet } from '@/components/vehicles/VehicleSheet';
 import { LiveIndicator } from '@/components/ui/LiveIndicator';
-import { ModeIcon } from '@/components/ui/primitives';
+import { ModeIcon, readableOn } from '@/components/ui/primitives';
 import { useActiveTrip } from '@/lib/client/activeTrip';
 import { useTheme } from '@/lib/client/theme';
 import { useTransit } from '@/lib/client/useTransit';
@@ -932,7 +932,19 @@ function updateMarkerEl(
   const icon = vehicle.vehicleType === 'bus' ? BUS_PATH : TRAIN_PATH;
   // Each line keeps its own colour so trains are told apart at a glance; lateness
   // is a separate amber tag, never a change of the line colour.
-  const tint = lineColor ?? 'var(--color-signal-500)';
+  //
+  // On the dark basemap a dark line colour — Barrie's navy, Lakeshore West's
+  // burgundy — sits almost on top of the map itself. --lift pulls it toward
+  // white by 38% in the dark theme and 0% in the light one, so the marker
+  // separates from the ground at night while the hue stays the line's own and
+  // daytime is untouched.
+  const tint = lineColor
+    ? `color-mix(in srgb, ${lineColor} calc(100% - var(--lift)), white)`
+    : 'var(--color-signal-500)';
+
+  // White on a lifted fill can fall below AA, so the glyph follows the fill:
+  // dark ink once the fill is light enough to need it.
+  const glyphInk = lineColor ? readableOn(lineColor) : '#0e1513';
 
   // The rider's own vehicle keeps its line colour — that is still how you know
   // which service it is — but gains a bright ring and a label, so it is findable
@@ -954,7 +966,7 @@ function updateMarkerEl(
       : '';
 
   el.innerHTML = `
-    <span class="gt-marker-icon" style="position:relative;display:grid;place-items:center;width:20px;height:20px;border-radius:999px;background:${tint};color:#fff;flex:none">
+    <span class="gt-marker-icon" style="position:relative;display:grid;place-items:center;width:20px;height:20px;border-radius:999px;background:${tint};color:${glyphInk};flex:none">
       <svg class="gt-marker-glyph" viewBox="0 0 20 20" width="13" height="13" fill="none" aria-hidden>${icon}</svg>
       ${arrow}
     </span>
