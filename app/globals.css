@@ -217,11 +217,23 @@
     --count-bg: #ffaaa2;
     --count-fg: #2a110f;
 
-    /* Platform tag: the same sign-like blue, inverted. 8.59:1 on its own
-       ground, and nothing else in the dark theme is this colour. */
-    --platform-bg: #1e3246;
-    --platform-fg: #a9d6ff;
-    --platform-label: #82a8cb;
+    /* Platform tag, dark.
+
+       A navy tag was a foreign colour here: this theme is green charcoal, and
+       every hue it has is already spoken for — lime is the brand, mint is on
+       time, amber is late, coral is cancelled, sky is an expected platform,
+       violet is a direction, cyan is express. An eighth hue would have had to
+       fight all seven.
+
+       So this one is told apart by value instead. It is the only surface in the
+       dark theme lighter than the card it sits on — a pale stub tinted with the
+       theme's own green-grey, the way a ticket torn off a roll is paler than
+       the hand holding it. It belongs to the green because it is made of it,
+       and it cannot be mistaken for a status because it is not a status
+       colour. 11.75:1. */
+    --platform-bg: #c9d5d2;
+    --platform-fg: #121a17;
+    --platform-label: #3e4b44;
 
     --dir-a: #a9d6ff;
     --dir-a-surface: rgb(169 214 255 / 0.13);
@@ -313,11 +325,23 @@
   --count-bg: #ffaaa2;
   --count-fg: #2a110f;
 
-  /* Platform tag: the same sign-like blue, inverted. 8.59:1 on its own
-     ground, and nothing else in the dark theme is this colour. */
-  --platform-bg: #1e3246;
-  --platform-fg: #a9d6ff;
-  --platform-label: #82a8cb;
+  /* Platform tag, dark.
+
+     A navy tag was a foreign colour here: this theme is green charcoal, and
+     every hue it has is already spoken for — lime is the brand, mint is on
+     time, amber is late, coral is cancelled, sky is an expected platform,
+     violet is a direction, cyan is express. An eighth hue would have had to
+     fight all seven.
+
+     So this one is told apart by value instead. It is the only surface in the
+     dark theme lighter than the card it sits on — a pale stub tinted with the
+     theme's own green-grey, the way a ticket torn off a roll is paler than
+     the hand holding it. It belongs to the green because it is made of it,
+     and it cannot be mistaken for a status because it is not a status
+     colour. 11.75:1. */
+  --platform-bg: #c9d5d2;
+  --platform-fg: #121a17;
+  --platform-label: #3e4b44;
   --on-warn: #2a1f07;
 
   --dir-a: #a9d6ff;
