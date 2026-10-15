@@ -480,14 +480,24 @@ body {
 
 /* --- maplibre ----------------------------------------------------------- */
 
+/*
+ * MapLibre's own stylesheet is imported by the map component, so it lands
+ * after this file and its black attribution text wins on source order. The
+ * background rule already carried !important and was applying; the colour did
+ * not, which left black text on a dark panel at 1.15:1 — invisible in the dark
+ * theme and never noticed because it is legal boilerplate nobody reads.
+ */
 .maplibregl-ctrl-attrib {
   font-size: 10px;
   background: color-mix(in oklab, var(--bg-elevated) 86%, transparent) !important;
-  color: var(--fg-muted);
+  color: var(--fg-muted) !important;
   border-radius: 6px;
 }
-.maplibregl-ctrl-attrib a {
-  color: var(--fg-muted);
+.maplibregl-ctrl-attrib a,
+.maplibregl-ctrl-attrib a:hover,
+.maplibregl-ctrl-attrib-inner,
+.maplibregl-ctrl-attrib-button {
+  color: var(--fg-muted) !important;
 }
 .maplibregl-canvas:focus {
   outline: none;

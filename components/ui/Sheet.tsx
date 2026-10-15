@@ -2,6 +2,7 @@
 
 import clsx from 'clsx';
 import { useEffect, useRef, useState, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
+import { useDialog } from '@/lib/client/useDialog';
 
 /**
  * Bottom sheet with a drag-to-dismiss grabber on touch, centred as a dialog on
@@ -24,19 +25,7 @@ export function Sheet({
   const [dragY, setDragY] = useState(0);
   const dragStart = useRef<number | null>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    const previous = document.activeElement as HTMLElement | null;
-    panelRef.current?.focus();
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      previous?.focus?.();
-    };
-  }, [open, onClose]);
+  useDialog(open, onClose, panelRef);
 
   useEffect(() => {
     if (open) setDragY(0);
@@ -74,18 +63,19 @@ export function Sheet({
         tabIndex={-1}
         style={dragY ? { transform: `translateY(${dragY}px)` } : undefined}
         className={clsx(
-          'animate-sheet relative max-h-[86vh] w-full overflow-y-auto scroll-touch rounded-t-[var(--radius-sheet)] bg-[var(--bg-elevated)] pb-safe outline-none',
-          'sm:max-w-lg sm:rounded-[var(--radius-sheet)]',
+          'animate-sheet relative max-h-[86vh] w-full overflow-y-auto scroll-touch rounded-t-[var(--radius-sheet)] pb-safe outline-none',
+          'border-t bg-[var(--bg-raised,var(--bg-elevated))] shadow-[0_-8px_40px_-12px_rgb(0_0_0/0.45)] hairline',
+          'sm:max-w-lg sm:rounded-[var(--radius-sheet)] sm:border',
           className,
         )}
       >
         <div
-          className="sticky top-0 z-10 flex cursor-grab touch-none justify-center bg-[var(--bg-elevated)] pt-2.5 pb-1 active:cursor-grabbing"
+          className="sticky top-0 z-10 flex cursor-grab touch-none justify-center bg-[var(--bg-raised,var(--bg-elevated))] pt-2.5 pb-1 active:cursor-grabbing"
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
         >
-          <span className="h-1 w-10 rounded-full bg-[var(--border-strong)]" aria-hidden />
+          <span className="my-1.5 h-1.5 w-11 rounded-full bg-[var(--border-strong)]" aria-hidden />
         </div>
         {children}
       </div>

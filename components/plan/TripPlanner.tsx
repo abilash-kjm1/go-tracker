@@ -102,7 +102,7 @@ export function PlannerForm({
   return (
     <div>
       <div className="relative">
-        <div className="overflow-visible rounded-2xl bg-[var(--bg-elevated)] text-[var(--fg)] shadow-lg ring-1 ring-black/5">
+        <div className="overflow-visible rounded-2xl border bg-[var(--bg-elevated)] text-[var(--fg)] shadow-[var(--shadow-card)] hairline">
           <StopPicker
             label="From"
             dot="from"
@@ -112,7 +112,15 @@ export function PlannerForm({
             onChange={setFrom}
             exclude={to?.id}
           />
-          <div className="mx-4 h-px bg-[var(--border)]" aria-hidden />
+          {/* The rail joining the two markers, so the pair reads as one journey
+              rather than two fields that happen to sit above each other. It
+              starts where the origin's hollow ring ends and finishes at the
+              destination's dot. */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute top-[38px] left-[26px] h-[36px] w-0.5 rounded-full bg-[var(--border-strong)]"
+          />
+          <div className="mx-4 ml-12 h-px bg-[var(--border)]" aria-hidden />
           <StopPicker
             label="To"
             dot="to"
@@ -275,7 +283,7 @@ function StopPicker({
           {dot === 'from' ? (
             <span className="size-3 rounded-full border-[3px] border-[var(--accent-ink)] bg-transparent" />
           ) : (
-            <span className="size-3 rounded-full bg-[var(--accent)]" />
+            <span className="size-3 rounded-full bg-[var(--accent-ink)] ring-[3px] ring-[var(--accent)]/35" />
           )}
         </span>
         <span className="sr-only">{label}</span>

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { ModeIcon, RouteBadge, Skeleton } from '@/components/ui/primitives';
+import { useDialog } from '@/lib/client/useDialog';
 import { useTransit } from '@/lib/client/useTransit';
 import type { SearchResults } from '@/lib/transit/types';
 
@@ -20,16 +21,8 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
     return () => clearTimeout(t);
   }, [query]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    document.addEventListener('keydown', onKey);
-    const t = setTimeout(() => inputRef.current?.focus(), 30);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      clearTimeout(t);
-    };
-  }, [open, onClose]);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialog(open, onClose, panelRef, { initialFocus: inputRef });
 
   const { data, loading } = useTransit<SearchResults>(
     open && debounced.length >= 2 ? `/api/transit/search?q=${encodeURIComponent(debounced)}` : null,
@@ -42,7 +35,14 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[var(--bg)] sm:items-center sm:justify-start sm:bg-black/40 sm:p-8 sm:backdrop-blur-sm">
-      <div className="flex min-h-0 w-full flex-1 flex-col sm:max-w-2xl sm:flex-none sm:rounded-3xl sm:surface sm:overflow-hidden">
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search stations, lines and trips"
+        tabIndex={-1}
+        className="flex min-h-0 w-full flex-1 flex-col outline-none sm:max-w-2xl sm:flex-none sm:overflow-hidden sm:rounded-3xl sm:border sm:shadow-[0_24px_60px_-20px_rgb(0_0_0/0.45)] sm:hairline sm:surface"
+      >
         <div className="flex items-center gap-2 border-b px-3 py-3 hairline pt-safe sm:pt-3">
           <SearchIcon className="ml-1 size-5 text-[var(--fg-faint)]" />
           <input
