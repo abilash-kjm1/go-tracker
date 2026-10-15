@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import clsx from 'clsx';
 import { JourneyCard } from './JourneyCard';
 import { LiveIndicator } from '@/components/ui/LiveIndicator';
 import { EmptyState, ModeIcon, Skeleton } from '@/components/ui/primitives';
@@ -130,6 +131,7 @@ export function PlannerForm({
         <div className="overflow-visible rounded-2xl border bg-[var(--bg-elevated)] text-[var(--fg)] shadow-[var(--shadow-card)] hairline">
           <StopPicker
             label="From"
+            edge="top"
             dot="from"
             stops={stops}
             loading={loadingStops}
@@ -148,6 +150,7 @@ export function PlannerForm({
           <div className="mx-4 ml-12 h-px bg-[var(--border)]" aria-hidden />
           <StopPicker
             label="To"
+            edge="bottom"
             dot="to"
             stops={stops}
             loading={loadingStops}
@@ -305,6 +308,7 @@ export function PlannerResults({ planner }: { planner: TripPlannerState }) {
 function StopPicker({
   label,
   dot,
+  edge,
   stops,
   loading,
   value,
@@ -313,6 +317,7 @@ function StopPicker({
 }: {
   label: string;
   dot: 'from' | 'to';
+  edge: 'top' | 'bottom';
   stops: TransitStop[];
   loading: boolean;
   value: TransitStop | null;
@@ -321,6 +326,9 @@ function StopPicker({
 }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0);
+  const listId = useId();
+  const listRef = useRef<HTMLUListElement>(null);
 
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -332,9 +340,58 @@ function StopPicker({
       .slice(0, 8);
   }, [stops, query, exclude]);
 
+  // A new query means a new list; the highlight cannot stay on the third row
+  // of a list that no longer has three rows.
+  useEffect(() => {
+    setActive(0);
+  }, [query]);
+
+  const showing = open && query.trim().length > 0;
+
+  const choose = (stop: TransitStop) => {
+    onChange(stop);
+    setQuery('');
+    setOpen(false);
+  };
+
+  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape') {
+      setOpen(false);
+      return;
+    }
+    if (!showing || matches.length === 0) return;
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      const step = event.key === 'ArrowDown' ? 1 : -1;
+      const next = (active + step + matches.length) % matches.length;
+      setActive(next);
+      listRef.current?.children[next]?.scrollIntoView({ block: 'nearest' });
+      return;
+    }
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      choose(matches[active] ?? matches[0]);
+    }
+  };
+
   return (
     <div className="relative">
-      <label className="flex min-h-14 items-center gap-3 px-4 focus-within:bg-[var(--bg-sunken)] rounded-2xl">
+      {/*
+        The focus ring belongs to the row, not to the bare input inside it.
+        The input used to take the app-wide 2px outline, which drew a rounded
+        rectangle floating in the middle of the card with the journey dot
+        marooned outside it — a box pasted onto a field rather than a field
+        waking up. The row now lights up as one piece, following the card's
+        own corners, and the input hands its outline over: see
+        .focus-ring-host in globals.css.
+      */}
+      <label
+        className={clsx(
+          'focus-ring-host flex min-h-14 items-center gap-3 px-4 transition-colors',
+          'focus-within:bg-[var(--bg-sunken)] focus-within:ring-2 focus-within:ring-[var(--focus-ring)] focus-within:ring-inset',
+          edge === 'top' ? 'rounded-t-[15px]' : 'rounded-b-[15px]',
+        )}
+      >
         <span aria-hidden className="grid w-3 place-items-center">
           {dot === 'from' ? (
             <span className="size-3 rounded-full border-[3px] border-[var(--accent-ink)] bg-transparent" />
@@ -352,39 +409,108 @@ function StopPicker({
           }}
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
-          placeholder={loading ? 'Loading stations…' : label === 'From' ? 'From: station or stop' : 'To: station or stop'}
+          onKeyDown={onKeyDown}
+          placeholder={
+            loading
+              ? 'Loading stations…'
+              : label === 'From'
+                ? 'From: station or stop'
+                : 'To: station or stop'
+          }
           aria-label={`${label} stop`}
+          role="combobox"
+          aria-expanded={showing}
+          aria-controls={listId}
+          aria-autocomplete="list"
+          aria-activedescendant={showing && matches.length ? `${listId}-${active}` : undefined}
           className="min-w-0 flex-1 bg-transparent py-3 pr-12 text-field font-semibold outline-none placeholder:font-medium placeholder:text-[var(--fg-faint)]"
         />
       </label>
 
-      {open && matches.length > 0 ? (
-        <ul className="absolute inset-x-0 top-full z-30 mt-1 max-h-72 overflow-y-auto rounded-2xl p-1 text-[var(--fg)] surface">
-          {matches.map((stop) => (
-            <li key={stop.id}>
+      {/*
+        The suggestions are a layer over the card, so they are built like one:
+        a raised surface, an edge stronger than a card hairline, and a shadow
+        deep enough to say the thing underneath is still there. The old panel
+        was card-coloured on a card, which in the light theme was white on
+        white — it read as the form rearranging itself rather than as a list
+        to choose from.
+      */}
+      {showing ? (
+        <ul
+          id={listId}
+          ref={listRef}
+          role="listbox"
+          aria-label={`${label} suggestions`}
+          className="absolute inset-x-0 top-full z-30 mt-2 max-h-72 overflow-y-auto rounded-2xl border p-1.5 text-[var(--fg)] shadow-[0_18px_44px_-14px_rgb(0_0_0/0.45)]"
+          style={{
+            background: 'var(--bg-raised, var(--bg-elevated))',
+            borderColor: 'var(--border-strong)',
+          }}
+        >
+          {matches.map((stop, i) => (
+            <li key={stop.id} id={`${listId}-${i}`} role="option" aria-selected={i === active}>
               <button
                 type="button"
+                tabIndex={-1}
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  onChange(stop);
-                  setQuery('');
-                  setOpen(false);
-                }}
-                className="flex min-h-12 w-full items-center gap-2 rounded-xl px-3 text-left hover:bg-[var(--bg-sunken)]"
+                onMouseEnter={() => setActive(i)}
+                onClick={() => choose(stop)}
+                className={clsx(
+                  'flex min-h-12 w-full items-center gap-2.5 rounded-xl px-3 text-left transition-colors',
+                  i === active && 'bg-[var(--bg-hover,var(--bg-sunken))]',
+                )}
               >
                 <span className="flex gap-1 text-[var(--fg-muted)]">
                   {(stop.modes.length ? stop.modes : (['unknown'] as const)).map((m) => (
                     <ModeIcon key={m} type={m} className="size-4" />
                   ))}
                 </span>
-                <span className="min-w-0 flex-1 truncate text-ui">{stop.name}</span>
+                <span className="min-w-0 flex-1 truncate text-ui">
+                  <Highlight text={stop.name} query={query} />
+                </span>
+                <span className="shrink-0 text-mini font-medium text-faint">
+                  {describeStop(stop)}
+                </span>
               </button>
             </li>
           ))}
+
+          {/* Silence is the one answer a search must not give. */}
+          {matches.length === 0 ? (
+            <li className="px-3 py-3 text-small text-muted">
+              {loading ? 'Still loading stations…' : `No GO stop matches “${query.trim()}”.`}
+            </li>
+          ) : null}
         </ul>
       ) : null}
     </div>
   );
+}
+
+/** What the rider typed, picked out of the name it matched. */
+function Highlight({ text, query }: { text: string; query: string }) {
+  const q = query.trim();
+  const at = q ? text.toLowerCase().indexOf(q.toLowerCase()) : -1;
+  if (at < 0) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, at)}
+      <mark className="bg-transparent font-bold text-[var(--accent-ink)]">
+        {text.slice(at, at + q.length)}
+      </mark>
+      {text.slice(at + q.length)}
+    </>
+  );
+}
+
+/** "Burlington GO" and "Burlington GO Bus" are not the same place to wait. */
+function describeStop(stop: TransitStop): string {
+  const train = stop.modes.includes('train');
+  const bus = stop.modes.includes('bus');
+  if (train && bus) return 'Train & bus';
+  if (train) return 'Station';
+  if (bus) return 'Bus stop';
+  return 'Stop';
 }
 
 /** "2026-09-27T09:30" as a rider would say it. */

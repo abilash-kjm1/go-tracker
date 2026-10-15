@@ -82,11 +82,11 @@ export function DepartureCard({
       : (routeColor ?? 'var(--accent)');
 
   const statusColor = cancelled
-    ? 'var(--color-alert-500)'
-    : late
-      ? 'var(--color-warn-500)'
-      : realtime && !early
-        ? 'var(--color-signal-500)'
+    ? 'var(--status-disruption-fg)'
+    : late || early
+      ? 'var(--status-delayed-fg)'
+      : realtime
+        ? 'var(--status-live-fg)'
         : 'var(--fg-muted)';
 
   const statusLabel = cancelled
@@ -100,6 +100,7 @@ export function DepartureCard({
           : 'Scheduled';
 
   const platformValue = platform?.replace(/^platforms?\s*/i, '');
+  const hasPlatform = Boolean(platformValue);
 
   // A light wash only: the spine carries the colour, so the body stays calm and
   // the card reads as one family instead of a colour block with a coloured box.
@@ -189,16 +190,22 @@ export function DepartureCard({
         </span>
       </span>
 
-      {/* A hairline is enough to separate the platform from the service. */}
-      <span aria-hidden className="w-0 border-l" style={{ borderColor: 'var(--border)' }} />
+      {/* Stub: the platform, torn off.
 
-      {/* Stub: the platform, torn off. */}
+          It carries its own ground now. A platform number is the single piece
+          of a departure a rider reads off a board and then walks on, and it
+          was being drawn in the direction's colour — which for a bus is the
+          neutral grey, so it came out the same ink as the destination beside
+          it. The tag is cool and sign-like in both themes and is the only
+          thing in the app wearing that blue, so the eye finds it without
+          reading. The direction still speaks through the spine and the wash. */}
       <span
         className="flex w-[80px] shrink-0 flex-col items-center justify-between rounded-r-[15px] px-1.5 py-3 @max-[340px]:w-[68px]"
+        style={hasPlatform ? { background: 'var(--platform-bg)' } : undefined}
       >
         <span
           className="text-[8px] font-bold tracking-[0.12em] uppercase"
-          style={{ color: platformValue && dir ? dir.fg : 'var(--fg-faint)', opacity: platformValue ? 0.85 : 1 }}
+          style={{ color: hasPlatform ? 'var(--platform-label)' : 'var(--fg-faint)' }}
         >
           {expectedPlatform && !platformValue ? 'Expected' : 'Platform'}
         </span>
@@ -206,7 +213,7 @@ export function DepartureCard({
         <span className="flex flex-1 flex-col items-center justify-center gap-0.5">
         {platformValue ? (
           <span
-            style={dir ? { color: dir.fg } : undefined}
+            style={{ color: 'var(--platform-fg)' }}
             className={clsx(
               'tabular leading-none font-bold',
               platformValue.length > 2
@@ -275,9 +282,18 @@ export function DepartureCard({
         </span>
 
         {!cancelled && countdown ? (
+          /* On a posted platform the countdown wears the tag's own ink: the
+             status is already said twice on the left, and a green number on
+             the blue tag made the tag look like two things at once. */
           <span
             className="tabular text-mini leading-none font-bold whitespace-nowrap"
-            style={{ color: departed ? 'var(--fg-faint)' : statusColor }}
+            style={{
+              color: departed
+                ? 'var(--fg-faint)'
+                : hasPlatform
+                  ? 'var(--platform-label)'
+                  : statusColor,
+            }}
           >
             {countdown}
           </span>

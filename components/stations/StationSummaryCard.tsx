@@ -83,11 +83,24 @@ export function StationSummaryCard({
 
           <div className="mt-2 flex items-center gap-3 text-small text-muted">
             {next.platform ? (
-              <span className="flex items-baseline gap-1.5 rounded-lg bg-[var(--bg-sunken)] px-2 py-1">
-                <span className="text-[8px] font-bold tracking-[0.1em] text-faint uppercase">
+              /* The same platform tag the board uses. On the dark theme the
+                 sunken grey it used to wear sat *below* the card it was on,
+                 so the number looked like a hole punched in the card rather
+                 than a tag stuck to it. */
+              <span
+                className="flex items-baseline gap-1.5 rounded-lg px-2 py-1"
+                style={{ background: 'var(--platform-bg)' }}
+              >
+                <span
+                  className="text-[8px] font-bold tracking-[0.1em] uppercase"
+                  style={{ color: 'var(--platform-label)' }}
+                >
                   Platform
                 </span>
-                <span className="tabular text-body leading-none font-bold text-[var(--fg)]">
+                <span
+                  className="tabular text-body leading-none font-bold"
+                  style={{ color: 'var(--platform-fg)' }}
+                >
                   {next.platform.replace(/^platforms?\s*/i, '')}
                 </span>
               </span>

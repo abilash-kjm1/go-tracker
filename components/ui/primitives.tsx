@@ -56,12 +56,19 @@ export function Pill({
 }) {
   return (
     <span
+      /*
+        Each tone is a ground and an ink from the status palette, which is
+        tuned per theme. "ok" used to be a wash of the brand sage over sage
+        ink, and in the light theme that landed on olive-on-cream: a pill
+        reading "ON TIME" in a colour that said nothing was fine, or anything
+        else. These are the greens, ambers and reds a rider already knows.
+      */
       className={clsx(
         'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-mini font-semibold tracking-wide uppercase',
         tone === 'neutral' && 'bg-[var(--bg-sunken)] text-[var(--fg-muted)]',
-        tone === 'ok' && 'bg-signal-500/12 text-signal-600 dark:text-signal-300',
-        tone === 'warn' && 'bg-warn-500/14 text-warn-500',
-        tone === 'bad' && 'bg-alert-500/14 text-alert-500',
+        tone === 'ok' && 'bg-[var(--status-live-bg)] text-[var(--status-live-fg)]',
+        tone === 'warn' && 'bg-[var(--status-delayed-bg)] text-[var(--status-delayed-fg)]',
+        tone === 'bad' && 'bg-[var(--status-disruption-bg)] text-[var(--status-disruption-fg)]',
         tone === 'accent' && 'bg-[var(--accent)] text-[var(--accent-fg)]',
         className,
       )}

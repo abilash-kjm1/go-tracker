@@ -16,15 +16,12 @@ export function PlanScreen({ stops }: { stops: TransitStop[] }) {
         </p>
       </header>
 
-      <div
-        className="rounded-[28px] p-4 shadow-[var(--shadow-card)]"
-        style={{
-          background:
-            'radial-gradient(120% 90% at 100% 0%, #38bdf8 0%, transparent 55%), linear-gradient(140deg, #047857 0%, #0f766e 48%, #0c4a6e 100%)',
-        }}
-      >
-        <PlannerForm planner={planner} stops={stops} />
-      </div>
+      {/* The planner stands on the page, exactly as it does on the home
+          screen. It used to sit on a hard-coded teal-to-cyan gradient left
+          behind by an older palette: two blues and a jade that belong to no
+          token in the app, under fields the warm-neutral theme had moved on
+          from. The same form on two screens should not be two colours. */}
+      <PlannerForm planner={planner} stops={stops} />
 
       <div className="pb-10">
         <PlannerResults planner={planner} />

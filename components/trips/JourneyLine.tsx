@@ -540,7 +540,10 @@ function StopRow({
               </span>
             ) : null}
             {stop.platform ? (
-              <span className="rounded-full bg-[var(--bg-sunken)] px-2 py-0.5 text-mini font-semibold text-muted">
+              <span
+                className="rounded-full px-2 py-0.5 text-mini font-semibold"
+                style={{ background: 'var(--platform-bg)', color: 'var(--platform-fg)' }}
+              >
                 {stop.platform}
               </span>
             ) : null}

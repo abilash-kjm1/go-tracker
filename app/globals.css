@@ -99,6 +99,17 @@
   --on-warn: #ffffff;
 
   /*
+   * The platform tag. A platform number is wayfinding, not status and not
+   * brand, so it gets a ground and an ink of its own rather than borrowing
+   * the sage — which made it read as one more muted label — or a status hue,
+   * which would have said "late" or "fine" about a number that says neither.
+   * Cool and sign-like, the way a departure board posts one. 7.81:1.
+   */
+  --platform-bg: #e9eff7;
+  --platform-fg: #1c4c72;
+  --platform-label: #3b6486;
+
+  /*
    * Direction colours. Deliberately outside the status palette (green / amber
    * / red) and outside the brand hue, so "which way is it going" never reads
    * as "is it late" nor as "this is selected".
@@ -206,6 +217,12 @@
     --count-bg: #ffaaa2;
     --count-fg: #2a110f;
 
+    /* Platform tag: the same sign-like blue, inverted. 8.59:1 on its own
+       ground, and nothing else in the dark theme is this colour. */
+    --platform-bg: #1e3246;
+    --platform-fg: #a9d6ff;
+    --platform-label: #82a8cb;
+
     --dir-a: #a9d6ff;
     --dir-a-surface: rgb(169 214 255 / 0.13);
     --dir-a-border: rgb(169 214 255 / 0.30);
@@ -295,6 +312,12 @@
   --status-disruption-fg: #ffaaa2;
   --count-bg: #ffaaa2;
   --count-fg: #2a110f;
+
+  /* Platform tag: the same sign-like blue, inverted. 8.59:1 on its own
+     ground, and nothing else in the dark theme is this colour. */
+  --platform-bg: #1e3246;
+  --platform-fg: #a9d6ff;
+  --platform-label: #82a8cb;
   --on-warn: #2a1f07;
 
   --dir-a: #a9d6ff;
@@ -571,6 +594,15 @@ body {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: 6px;
+}
+
+/* ...except where the control has handed its ring to the row around it. A
+   bare text input inside a composed field drew a small rounded box floating
+   in the middle of a card, with the field's own markers left outside it. A
+   host marks itself with .focus-ring-host and draws the ring on :focus-within
+   instead, which is the same indicator around a larger, truer target. */
+.focus-ring-host :is(input, button, select, textarea):focus-visible {
+  outline: none;
 }
 
 /* A dark map canvas needs the ring lifted off the tiles to stay visible. */
