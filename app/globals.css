@@ -594,6 +594,29 @@ body {
   z-index: 4;
 }
 
+/*
+   A vehicle that has stopped reporting.
+
+   The marker still shows where it last said it was — that is genuinely the
+   best answer available, and hiding it would be worse than dimming it — but
+   it stops looking like a live fix. The dashed edge and the drained colour
+   are the map admitting it is out of date, and the label underneath says by
+   how much. The rider's own vehicle keeps its ring and its full colour,
+   because losing track of the thing you are following is exactly when you
+   need to find it on screen. */
+.gt-marker[data-stale='true'] {
+  /* The marker carries its own inline border, so the stale edge has to say
+     so explicitly or it never appears — and the dashed edge is the only cue
+     the rider's own vehicle gets, since that one keeps its full colour. */
+  border-style: dashed !important;
+  border-color: var(--color-warn-500) !important;
+}
+.gt-marker[data-stale='true']:not([data-mine='true']) {
+  opacity: 0.62;
+  filter: saturate(0.55);
+  z-index: 1;
+}
+
 /* A pinned station's star lands with a small bounce. */
 @keyframes st-pop {
   0% { transform: scale(0.6) rotate(-18deg); }

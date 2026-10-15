@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Sheet } from '@/components/ui/Sheet';
 import { ModeIcon, Pill } from '@/components/ui/primitives';
+import { isStaleFix } from '@/lib/transit/liveness';
 import { formatAge } from '@/lib/transit/time';
 import { useTicker } from '@/lib/client/useTransit';
 import type { LiveVehicle } from '@/lib/transit/types';
@@ -20,6 +21,10 @@ export function VehicleSheet({
 
   const delayMin = vehicle.delaySeconds != null ? Math.round(vehicle.delaySeconds / 60) : null;
   const late = delayMin != null && delayMin >= 1;
+
+  // The map's own threshold: past this the fix is history, not a position,
+  // and the sheet stops presenting it as one.
+  const stale = isStaleFix(vehicle.updatedAt, now);
 
   return (
     <Sheet open={Boolean(vehicle)} onClose={onClose} title="Vehicle detail">
@@ -42,10 +47,22 @@ export function VehicleSheet({
         <div className="flex flex-wrap items-center gap-2">
           {late ? <Pill tone="warn">+{delayMin} min</Pill> : <Pill tone="ok">On time</Pill>}
           {vehicle.tripNumber ? <Pill tone="neutral">Trip {vehicle.tripNumber}</Pill> : null}
-          {vehicle.isMoving != null ? (
+          {/* "Moving" is a claim about this moment, so it is only made when
+              the fix is recent enough to support one. */}
+          {vehicle.isMoving != null && !stale ? (
             <Pill tone="neutral">{vehicle.isMoving ? 'Moving' : 'Stopped'}</Pill>
           ) : null}
         </div>
+
+        {stale ? (
+          <p
+            className="rounded-xl px-3 py-2 text-small"
+            style={{ background: 'var(--status-delayed-bg)', color: 'var(--status-delayed-fg)' }}
+          >
+            No position reported for {formatAge(vehicle.updatedAt, now)}. The marker shows
+            where it last said it was, not where it is now.
+          </p>
+        ) : null}
 
         {vehicle.delayReason ? (
           <p className="rounded-xl bg-warn-500/10 px-3 py-2 text-small text-warn-500">
@@ -74,7 +91,9 @@ export function VehicleSheet({
           ) : null}
           <div>
             <dt className="text-mini font-semibold tracking-wide text-faint uppercase">Updated</dt>
-            <dd className="mt-0.5">{formatAge(vehicle.updatedAt, now)}</dd>
+            <dd className="mt-0.5" style={stale ? { color: 'var(--status-delayed-fg)' } : undefined}>
+              {formatAge(vehicle.updatedAt, now)}
+            </dd>
           </div>
         </dl>
 

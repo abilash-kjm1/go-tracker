@@ -2,6 +2,7 @@
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 
+import clsx from 'clsx';
 import maplibregl, { type GeoJSONSource, type Map as MapLibreMap, type Marker } from 'maplibre-gl';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -12,7 +13,8 @@ import { ModeIcon, readableOn } from '@/components/ui/primitives';
 import { useActiveTrip } from '@/lib/client/activeTrip';
 import { useTheme } from '@/lib/client/theme';
 import { useTransit } from '@/lib/client/useTransit';
-import { formatClockParts } from '@/lib/transit/time';
+import { FRESH_MS, LOST_MS, fixAgeMs, markerMotion } from '@/lib/transit/liveness';
+import { formatAge, formatClockParts } from '@/lib/transit/time';
 import type {
   LiveVehicle,
   TransitRoute,
@@ -29,14 +31,14 @@ interface MarkerEntry {
   from: [number, number];
   to: [number, number];
   startedAt: number;
-  /** How long to take reaching `to`: the gap between fixes, so motion never pauses. */
+  /** How long the marker takes to reach `to`. */
   durationMs: number;
   updatedAt: number;
+  /** When GO fixed the position in `to` — upstream time, not ours. */
+  fixAt: number;
   vehicle: LiveVehicle;
 }
 
-const MIN_TWEEN_MS = 4_000;
-const MAX_TWEEN_MS = 25_000;
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -90,16 +92,22 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
   );
 
   const visible = useMemo(() => {
+    const now = Date.now();
     const list = (vehicles ?? []).filter(
       (v) => Number.isFinite(v.latitude) && Number.isFinite(v.longitude),
     );
-    return list.filter(
-      (v) =>
-        // A followed vehicle stays visible whatever the filters say.
-        (following && v.tripId === following) ||
-        ((mode === 'all' || v.vehicleType === mode) &&
-          (routeId === 'all' || v.routeId === routeId)),
-    );
+    return list.filter((v) => {
+      // A followed vehicle stays visible whatever the filters say.
+      if (following && v.tripId === following) return true;
+      // And a fix this old says nothing about where the vehicle is now, so
+      // the map does not claim one. Hiding it is the honest answer: the
+      // alternative was a bus parked on a road it left half an hour ago.
+      if (fixAgeMs(v.updatedAt, now) > LOST_MS) return false;
+      return (
+        (mode === 'all' || v.vehicleType === mode) &&
+        (routeId === 'all' || v.routeId === routeId)
+      );
+    });
   }, [vehicles, mode, routeId, following]);
 
   /** Only offer filters for services that actually appear in the live data. */
@@ -439,21 +447,45 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
           const now = performance.now();
           const current = existing.marker.getLngLat();
           const heading = bearing([current.lng, current.lat], target);
-          existing.from = [current.lng, current.lat];
-          existing.to = target;
-          // Spread the move over the time since the last fix: a short ease-out
-          // makes a train hop and then look parked until the next poll.
-          existing.durationMs = Math.min(
-            MAX_TWEEN_MS,
-            Math.max(MIN_TWEEN_MS, now - existing.updatedAt),
+
+          /*
+            How the marker crosses the gap between two fixes.
+
+            It used to glide the whole way over the time until the next poll,
+            which looked smooth and was wrong twice over. It left the marker a
+            full interval behind the truth at every single moment — the
+            position shown was always the one the vehicle held fifteen seconds
+            ago — and when a bus went quiet for three minutes and came back
+            four kilometres on, it drew that as a serene 580 km/h cruise down
+            a road the bus may never have taken.
+
+            So: the two fixes are real, the line between them is not. The
+            marker eases onto the reported position in well under a second and
+            then stands there, which halves the average error and spends most
+            of its time on a position GO actually reported. And a jump no
+            vehicle could have driven is not a journey — it is placed, not
+            animated.
+          */
+          const fixAt = Date.parse(vehicle.updatedAt);
+          const { teleported, durationMs } = markerMotion(
+            { fixAt: existing.fixAt, lat: existing.to[1], lon: existing.to[0] },
+            { fixAt: Number.isNaN(fixAt) ? existing.fixAt : fixAt, lat: target[1], lon: target[0] },
           );
+
+          existing.from = teleported ? target : [current.lng, current.lat];
+          existing.to = target;
+          existing.fixAt = Number.isNaN(fixAt) ? Date.now() : fixAt;
+          existing.durationMs = durationMs;
           existing.startedAt = now;
           existing.updatedAt = now;
           existing.vehicle = vehicle;
+          if (teleported) existing.marker.setLngLat(target);
           updateMarkerEl(
             existing.el,
             vehicle,
-            heading,
+            // The line across a teleport points nowhere the vehicle drove, so
+            // it is not a heading. Keep the last one we had grounds for.
+            teleported ? null : heading,
             routeColorRef.current.get(vehicle.routeId ?? ''),
             Boolean(vehicle.tripId && myTripIdsRef.current.has(vehicle.tripId)),
           );
@@ -489,8 +521,9 @@ export function LiveMap({ stops, routes }: { stops: TransitStop[]; routes: Trans
           from: target,
           to: target,
           startedAt: performance.now(),
-          durationMs: 15_000,
+          durationMs: 1,
           updatedAt: performance.now(),
+          fixAt: Date.parse(vehicle.updatedAt) || Date.now(),
           vehicle,
         });
       }
@@ -723,13 +756,24 @@ function FollowCard({
     ? formatClockParts(next.estimatedDeparture ?? next.scheduledDeparture ?? next.scheduledArrival)
     : null;
   const delayMin = vehicle.delaySeconds != null ? Math.round(vehicle.delaySeconds / 60) : 0;
+  // "Moving" is a claim about now, and a four-minute-old fix cannot support
+  // one. When the vehicle has gone quiet the card says that instead, because
+  // a rider standing at a stop needs to know the difference between a bus
+  // that is late and a bus the map has lost.
+  const stale = fixAgeMs(vehicle.updatedAt) > FRESH_MS;
 
   return (
     <div className="space-y-2">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 font-semibold">
-            <span className="live-dot size-2 shrink-0 rounded-full bg-signal-500" aria-hidden />
+            <span
+              className={clsx(
+                'size-2 shrink-0 rounded-full',
+                stale ? 'bg-[var(--color-warn-500)]' : 'live-dot bg-signal-500',
+              )}
+              aria-hidden
+            />
             <span className="truncate">
               {vehicle.routeName ?? 'Service'}
               {vehicle.tripNumber ? ` ${vehicle.tripNumber}` : ''}
@@ -738,7 +782,7 @@ function FollowCard({
           </p>
           <p className="mt-0.5 text-muted">
             {delayMin >= 1 ? `${delayMin} min late` : 'On time'}
-            {vehicle.isMoving === false ? ' · stopped' : ' · moving'}
+            {stale ? '' : vehicle.isMoving === false ? ' · stopped' : ' · moving'}
           </p>
         </div>
         <button
@@ -750,6 +794,16 @@ function FollowCard({
           ✕
         </button>
       </div>
+
+      {stale ? (
+        <p
+          className="rounded-xl px-3 py-2 text-small"
+          style={{ background: 'var(--status-delayed-bg)', color: 'var(--status-delayed-fg)' }}
+        >
+          No position reported for {formatAge(vehicle.updatedAt)}. The marker is where it
+          last said it was, not where it is now.
+        </p>
+      ) : null}
 
       {next ? (
         <div className="flex items-center justify-between gap-3 rounded-xl bg-[var(--bg-sunken)] px-3 py-2">
@@ -952,12 +1006,20 @@ function updateMarkerEl(
   el.dataset.mine = mine ? 'true' : 'false';
   el.dataset.mode = vehicle.vehicleType;
 
+  // Whether this is where the vehicle is, or where it was when it last said.
+  // A marker drawn from a four-minute-old fix is not live and must not look
+  // it — that difference is the whole of "the bus is not moving accurately".
+  const stale = fixAgeMs(vehicle.updatedAt) > FRESH_MS;
+  el.dataset.stale = stale ? 'true' : 'false';
+
   // A train covers about a pixel per poll at regional zoom, so movement needs
   // to be stated, not just animated: an arrow points the way it is heading.
+  // Not on a stale fix, though: the last heading we worked out is as old as
+  // the position, and an arrow is a claim about now.
   if (heading != null) el.dataset.heading = String(Math.round(heading));
   const arrowDeg = el.dataset.heading;
   const arrow =
-    arrowDeg && vehicle.isMoving
+    arrowDeg && vehicle.isMoving && !stale
       ? `<span class="gt-marker-arrow" style="--gt-deg:${arrowDeg}deg">
            <svg viewBox="0 0 12 10" width="12" height="10" aria-hidden>
              <path d="M6 0 11.4 9.4 6 7 0.6 9.4Z" fill="${tint}" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/>
@@ -982,12 +1044,21 @@ function updateMarkerEl(
         vehicle.destination ?? '',
       )}</span>
       ${late ? `<span style="font-weight:700;color:var(--color-warn-500)">+${delayMin} min late</span>` : ''}
+      ${
+        stale
+          ? `<span style="font-weight:700;color:var(--color-warn-500)">last seen ${escapeHtml(
+              formatAge(vehicle.updatedAt),
+            )}</span>`
+          : ''
+      }
     </span>`;
   el.setAttribute(
     'aria-label',
     `${vehicle.vehicleType === 'bus' ? 'GO Bus' : 'GO Train'} ${vehicle.routeName ?? ''} to ${
       vehicle.destination ?? 'unknown destination'
-    }${late ? `, ${delayMin} minutes late` : ''}`,
+    }${late ? `, ${delayMin} minutes late` : ''}${
+      stale ? `, last reported its position ${formatAge(vehicle.updatedAt)}` : ''
+    }`,
   );
 }
 
