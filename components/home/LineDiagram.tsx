@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Fragment, useMemo } from 'react';
+import { badgeColors } from '@/components/ui/primitives';
 import { progressAlongLeg } from '@/lib/transit/geo';
 import type { LiveVehicle } from '@/lib/transit/types';
 
@@ -21,6 +22,16 @@ export interface PatternStop {
  * so a train appears in the gap it is actually in and every row lines up. The
  * rail runs behind all of it.
  */
+/**
+ * A line's colour, lifted toward white by --lift so it can be read as text.
+ *
+ * The hue is preserved — this is still recognisably Lakeshore West — but the
+ * raw burgundy on a charcoal page measured 1.65:1, which is no use as a label.
+ * --lift is 0% in the light theme, so nothing changes there.
+ */
+const inkOf = (color: string) =>
+  `color-mix(in srgb, ${color} calc(100% - var(--lift)), white)`;
+
 export function LineDiagram({
   stops,
   vehicles,
@@ -93,12 +104,12 @@ export function LineDiagram({
         style={{ background: `color-mix(in srgb, ${color} 10%, transparent)` }}
       >
         <p className="flex min-w-0 items-center gap-2 text-small font-bold">
-          <span aria-hidden style={{ color }}>
+          <span aria-hidden style={{ color: inkOf(color) }}>
             ↓
           </span>
           <span className="truncate">towards {tidy(headsign ?? stops.at(-1)?.name ?? '')}</span>
         </p>
-        <p className="tabular shrink-0 text-tiny font-semibold" style={{ color }}>
+        <p className="tabular shrink-0 text-tiny font-semibold" style={{ color: inkOf(color) }}>
           {running} running
         </p>
       </div>
@@ -181,7 +192,16 @@ function TrainRow({
 }) {
   const delayMin = vehicle.delaySeconds != null ? Math.round(vehicle.delaySeconds / 60) : 0;
   const late = delayMin >= 2;
+  // The fill tints the row and fills the glyph; the ink on top of it has to be
+  // chosen per theme, because the warning fill is a dark amber in one and a
+  // bright one in the other and white measured 1.44:1 on the bright version.
   const tone = late ? 'var(--color-warn-500)' : color;
+  const onTone = late
+    ? 'var(--on-warn)'
+    : badgeColors(color.startsWith('#') ? color : '#565e51').color;
+  const pill = late
+    ? { background: 'var(--status-delayed-bg)', color: 'var(--status-delayed-fg)' }
+    : badgeColors(color.startsWith('#') ? color : '#565e51');
   const stopped = vehicle.isMoving === false;
 
   return (
@@ -196,8 +216,8 @@ function TrainRow({
       }}
     >
       <span
-        className="grid size-6 shrink-0 place-items-center rounded-full text-white shadow-sm"
-        style={{ background: tone }}
+        className="grid size-6 shrink-0 place-items-center rounded-full shadow-sm"
+        style={{ background: tone, color: onTone }}
       >
         <TrainGlyph />
       </span>
@@ -217,7 +237,7 @@ function TrainRow({
 
       <span
         className="tabular shrink-0 rounded-full px-2 py-0.5 text-mini font-bold"
-        style={{ background: tone, color: '#fff' }}
+        style={pill}
       >
         {late ? `+${delayMin}` : 'on time'}
       </span>

@@ -95,6 +95,8 @@
   /* Solid attention pill — a count, not a surface. */
   --count-bg: #9b2c25;
   --count-fg: #ffffff;
+  /* Ink for a solid warning fill, which inverts between themes. */
+  --on-warn: #ffffff;
 
   /*
    * Direction colours. Deliberately outside the status palette (green / amber
@@ -150,64 +152,88 @@
 :root[data-theme='dark'],
 :root:not([data-theme='light']) {
   @media (prefers-color-scheme: dark) {
+    /*
+     * Midnight charcoal, cooled slightly toward green so the lime accent belongs
+     * to it rather than sitting on top of it.
+     *
+     * The surfaces were the reason the old dark theme read as flat: a card only
+     * 1.21:1 above the page has no edge to find. The ladder here spans 1.81:1
+     * from page to the highest surface, and the border is lifted to 1.67:1
+     * against a card, so a card looks like a card without being outlined.
+     */
+    --bg: #0e1513;
+    --bg-sunken: #0a110f;
+    --bg-elevated: #202b27;
+    --bg-raised: #2a3733;
+    --bg-hover: #36443f;
 
-    --bg: var(--color-ink-950);
-    --bg-elevated: #1f231d;
-    --bg-sunken: #121511;
-    --fg: #ecefe6;
-    --fg-muted: #afb7a8;
-    --fg-faint: #949c8d;
-    --border: rgb(236 239 230 / 0.12);
-    --border-strong: rgb(236 239 230 / 0.24);
+    --fg: #f3f5f0;
+    --fg-muted: #b0bdb5;
+    /* #899890 measured 4.41:1 on a raised surface; this clears AA on all of them. */
+    --fg-faint: #93a29a;
 
-    --accent: var(--color-signal-400);
-    --accent-fg: #19200f;
-    --accent-ink: #bfd38c;
-    --focus-ring: #bfd38c;
+    --border: #35433d;
+    --border-strong: #46554e;
 
-    --color-signal-500: #bfd38c;
-    --color-warn-500: #f0c96a;
-    --color-alert-500: #f3a49d;
+    /*
+     * Lime reads at 11:1 on the page, so unlike the light theme it can be the
+     * text colour as well as the surface — the accent and its ink are the same
+     * hue here, which is what keeps the theme from needing a second green.
+     */
+    --accent: #b5d77a;
+    --accent-fg: #11190d;
+    --accent-ink: #b5d77a;
+    --accent-hover: #c7e895;
+    --accent-muted: #79a96b;
+    --focus-ring: #b5d77a;
 
-    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.42), 0 14px 34px -22px rgb(0 0 0 / 0.9);
+    --color-signal-500: #b5d77a;
+    --color-warn-500: #ffd078;
+    --color-alert-500: #ffaaa2;
 
-    --status-live-bg: rgb(173 193 120 / 0.18);
-    --status-live-fg: #cfe3a0;
-    --status-expected-bg: rgb(125 176 221 / 0.16);
-    --status-expected-fg: #a8cdec;
-    --status-delayed-bg: rgb(240 201 106 / 0.16);
-    --status-delayed-fg: #f0c96a;
-    --status-disruption-bg: rgb(243 164 157 / 0.16);
-    --status-disruption-fg: #f3a49d;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.5), 0 16px 36px -24px rgb(0 0 0 / 0.95);
 
-    --dir-a: #8fb4ee;
-    --dir-a-surface: rgb(143 180 238 / 0.14);
-    --dir-a-border: rgb(143 180 238 / 0.32);
-    --dir-b: #c3a2e4;
-    --dir-b-surface: rgb(195 162 228 / 0.14);
-    --dir-b-border: rgb(195 162 228 / 0.32);
-    --dir-c: #9aa390;
-    --dir-c-surface: rgb(154 163 144 / 0.14);
-    --dir-c-border: rgb(154 163 144 / 0.30);
-    --dir-d: #e0bd74;
-    --dir-d-surface: rgb(224 189 116 / 0.14);
-    --dir-d-border: rgb(224 189 116 / 0.32);
-    --express: #7fd3e3;
-    --express-surface: rgb(127 211 227 / 0.14);
-    --express-border: rgb(127 211 227 / 0.32);
+    /* Each status is a ground and an ink, both verified on the ground and again
+       on a bare card, since a badge appears on either. */
+    --status-live-bg: #243b2d;
+    --status-live-fg: #a7e3ac;
+    --status-expected-bg: #263746;
+    --status-expected-fg: #a9d6ff;
+    --status-delayed-bg: #453a23;
+    --status-delayed-fg: #ffd078;
+    --status-disruption-bg: #432b2a;
+    --status-disruption-fg: #ffaaa2;
+    --count-bg: #ffaaa2;
+    --count-fg: #2a110f;
 
-    --tile-blue-bg: rgb(143 180 238 / 0.16);
-    --tile-blue-fg: #a8cdec;
-    --tile-violet-bg: rgb(195 162 228 / 0.17);
-    --tile-violet-fg: #d3bdee;
-    --tile-amber-bg: rgb(240 201 106 / 0.15);
-    --tile-amber-fg: #f0c96a;
-    --tile-teal-bg: rgb(127 211 227 / 0.15);
-    --tile-teal-fg: #8fdbe8;
-    --tile-rose-bg: rgb(243 164 157 / 0.17);
-    --tile-rose-fg: #f3a49d;
-    --tile-green-bg: rgb(173 193 120 / 0.17);
-    --tile-green-fg: #cfe3a0;
+    --dir-a: #a9d6ff;
+    --dir-a-surface: rgb(169 214 255 / 0.13);
+    --dir-a-border: rgb(169 214 255 / 0.30);
+    --dir-b: #cfb2f0;
+    --dir-b-surface: rgb(207 178 240 / 0.13);
+    --dir-b-border: rgb(207 178 240 / 0.30);
+    --dir-c: #b0bdb5;
+    --dir-c-surface: rgb(176 189 181 / 0.13);
+    --dir-c-border: rgb(176 189 181 / 0.28);
+    --dir-d: #ffd078;
+    --dir-d-surface: rgb(255 208 120 / 0.13);
+    --dir-d-border: rgb(255 208 120 / 0.30);
+    --express: #8fd9e8;
+    --express-surface: rgb(143 217 232 / 0.13);
+    --express-border: rgb(143 217 232 / 0.30);
+
+    --tile-blue-bg: #263746;
+    --tile-blue-fg: #a9d6ff;
+    --tile-violet-bg: #332a46;
+    --tile-violet-fg: #cfb2f0;
+    --tile-amber-bg: #453a23;
+    --tile-amber-fg: #ffd078;
+    --tile-teal-bg: #1f383c;
+    --tile-teal-fg: #8fd9e8;
+    --tile-rose-bg: #432b2a;
+    --tile-rose-fg: #ffaaa2;
+    --tile-green-bg: #243b2d;
+    --tile-green-fg: #a7e3ac;
     --hero-a: 34%;
     --hero-b: 10%;
     --lift: 38%;
@@ -216,66 +242,89 @@
 }
 
 :root[data-theme='dark'] {
+  /*
+   * Midnight charcoal, cooled slightly toward green so the lime accent belongs
+   * to it rather than sitting on top of it.
+   *
+   * The surfaces were the reason the old dark theme read as flat: a card only
+   * 1.21:1 above the page has no edge to find. The ladder here spans 1.81:1
+   * from page to the highest surface, and the border is lifted to 1.67:1
+   * against a card, so a card looks like a card without being outlined.
+   */
+  --bg: #0e1513;
+  --bg-sunken: #0a110f;
+  --bg-elevated: #202b27;
+  --bg-raised: #2a3733;
+  --bg-hover: #36443f;
 
-  --bg: var(--color-ink-950);
-  --bg-elevated: #1f231d;
-  --bg-sunken: #121511;
-  --fg: #ecefe6;
-  --fg-muted: #afb7a8;
-  --fg-faint: #949c8d;
-  --border: rgb(236 239 230 / 0.12);
-  --border-strong: rgb(236 239 230 / 0.24);
+  --fg: #f3f5f0;
+  --fg-muted: #b0bdb5;
+  /* #899890 measured 4.41:1 on a raised surface; this clears AA on all of them. */
+  --fg-faint: #93a29a;
 
-  --accent: var(--color-signal-400);
-  --accent-fg: #19200f;
-  --accent-ink: #bfd38c;
-  --focus-ring: #bfd38c;
+  --border: #35433d;
+  --border-strong: #46554e;
 
-  --color-signal-500: #bfd38c;
-  --color-warn-500: #f0c96a;
-  --color-alert-500: #f3a49d;
+  /*
+   * Lime reads at 11:1 on the page, so unlike the light theme it can be the
+   * text colour as well as the surface — the accent and its ink are the same
+   * hue here, which is what keeps the theme from needing a second green.
+   */
+  --accent: #b5d77a;
+  --accent-fg: #11190d;
+  --accent-ink: #b5d77a;
+  --accent-hover: #c7e895;
+  --accent-muted: #79a96b;
+  --focus-ring: #b5d77a;
 
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.42), 0 14px 34px -22px rgb(0 0 0 / 0.9);
+  --color-signal-500: #b5d77a;
+  --color-warn-500: #ffd078;
+  --color-alert-500: #ffaaa2;
 
-  --status-live-bg: rgb(173 193 120 / 0.18);
-  --status-live-fg: #cfe3a0;
-  --status-expected-bg: rgb(125 176 221 / 0.16);
-  --status-expected-fg: #a8cdec;
-  --status-delayed-bg: rgb(240 201 106 / 0.16);
-  --status-delayed-fg: #f0c96a;
-  --status-disruption-bg: rgb(243 164 157 / 0.16);
-  --status-disruption-fg: #f3a49d;
-  --count-bg: #f3a49d;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.5), 0 16px 36px -24px rgb(0 0 0 / 0.95);
+
+  /* Each status is a ground and an ink, both verified on the ground and again
+     on a bare card, since a badge appears on either. */
+  --status-live-bg: #243b2d;
+  --status-live-fg: #a7e3ac;
+  --status-expected-bg: #263746;
+  --status-expected-fg: #a9d6ff;
+  --status-delayed-bg: #453a23;
+  --status-delayed-fg: #ffd078;
+  --status-disruption-bg: #432b2a;
+  --status-disruption-fg: #ffaaa2;
+  --count-bg: #ffaaa2;
   --count-fg: #2a110f;
+  --on-warn: #2a1f07;
 
-  --dir-a: #8fb4ee;
-  --dir-a-surface: rgb(143 180 238 / 0.14);
-  --dir-a-border: rgb(143 180 238 / 0.32);
-  --dir-b: #c3a2e4;
-  --dir-b-surface: rgb(195 162 228 / 0.14);
-  --dir-b-border: rgb(195 162 228 / 0.32);
-  --dir-c: #9aa390;
-  --dir-c-surface: rgb(154 163 144 / 0.14);
-  --dir-c-border: rgb(154 163 144 / 0.30);
-  --dir-d: #e0bd74;
-  --dir-d-surface: rgb(224 189 116 / 0.14);
-  --dir-d-border: rgb(224 189 116 / 0.32);
-  --express: #7fd3e3;
-  --express-surface: rgb(127 211 227 / 0.14);
-  --express-border: rgb(127 211 227 / 0.32);
+  --dir-a: #a9d6ff;
+  --dir-a-surface: rgb(169 214 255 / 0.13);
+  --dir-a-border: rgb(169 214 255 / 0.30);
+  --dir-b: #cfb2f0;
+  --dir-b-surface: rgb(207 178 240 / 0.13);
+  --dir-b-border: rgb(207 178 240 / 0.30);
+  --dir-c: #b0bdb5;
+  --dir-c-surface: rgb(176 189 181 / 0.13);
+  --dir-c-border: rgb(176 189 181 / 0.28);
+  --dir-d: #ffd078;
+  --dir-d-surface: rgb(255 208 120 / 0.13);
+  --dir-d-border: rgb(255 208 120 / 0.30);
+  --express: #8fd9e8;
+  --express-surface: rgb(143 217 232 / 0.13);
+  --express-border: rgb(143 217 232 / 0.30);
 
-  --tile-blue-bg: rgb(143 180 238 / 0.16);
-  --tile-blue-fg: #a8cdec;
-  --tile-violet-bg: rgb(195 162 228 / 0.17);
-  --tile-violet-fg: #d3bdee;
-  --tile-amber-bg: rgb(240 201 106 / 0.15);
-  --tile-amber-fg: #f0c96a;
-  --tile-teal-bg: rgb(127 211 227 / 0.15);
-  --tile-teal-fg: #8fdbe8;
-  --tile-rose-bg: rgb(243 164 157 / 0.17);
-  --tile-rose-fg: #f3a49d;
-  --tile-green-bg: rgb(173 193 120 / 0.17);
-  --tile-green-fg: #cfe3a0;
+  --tile-blue-bg: #263746;
+  --tile-blue-fg: #a9d6ff;
+  --tile-violet-bg: #332a46;
+  --tile-violet-fg: #cfb2f0;
+  --tile-amber-bg: #453a23;
+  --tile-amber-fg: #ffd078;
+  --tile-teal-bg: #1f383c;
+  --tile-teal-fg: #8fd9e8;
+  --tile-rose-bg: #432b2a;
+  --tile-rose-fg: #ffaaa2;
+  --tile-green-bg: #243b2d;
+  --tile-green-fg: #a7e3ac;
   --hero-a: 34%;
   --hero-b: 10%;
   --lift: 38%;

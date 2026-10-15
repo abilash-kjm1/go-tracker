@@ -30,7 +30,7 @@ export function JourneyLine({
   // GO's line colours are pure primaries (#ff0d00 red); softened towards slate they
   // stay recognisable without glaring on a light or dark page.
   // Dark mode lifts it toward white instead, so the line still glows on a dark page.
-  const color = `color-mix(in srgb, color-mix(in srgb, ${trip.routeColor ?? '#4f6939'} 86%, #0f172a) calc(100% - var(--lift)), white)`;
+  const color = `color-mix(in srgb, color-mix(in srgb, ${trip.routeColor ?? '#4f6939'} 86%, #0e1513) calc(100% - var(--lift)), white)`;
   const stops = trip.stops;
   const [showPassed, setShowPassed] = useState(false);
 
