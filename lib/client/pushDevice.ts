@@ -16,6 +16,37 @@
 
 const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? '';
 
+/** What was last sent to the server, so the same thing is not sent again. */
+const SEEN_KEY = 'gotracker:push-device:v1';
+
+/**
+ * How long a registration is trusted before it is refreshed anyway.
+ *
+ * Re-saving on every open is the habit that keeps the address true, but
+ * "every open" taken literally meant a request every single time the app came
+ * back to the foreground — dozens a day, on a phone, to say something the
+ * server already knew. A changed address is still sent the instant it
+ * changes; an unchanged one is confirmed twice a day.
+ */
+const REREGISTER_AFTER_MS = 12 * 60 * 60 * 1000;
+
+function lastRegistered(): { endpoint: string; at: number } | null {
+  try {
+    const raw = localStorage.getItem(SEEN_KEY);
+    return raw ? (JSON.parse(raw) as { endpoint: string; at: number }) : null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberRegistered(endpoint: string) {
+  try {
+    localStorage.setItem(SEEN_KEY, JSON.stringify({ endpoint, at: Date.now() }));
+  } catch {
+    // Private mode, or storage full. The only cost is registering again.
+  }
+}
+
 export type PushState =
   | 'unknown'
   | 'on'
@@ -110,6 +141,7 @@ async function register(subscription: PushSubscription): Promise<boolean> {
     const body = (await response.json().catch(() => null)) as {
       data?: { durable?: boolean };
     } | null;
+    rememberRegistered(json.endpoint);
     return body?.data?.durable !== false;
   } catch {
     return false;
@@ -124,14 +156,22 @@ async function register(subscription: PushSubscription): Promise<boolean> {
  * use of the app rather than discovered on a platform at seven in the
  * morning.
  */
-export async function refreshDevice(): Promise<PushState> {
+export async function refreshDevice(force = false): Promise<PushState> {
   const support = pushSupport();
   if (support !== 'off') return support;
   try {
     const registration = await swReady(5000);
     const subscription = await registration.pushManager.getSubscription();
     if (!subscription || Notification.permission !== 'granted') return 'off';
-    await register(subscription);
+
+    // A changed address goes up at once — that is the whole point. An
+    // unchanged one is left alone until it is a few hours old, so returning
+    // to the app forty times in a day costs forty nothings.
+    const seen = lastRegistered();
+    const changed = seen?.endpoint !== subscription.endpoint;
+    const old = !seen || Date.now() - seen.at > REREGISTER_AFTER_MS;
+    if (force || changed || old) await register(subscription);
+
     return 'on';
   } catch {
     return 'off';
