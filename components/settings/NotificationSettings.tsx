@@ -13,6 +13,7 @@ import {
   pushSupport,
   refreshDevice,
   relink,
+  requestServerTest,
   showTestNotification,
   unfollowLine,
 } from '@/lib/client/pushDevice';
@@ -94,6 +95,18 @@ export function NotificationSettings() {
     } catch (err) {
       setNote(`Could not show one: ${err instanceof Error ? err.message : 'try again'}`);
     }
+  };
+
+  const serverTest = async () => {
+    setBusy(true);
+    setNote(null);
+    const result = await requestServerTest();
+    setNote(
+      result.ok
+        ? 'On its way. Close GO Tracker now — it should arrive within a minute. If it does, alerts will reach you the same way.'
+        : `Could not ask for one: ${result.error ?? 'try again'}`,
+    );
+    setBusy(false);
   };
 
   return (
@@ -200,13 +213,32 @@ export function NotificationSettings() {
             </ul>
           </div>
 
+          {/*
+            The test that answers the actual question. The local one below
+            only asks the page to draw a notification — it never touches the
+            server, the signing key, the push service or the sleeping service
+            worker, which is every part that can really be broken.
+          */}
+          <button
+            type="button"
+            onClick={serverTest}
+            disabled={busy}
+            className="flex min-h-12 w-full flex-col items-center justify-center rounded-xl border text-ui font-bold hairline disabled:opacity-50"
+            style={{ borderColor: 'var(--accent)', color: 'var(--accent-ink)' }}
+          >
+            Send a real test from the server
+            <span className="text-mini font-medium text-muted">
+              Arrives within a minute — close the app and wait
+            </span>
+          </button>
+
           <div className="flex gap-2">
             <button
               type="button"
               onClick={test}
               className="flex min-h-11 flex-1 items-center justify-center rounded-xl border text-ui font-semibold hairline bg-[var(--bg-elevated)]"
             >
-              Show a test one
+              Test on screen
             </button>
             <button
               type="button"

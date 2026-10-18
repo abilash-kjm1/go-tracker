@@ -385,3 +385,33 @@ export async function unfollowLine(routeId: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Ask the server to push a real test to this phone.
+ *
+ * Different in kind from showTestNotification above, which only asks the page
+ * to draw one. This goes out to the signing key, the push service, and back
+ * down to the service worker — every part that can actually be broken — and
+ * arrives about a minute later, by which time the app can be closed. It is
+ * the only way to answer "will I get told while I am not using it".
+ */
+export async function requestServerTest(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const registration = await swReady(5000);
+    const subscription = await registration.pushManager.getSubscription();
+    if (!subscription) return { ok: false, error: 'This device is not subscribed yet.' };
+
+    const response = await fetch('/api/push/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscription: subscription.toJSON() }),
+    });
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { error?: string } | null;
+      return { ok: false, error: body?.error ?? 'The server would not take it.' };
+    }
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Could not ask.' };
+  }
+}

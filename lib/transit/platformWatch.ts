@@ -14,6 +14,7 @@ import {
   removeLineWatch,
   saveLineWatch,
 } from './lineWatch';
+import { dropTest, listTests, testExpired, testMessage } from './pushTest';
 
 /**
  * Watches that outlive the page: the two things a rider wants to be told while
@@ -185,6 +186,9 @@ export interface TickResult {
   /** Followed lines checked, and how many raised a notification. */
   lines?: number;
   lineNotified?: number;
+  /** End-to-end tests a rider asked for, and how many were delivered. */
+  tests?: number;
+  testsSent?: number;
   /** Set when the time budget stopped the run before it finished. */
   cutShort?: boolean;
 }
@@ -200,7 +204,7 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
   const watches = await listWatches();
   const result: TickResult = { checked: watches.length, notified: 0, expired: 0, stops: 0 };
   if (!watches.length) {
-    await runLineAlerts(result, now, outOfTime);
+    await runStanding(result, now, outOfTime);
     return result;
   }
 
@@ -217,7 +221,7 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
     live.push(entry);
   }
   if (!live.length) {
-    await runLineAlerts(result, now, outOfTime);
+    await runStanding(result, now, outOfTime);
     return result;
   }
 
@@ -314,9 +318,51 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
     await settleWatch(entry.key, watch, sent, result);
   }
 
-  await runLineAlerts(result, now, outOfTime);
+  await runStanding(result, now, outOfTime);
 
   return result;
+}
+
+/**
+ * The work that is not tied to any one trip: followed lines, and tests a
+ * rider has asked the server to send them.
+ */
+async function runStanding(
+  result: TickResult,
+  now: number,
+  outOfTime: () => boolean,
+): Promise<void> {
+  await deliverTests(result, now);
+  await runLineAlerts(result, now, outOfTime);
+}
+
+/**
+ * Send the end-to-end tests that have been asked for.
+ *
+ * Deliberately sent from here rather than from the request that asked for it.
+ * A notification that arrives while the rider is still looking at the button
+ * proves very little; one that arrives a minute later, with the phone in a
+ * pocket, proves the whole thing.
+ */
+async function deliverTests(result: TickResult, now: number): Promise<void> {
+  const tests = await listTests();
+  if (!tests.length) return;
+  result.tests = tests.length;
+
+  for (const { key, value } of tests) {
+    if (testExpired(value, now)) {
+      await dropTest(key);
+      continue;
+    }
+    const sent = await sendPush(value.subscription, testMessage());
+    if (sent === 'failed') continue; // Try again next minute.
+    await dropTest(key);
+    if (sent === 'gone') {
+      await dropDevice(deviceId(value.subscription.endpoint)).catch(() => undefined);
+      continue;
+    }
+    result.testsSent = (result.testsSent ?? 0) + 1;
+  }
 }
 
 /**

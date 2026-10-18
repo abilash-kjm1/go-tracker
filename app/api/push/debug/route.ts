@@ -9,6 +9,9 @@ import {
 } from '@/lib/transit/platformWatch';
 import { getLiveBoard } from '@/lib/transit/sources/goTrackerBoards';
 import { getProvider } from '@/lib/transit/provider';
+import { listDevices } from '@/lib/transit/pushDevice';
+import { listLineWatches } from '@/lib/transit/lineWatch';
+import { listTests } from '@/lib/transit/pushTest';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +29,12 @@ export async function GET(request: Request) {
 
   const watches = await listWatches();
   const status = await readTickStatus();
+  // "Nothing arrived" has three quite different causes — no phone registered,
+  // nothing asked for, or the sending itself failing — and only the first two
+  // are visible from here. Both are now.
+  const devices = await listDevices().catch(() => []);
+  const lines = await listLineWatches().catch(() => []);
+  const tests = await listTests().catch(() => []);
   const out = [];
 
   for (const { value } of watches) {
@@ -84,6 +93,26 @@ export async function GET(request: Request) {
       ...(run.cutShort ? { cutShort: true } : {}),
       ...(run.error ? { error: run.error } : {}),
     })),
+    // Phones that have registered at all. Zero here means nothing the rider
+    // does in the app can ever reach them, whatever else looks healthy.
+    devices: devices.map(({ value }) => ({
+      label: value.label ?? 'unknown',
+      host: (() => {
+        try {
+          return new URL(value.subscription.endpoint).host;
+        } catch {
+          return 'invalid';
+        }
+      })(),
+      registeredAt: new Date(value.createdAt).toISOString(),
+      lastSeenAt: new Date(value.seenAt).toISOString(),
+    })),
+    followedLines: lines.map(({ value }) => ({
+      routeName: value.routeName,
+      routeId: value.routeId,
+      notifiedAt: value.notifiedAt ? new Date(value.notifiedAt).toISOString() : null,
+    })),
+    pendingTests: tests.length,
     count: out.length,
     watches: out,
   }, {
