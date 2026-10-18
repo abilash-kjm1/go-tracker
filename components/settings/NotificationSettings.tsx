@@ -2,16 +2,19 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import {
+  type FollowedLine,
   type LinkReport,
   type PushState,
   checkLinked,
   deviceLabel,
   disablePush,
   enablePush,
+  followedLines,
   pushSupport,
   refreshDevice,
   relink,
   showTestNotification,
+  unfollowLine,
 } from '@/lib/client/pushDevice';
 
 /**
@@ -31,11 +34,18 @@ export function NotificationSettings() {
   const [busy, setBusy] = useState(false);
   const [link, setLink] = useState<LinkReport | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [lines, setLines] = useState<FollowedLine[] | null>(null);
   const device = typeof navigator === 'undefined' ? 'device' : deviceLabel();
 
   const verify = useCallback(async (next: PushState) => {
     setState(next);
-    setLink(next === 'on' ? await checkLinked() : null);
+    if (next !== 'on') {
+      setLink(null);
+      setLines(null);
+      return;
+    }
+    setLink(await checkLinked());
+    setLines(await followedLines());
   }, []);
 
   useEffect(() => {
@@ -64,6 +74,7 @@ export function NotificationSettings() {
     await disablePush();
     setState('off');
     setLink(null);
+    setLines(null);
     setNote(null);
     setBusy(false);
   };
@@ -138,6 +149,56 @@ export function NotificationSettings() {
               This server has no shared store, so the registration will not outlive a restart.
             </p>
           ) : null}
+
+          {/*
+            Everything that can reach this phone from now on, and nothing
+            else. Platform alerts die with their train and a trip's alerts end
+            with the trip, so a followed line is the only standing claim on a
+            phone — which makes it the only one that needs a way out here.
+          */}
+          <div>
+            <p className="mb-1.5 text-mini font-semibold tracking-wide text-faint uppercase">
+              You will be told about
+            </p>
+            <ul className="space-y-1">
+              <li className="flex items-start gap-2 text-small text-muted">
+                <span aria-hidden>·</span>
+                <span>Platforms and stops you ask for. Each ends with that train.</span>
+              </li>
+              {lines === null ? null : lines.length === 0 ? (
+                <li className="flex items-start gap-2 text-small text-muted">
+                  <span aria-hidden>·</span>
+                  <span>
+                    No lines followed. Open a line and turn on big-delay alerts to add one.
+                  </span>
+                </li>
+              ) : (
+                lines.map((line) => (
+                  <li
+                    key={line.routeId}
+                    className="flex min-h-11 items-center gap-2 rounded-xl px-2.5"
+                    style={{ background: 'var(--bg-sunken)' }}
+                  >
+                    <span className="min-w-0 flex-1 truncate text-small">
+                      <span className="font-semibold">{line.routeName}</span>
+                      <span className="text-muted"> · big delays</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await unfollowLine(line.routeId);
+                        setLines(await followedLines());
+                      }}
+                      className="shrink-0 rounded-lg px-2 py-1 text-mini font-semibold text-[var(--fg-muted)]"
+                      aria-label={`Stop following ${line.routeName}`}
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
 
           <div className="flex gap-2">
             <button

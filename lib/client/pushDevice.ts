@@ -340,3 +340,48 @@ export function watchDeviceRegistration(onState?: (state: PushState) => void): (
     document.removeEventListener('visibilitychange', onVisible);
   };
 }
+
+export interface FollowedLine {
+  routeId: string;
+  routeName: string;
+}
+
+/**
+ * Which lines this phone follows.
+ *
+ * The only standing subscription in the app — a platform alert dies with its
+ * train and a trip's alerts end with the trip, but a followed line keeps its
+ * claim on a phone until it is dropped. Anything that can notify you
+ * indefinitely has to be visible somewhere you can turn it off.
+ */
+export async function followedLines(): Promise<FollowedLine[]> {
+  try {
+    const registration = await swReady(5000);
+    const subscription = await registration.pushManager.getSubscription();
+    if (!subscription) return [];
+    const response = await fetch(
+      `/api/push/lines?endpoint=${encodeURIComponent(subscription.endpoint)}`,
+    );
+    if (!response.ok) return [];
+    const body = (await response.json()) as { data?: { lines?: FollowedLine[] } };
+    return body.data?.lines ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export async function unfollowLine(routeId: string): Promise<boolean> {
+  try {
+    const registration = await swReady(5000);
+    const subscription = await registration.pushManager.getSubscription();
+    if (!subscription) return false;
+    const response = await fetch('/api/push/lines', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: subscription.endpoint, routeId }),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}

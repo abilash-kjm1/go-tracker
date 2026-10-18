@@ -88,9 +88,14 @@ export function legsFromJourney(
 export function autoAlertsForLeg(trip: TripDetail, leg: TripLeg, isFinalLeg: boolean): StopAlert[] {
   const index = trip.stops.findIndex((s) => s.stopId === leg.alightStopId);
   if (index < 0) return [];
+  const board = trip.stops.findIndex((s) => s.stopId === leg.boardStopId);
   const wanted = isFinalLeg ? [index - 2, index - 1, index] : [index - 1, index];
   return wanted
-    .filter((i) => i >= 0 && i < trip.stops.length)
+    // Two stops before the destination can be the stop the rider is standing
+    // on, or one they passed before boarding. On a short leg that meant being
+    // told "arriving at Union" while waiting at Union — a notification that
+    // could only ever be noise.
+    .filter((i) => i >= 0 && i < trip.stops.length && (board < 0 || i > board))
     .map((i) => {
       const stop = trip.stops[i];
       return {

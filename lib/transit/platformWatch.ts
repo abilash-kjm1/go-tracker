@@ -114,6 +114,16 @@ export interface PlatformWatch {
 /** After this many failed sends, stop trying this one. */
 const MAX_SEND_ATTEMPTS = 5;
 
+/**
+ * How far past a stop an arrival alert is still worth sending.
+ *
+ * The tick runs every minute, so a stop caught as `departed` is normally one
+ * or two ticks old and the rider still wants it. Beyond this it is history,
+ * and a phone buzzing about a station already behind you is exactly the kind
+ * of notification that gets notifications turned off.
+ */
+const ARRIVAL_STALE_MS = 5 * 60_000;
+
 /** One watch per phone, kind, trip and stop. */
 const watchKey = (endpoint: string, tripNumber: string, stopId: string, kind: WatchKind) =>
   Buffer.from(`${endpoint}|${kind}|${tripNumber}|${stopId}`).toString('base64url').slice(0, 96);
@@ -273,6 +283,20 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
     // `next` is the train approaching; `current` is it standing there. Either
     // is worth telling someone about, and `departed` means we were too slow.
     if (!stop || (stop.status !== 'next' && stop.status !== 'current' && stop.status !== 'departed')) {
+      continue;
+    }
+
+    // `departed` is here to catch a dwell that fell between two ticks, not to
+    // announce a stop the train left a quarter of an hour ago. The watch
+    // itself lives until ten minutes after the service was due, so without
+    // this a late tick could buzz a rider about a stop well behind them. The
+    // page-side watcher has always had this guard; the server had none.
+    const due = Date.parse(
+      stop.estimatedDeparture ?? stop.scheduledDeparture ?? stop.scheduledArrival ?? '',
+    );
+    if (Number.isFinite(due) && now - due > ARRIVAL_STALE_MS) {
+      await remove(SET, entry.key);
+      result.expired += 1;
       continue;
     }
 
