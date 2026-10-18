@@ -7,6 +7,13 @@ import { getLiveBoard } from './sources/goTrackerBoards';
 import type { TripDetail } from './types';
 import { durable, list, put, readOne, remove, writeOne } from '../server/store';
 import { deviceId, dropDevice } from './pushDevice';
+import {
+  decideLine,
+  lineMessage,
+  listLineWatches,
+  removeLineWatch,
+  saveLineWatch,
+} from './lineWatch';
 
 /**
  * Watches that outlive the page: the two things a rider wants to be told while
@@ -165,6 +172,9 @@ export interface TickResult {
   retrying?: number;
   /** Given up on after too many failures. */
   abandoned?: number;
+  /** Followed lines checked, and how many raised a notification. */
+  lines?: number;
+  lineNotified?: number;
   /** Set when the time budget stopped the run before it finished. */
   cutShort?: boolean;
 }
@@ -179,7 +189,10 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
 
   const watches = await listWatches();
   const result: TickResult = { checked: watches.length, notified: 0, expired: 0, stops: 0 };
-  if (!watches.length) return result;
+  if (!watches.length) {
+    await runLineAlerts(result, now, outOfTime);
+    return result;
+  }
 
   // A watch is pointless once the train has gone; give it a few minutes' grace
   // in case the departure slipped.
@@ -193,7 +206,10 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
     }
     live.push(entry);
   }
-  if (!live.length) return result;
+  if (!live.length) {
+    await runLineAlerts(result, now, outOfTime);
+    return result;
+  }
 
   const platformWatches = live.filter((entry) => (entry.value.kind ?? 'platform') === 'platform');
   const arrivalWatches = live.filter((entry) => entry.value.kind === 'arrival');
@@ -274,7 +290,61 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
     await settleWatch(entry.key, watch, sent, result);
   }
 
+  await runLineAlerts(result, now, outOfTime);
+
   return result;
+}
+
+/**
+ * Lines a rider follows, checked once for everybody.
+ *
+ * One alert fetch covers every follower of every line, so this costs the same
+ * whether one phone is watching or a thousand. Nothing is pushed unless the
+ * line is properly in trouble and this phone has not already been told about
+ * that same trouble — the judgement lives in decideLine, where it can be
+ * tested.
+ */
+async function runLineAlerts(
+  result: TickResult,
+  now: number,
+  outOfTime: () => boolean,
+): Promise<void> {
+  const watches = await listLineWatches();
+  if (!watches.length) return;
+  result.lines = watches.length;
+
+  let alerts: Awaited<ReturnType<Awaited<ReturnType<typeof getProvider>>['getAlerts']>>;
+  try {
+    alerts = await (await getProvider()).getAlerts();
+  } catch {
+    // No alert feed this minute says nothing about the lines; try again next.
+    return;
+  }
+
+  for (const { key, value: watch } of watches) {
+    if (outOfTime()) {
+      result.cutShort = true;
+      return;
+    }
+
+    const action = decideLine(watch, alerts, now);
+    if (action.do === 'nothing') continue;
+    if (action.do === 'save') {
+      await saveLineWatch(key, action.next);
+      continue;
+    }
+
+    const sent = await sendPush(watch.subscription, lineMessage(action.alert, watch.routeName));
+    if (sent === 'gone') {
+      await removeLineWatch(key);
+      await dropDevice(deviceId(watch.subscription.endpoint)).catch(() => undefined);
+      continue;
+    }
+    if (sent === 'failed') continue; // Try again next minute; nothing is lost.
+
+    await saveLineWatch(key, action.next);
+    result.lineNotified = (result.lineNotified ?? 0) + 1;
+  }
 }
 
 /**

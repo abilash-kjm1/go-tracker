@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { LineDiagram } from './LineDiagram';
+import { LineAlertToggle } from '@/components/routes/LineAlertToggle';
 import { LiveIndicator } from '@/components/ui/LiveIndicator';
 import { ModeIcon, Pill, RouteBadge, Segmented, StarButton } from '@/components/ui/primitives';
 import { useFavorites } from '@/lib/client/favorites';
@@ -114,6 +115,10 @@ export function RouteScreen({
             })}
           </ul>
         )}
+      </section>
+
+      <section className="mb-5">
+        <LineAlertToggle routeId={route.id} routeName={route.name} />
       </section>
 
       {pattern ? (
