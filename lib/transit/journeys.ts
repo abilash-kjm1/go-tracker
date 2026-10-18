@@ -184,8 +184,22 @@ interface Label {
   walkFrom?: string;
 }
 
-/** Most changes a rider will accept before the journey stops being worth it. */
-const MAX_CHANGES = 2;
+/**
+ * Most changes the planner will build.
+ *
+ * Two was a guess about what a rider would accept, and it was answering the
+ * wrong question: the rider does not get to accept anything if the app will
+ * not show them the journey. Scarborough to Niagara Falls on a Sunday needs
+ * three — Lakeshore East to Union, two Lakeshore West legs, then the Niagara
+ * bus from Burlington — and GO's own site offers it. The app said "nothing
+ * connects these stops", which is the worst answer a trip planner can give,
+ * because it is both wrong and final.
+ *
+ * Three costs nothing measurable: the search converges once no stop improves,
+ * so the extra round is empty on every journey that did not need it. Timed
+ * over five fresh searches it was 0.05-0.17s either way.
+ */
+const MAX_CHANGES = 3;
 
 /**
  * A time-expanded search over the whole timetable, one round per leg, so a

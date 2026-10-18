@@ -261,7 +261,7 @@ export function PlannerResults({ planner }: { planner: TripPlannerState }) {
       {data?.length === 0 ? (
         <EmptyState
           title="Nothing connects these stops"
-          body={`No GO service runs from ${from!.name} to ${to!.name} in the next few hours, directly or with one change.`}
+          body={`No GO service runs from ${from!.name} to ${to!.name} in the next few hours, direct or with up to three changes. Try a different day or time.`}
         />
       ) : null}
 
