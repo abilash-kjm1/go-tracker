@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { NotificationSettings } from '@/components/settings/NotificationSettings';
 import { SignalShortcutSettings } from '@/components/settings/SignalShortcutSettings';
 import { ThemePicker } from '@/components/ui/ThemePicker';
 import { config } from '@/lib/transit/config';
@@ -22,6 +23,15 @@ export default function MorePage() {
 
       <section className="mb-6">
         <h2 className="pr-dangle px-1 pb-2 text-mini font-semibold tracking-wide text-faint uppercase">
+          Notifications
+        </h2>
+        <div className="rounded-2xl border px-4 py-4 hairline bg-[var(--bg-elevated)]">
+          <NotificationSettings />
+        </div>
+      </section>
+
+      <section className="mb-6">
+        <h2 className="px-1 pb-2 text-mini font-semibold tracking-wide text-faint uppercase">
           Appearance
         </h2>
         <div className="rounded-2xl border px-4 py-4 hairline bg-[var(--bg-elevated)]">

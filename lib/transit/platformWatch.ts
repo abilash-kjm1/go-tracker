@@ -6,6 +6,7 @@ import { getProvider } from './provider';
 import { getLiveBoard } from './sources/goTrackerBoards';
 import type { TripDetail } from './types';
 import { durable, list, put, readOne, remove, writeOne } from '../server/store';
+import { deviceId, dropDevice } from './pushDevice';
 
 /**
  * Watches that outlive the page: the two things a rider wants to be told while
@@ -99,7 +100,12 @@ export interface PlatformWatch {
   /** Scheduled time here, so a watch cleans itself up after the train has gone. */
   departsAt: string;
   createdAt: number;
+  /** Delivery attempts that failed for a reason worth retrying. */
+  attempts?: number;
 }
+
+/** After this many failed sends, stop trying this one. */
+const MAX_SEND_ATTEMPTS = 5;
 
 /** One watch per phone, kind, trip and stop. */
 const watchKey = (endpoint: string, tripNumber: string, stopId: string, kind: WatchKind) =>
@@ -153,6 +159,12 @@ export interface TickResult {
   notified: number;
   expired: number;
   stops: number;
+  /** The push service said the phone is no longer there. */
+  gone?: number;
+  /** Left in place to try again on the next tick. */
+  retrying?: number;
+  /** Given up on after too many failures. */
+  abandoned?: number;
   /** Set when the time budget stopped the run before it finished. */
   cutShort?: boolean;
 }
@@ -234,9 +246,7 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
       tag: `platform-${watch.tripNumber}-${watch.stopId}`,
     });
 
-    // Delivered or undeliverable, this watch is finished either way.
-    await remove(SET, entry.key);
-    if (sent) result.notified += 1;
+    await settleWatch(entry.key, watch, sent, result);
   }
 
   for (const entry of arrivalWatches) {
@@ -261,8 +271,7 @@ export async function runPlatformTick(now = Date.now()): Promise<TickResult> {
       tag: `arrival-${watch.tripNumber}-${watch.stopId}`,
     });
 
-    await remove(SET, entry.key);
-    if (sent) result.notified += 1;
+    await settleWatch(entry.key, watch, sent, result);
   }
 
   return result;
@@ -300,17 +309,73 @@ async function stopLabel(watch: PlatformWatch): Promise<string> {
   return (stop?.name ?? watch.stopName).replace(/\s+GO(\s+Bus)?$/i, '');
 }
 
+/**
+ * What became of one notification.
+ *
+ * The difference matters more than it looks. This used to return a plain
+ * boolean and the caller deleted the watch whichever way it went — so a
+ * single bad minute at Google's push service, a 500 or a dropped connection,
+ * silently cancelled a rider's platform alert for good. A platform is posted
+ * once; there is no second chance to catch it. `failed` now means try again
+ * on the next tick, sixty seconds later, and only `gone` means the phone is
+ * really not there any more.
+ */
+export type SendOutcome = 'sent' | 'gone' | 'failed';
+
 async function sendPush(
   subscription: PushSubscriptionRecord,
   payload: { title: string; body: string; url: string; tag: string },
-): Promise<boolean> {
-  if (!pushConfigured()) return false;
+): Promise<SendOutcome> {
+  if (!pushConfigured()) return 'failed';
   try {
-    await webpush.sendNotification(subscription, JSON.stringify(payload), { TTL: 600 });
-    return true;
-  } catch {
-    // A phone that has uninstalled the app returns 404/410; either way there is
-    // nothing useful to do but forget it, which the caller does.
-    return false;
+    await webpush.sendNotification(subscription, JSON.stringify(payload), {
+      TTL: 600,
+      // Without this, a push service is free to hold the notification until
+      // the phone next wakes on its own — which is how alerts end up arriving
+      // in a batch the moment the app is opened, long after they mattered.
+      // A platform number has a useful life of minutes, so it goes now.
+      urgency: 'high',
+    });
+    return 'sent';
+  } catch (err) {
+    const status = (err as { statusCode?: number } | null)?.statusCode;
+    if (status === 404 || status === 410) return 'gone';
+    return 'failed';
   }
+}
+
+/**
+ * Act on the outcome: finish with the watch, or leave it for the next tick.
+ *
+ * A phone the push service says is gone has its device record removed too, so
+ * nothing else in the app keeps writing to an address that no longer exists.
+ */
+async function settleWatch(
+  key: string,
+  watch: PlatformWatch,
+  outcome: SendOutcome,
+  result: TickResult,
+): Promise<void> {
+  if (outcome === 'sent') {
+    await remove(SET, key);
+    result.notified += 1;
+    return;
+  }
+  if (outcome === 'gone') {
+    await remove(SET, key);
+    result.gone = (result.gone ?? 0) + 1;
+    await dropDevice(deviceId(watch.subscription.endpoint)).catch(() => undefined);
+    return;
+  }
+
+  // Try again next minute, but not forever: a watch that has failed this many
+  // times is failing for a reason a retry will not fix.
+  const attempts = (watch.attempts ?? 0) + 1;
+  if (attempts >= MAX_SEND_ATTEMPTS) {
+    await remove(SET, key);
+    result.abandoned = (result.abandoned ?? 0) + 1;
+    return;
+  }
+  await put(SET, key, { ...watch, attempts });
+  result.retrying = (result.retrying ?? 0) + 1;
 }

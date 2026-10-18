@@ -6,15 +6,16 @@ import {
   pushConfigured,
   watchesSurvive,
 } from '@/lib/transit/platformWatch';
+import { cleanSubscription, deviceStoreSurvives, saveDevice } from '@/lib/transit/pushDevice';
 
 export const dynamic = 'force-dynamic';
 
 const bodySchema = z.object({
   kind: z.enum(['platform', 'arrival']).default('platform'),
-  subscription: z.object({
-    endpoint: z.string().url(),
-    keys: z.object({ p256dh: z.string(), auth: z.string() }),
-  }),
+  // Checked properly below. The endpoint must belong to a real push service:
+  // any https URL used to be accepted, which let a forged request make this
+  // server sign and post to an address of the sender's choosing.
+  subscription: z.unknown(),
   stopId: z.string().min(1).max(40),
   stopName: z.string().min(1).max(120),
   tripId: z.string().max(80).optional(),
@@ -29,14 +30,22 @@ export async function POST(request: Request) {
   try {
     if (!pushConfigured()) return fail('Push notifications are not configured on this server', 503);
 
-    const watch = bodySchema.parse(await request.json());
-    await addWatch({ ...watch, createdAt: Date.now() });
+    const body = bodySchema.parse(await request.json());
+    const subscription = cleanSubscription(body.subscription);
+    if (!subscription) return fail('That is not a usable push subscription', 400);
+
+    await addWatch({ ...body, subscription, createdAt: Date.now() });
+
+    // Arming an alert is also this phone saying it wants to hear from the app,
+    // so the device is registered at the same time. It then stays reachable
+    // after this one watch has come and gone.
+    await saveDevice(subscription).catch(() => undefined);
 
     return ok(
       envelope(
         // Said plainly: on a server without a shared store the watch will not
         // outlive this request, and the rider deserves to know that.
-        { watching: true, durable: watchesSurvive() },
+        { watching: true, durable: watchesSurvive() && deviceStoreSurvives() },
         { freshness: 'scheduled', updatedAt: null },
       ),
     );
